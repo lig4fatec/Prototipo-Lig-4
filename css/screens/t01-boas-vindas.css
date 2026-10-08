@@ -1,0 +1,144 @@
+body {
+  background: linear-gradient(120deg, #18301D 0%, #1D3923 100%);
+}
+
+.welcome-main {
+  min-height: 100vh;
+  margin-left: 248px;
+  padding: 3rem 4rem;
+}
+
+.welcome-layout {
+  display: grid;
+  width: min(100%, 1200px);
+  min-height: calc(100vh - 6rem);
+  grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+  align-items: center;
+  gap: 3rem;
+  margin: 0 auto;
+}
+
+.welcome-board {
+  width: 100%;
+  margin: 0;
+  filter: drop-shadow(0 24px 24px rgb(0 0 0 / 24%));
+}
+
+.welcome-board img {
+  width: 100%;
+  height: auto;
+}
+
+.welcome-copy {
+  max-width: 480px;
+  padding: 1.5rem 0;
+}
+
+.welcome-kicker {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0 0 1.25rem;
+  color: var(--color-primary);
+  font-size: 0.875rem;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.welcome-kicker::before {
+  width: 2rem;
+  height: 3px;
+  background: var(--color-highlight);
+  content: "";
+}
+
+.welcome-copy h1 {
+  max-width: 12ch;
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 3.75rem;
+  font-weight: 700;
+  line-height: 1.04;
+}
+
+.welcome-description {
+  max-width: 38ch;
+  margin: 1.5rem 0 2rem;
+  color: rgb(255 255 255 / 84%);
+  font-size: 1.125rem;
+  line-height: 1.65;
+}
+
+.welcome-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  color: var(--color-text);
+  font-size: 1.25rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.welcome-brand img {
+  width: 52px;
+  height: 52px;
+}
+
+.welcome-cta {
+  width: min(100%, 360px);
+  min-height: 56px;
+  font-size: 1.0625rem;
+}
+
+@media (max-width: 1050px) {
+  .welcome-main {
+    padding: 2.5rem;
+  }
+
+  .welcome-layout {
+    gap: 2rem;
+  }
+
+  .welcome-copy h1 {
+    font-size: 3.125rem;
+  }
+}
+
+@media (max-width: 700px) {
+  .welcome-main {
+    min-height: calc(100vh - 76px);
+    margin-left: 0;
+    padding: 2rem 1.25rem 3rem;
+  }
+
+  .welcome-layout {
+    min-height: auto;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+  }
+
+  .welcome-board {
+    width: min(100%, 440px);
+    margin: 0 auto;
+  }
+
+  .welcome-copy {
+    max-width: 560px;
+    padding: 0;
+  }
+
+  .welcome-copy h1 {
+    max-width: 14ch;
+    font-size: 2.625rem;
+  }
+
+  .welcome-description {
+    margin: 1rem 0 1.5rem;
+    font-size: 1rem;
+  }
+
+  .welcome-cta {
+    width: 100%;
+  }
+}

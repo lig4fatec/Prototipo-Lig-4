@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#18301D">
+    <title>Criar conta | LIG-4 Online</title>
+    <link rel="stylesheet" href="../css/base.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/screens/auth.css">
+    <script type="module" src="../js/auth-forms.js"></script>
+  </head>
+  <body class="auth-screen">
+    <header class="auth-header">
+      <a class="auth-back" href="./t01-boas-vindas.html" aria-label="Voltar à página inicial" title="Voltar à página inicial">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="m14.5 5-7 7 7 7M8 12h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+      <a class="auth-brand" href="./t01-boas-vindas.html" aria-label="LIG-4 Online, página inicial">
+        <img src="../assets/images/logo/lig4-mark.svg" alt="">
+        <span>LIG-4</span>
+      </a>
+    </header>
+
+    <main class="auth-main">
+      <section class="auth-card auth-card--register" aria-labelledby="register-title">
+        <h1 id="register-title">Crie sua conta</h1>
+        <p class="auth-intro">Prepare-se para conectar quatro.</p>
+
+        <form class="auth-form" data-auth-form="register" novalidate>
+          <div class="form-field">
+            <label class="form-field__label" for="register-email">E-mail</label>
+            <div class="form-field__control">
+              <svg class="form-field__icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/>
+                <path d="m4 7 8 6 8-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <input
+                id="register-email"
+                name="email"
+                type="email"
+                autocomplete="email"
+                inputmode="email"
+                placeholder="voce@exemplo.com"
+                data-field="email"
+                aria-describedby="register-email-error"
+                aria-invalid="false"
+                required
+              >
+            </div>
+            <p class="form-field__error" id="register-email-error" data-error-for="email" aria-live="polite"></p>
+          </div>
+
+          <div class="form-field">
+            <label class="form-field__label" for="register-password">Senha</label>
+            <div class="form-field__control">
+              <svg class="form-field__icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <rect x="4" y="10" width="16" height="11" rx="2" stroke="currentColor" stroke-width="1.8"/>
+                <path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                <circle cx="12" cy="15.5" r="1.2" fill="currentColor"/>
+              </svg>
+              <input
+                id="register-password"
+                name="password"
+                type="password"
+                autocomplete="new-password"
+                placeholder="Mínimo de 6 caracteres"
+                data-field="password"
+                aria-describedby="register-password-help register-password-error"
+                aria-invalid="false"
+                required
+              >
+              <button
+                class="password-toggle"
+                type="button"
+                data-password-toggle
+                aria-label="Mostrar senha"
+                aria-controls="register-password"
+                aria-pressed="false"
+              >
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M2.5 12s3.4-6 9.5-6 9.5 6 9.5 6-3.4 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" stroke-width="1.8"/>
+                  <circle cx="12" cy="12" r="2.5" stroke="currentColor" stroke-width="1.8"/>
+                </svg>
+              </button>
+            </div>
+            <p class="form-field__help" id="register-password-help">Recomendado: use letras maiúsculas e minúsculas, números e símbolos.</p>
+            <p class="form-field__error" id="register-password-error" data-error-for="password" aria-live="polite"></p>
+          </div>
+
+          <div class="form-field">
+            <label class="form-field__label" for="register-confirm-password">Confirmar senha</label>
+            <div class="form-field__control">
+              <svg class="form-field__icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <rect x="4" y="10" width="16" height="11" rx="2" stroke="currentColor" stroke-width="1.8"/>
+                <path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                <path d="m9 15 2 2 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <input
+                id="register-confirm-password"
+                name="confirm-password"
+                type="password"
+                autocomplete="new-password"
+                placeholder="Digite a senha novamente"
+                data-field="confirm-password"
+                aria-describedby="register-confirm-password-error"
+                aria-invalid="false"
+                required
+              >
+              <button
+                class="password-toggle"
+                type="button"
+                data-password-toggle
+                aria-label="Mostrar senha"
+                aria-controls="register-confirm-password"
+                aria-pressed="false"
+              >
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M2.5 12s3.4-6 9.5-6 9.5 6 9.5 6-3.4 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" stroke-width="1.8"/>
+                  <circle cx="12" cy="12" r="2.5" stroke="currentColor" stroke-width="1.8"/>
+                </svg>
+              </button>
+            </div>
+            <p class="form-field__error" id="register-confirm-password-error" data-error-for="confirm-password" aria-live="polite"></p>
+          </div>
+
+          <p class="auth-status" data-auth-status role="status" aria-live="polite"></p>
+          <button class="button button-primary-light button--full-width" type="submit">Cadastrar</button>
+        </form>
+
+        <p class="auth-footer">Já tem uma conta? <a href="./t02-login.html">Entrar</a></p>
+      </section>
+    </main>
+  </body>
+</html>

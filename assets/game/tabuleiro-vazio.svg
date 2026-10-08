@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 540" fill="none">
+  <defs>
+    <pattern id="empty-holes" width="84" height="84" patternUnits="userSpaceOnUse" x="18" y="18">
+      <circle cx="42" cy="42" r="27" fill="#18301D"/>
+      <circle cx="42" cy="42" r="25.5" stroke="#36513A" stroke-width="3"/>
+    </pattern>
+  </defs>
+  <rect x="18" y="18" width="584" height="504" rx="28" fill="#0460D9"/>
+  <rect x="25" y="25" width="570" height="490" rx="22" stroke="#FFFFFF" stroke-opacity="0.18" stroke-width="2"/>
+  <rect x="18" y="18" width="584" height="504" rx="28" fill="url(#empty-holes)"/>
+</svg>
