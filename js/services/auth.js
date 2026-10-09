@@ -1,6 +1,8 @@
+// Adaptador de autenticação do front-end; a UI deve usar os exports deste módulo.
 const ACCOUNTS_KEY = "lig4.accounts";
 const CURRENT_USER_KEY = "lig4.currentUser";
 
+// Helpers do mock local: podem ser substituídos/removidos na integração com a API.
 function createAuthError(code) {
   const error = new Error(code);
   error.code = code;
@@ -45,6 +47,8 @@ function toPublicUser(account) {
   return { id: account.id, email: account.email };
 }
 
+// Contrato do front-end consumido por auth-forms.js. O backend pode trocar estas
+// implementações por chamadas HTTP; preserve assinaturas, retorno e error.code.
 export async function register(email, password) {
   const normalizedEmail = normalizeEmail(email);
   if (!isValidEmail(normalizedEmail)) throw createAuthError("EMAIL_INVALIDO");
