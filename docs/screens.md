@@ -55,7 +55,7 @@ Todas as telas desta categoria usam a barra de navegação global (desktop: late
 ### T05 · Jogar
 - **Arquivo:** `html/t05-jogar.html`
 - **Objetivo:** escolher como iniciar ou entrar em uma partida online.
-- **Elementos:** opções "Criar uma sala" e "Entrar em uma sala", com destaque visual para partida rápida em relação a salas privadas (decisão registrada no slide).
+- **Elementos:** opções "Criar uma sala" e "Entrar em uma sala".
 - **Navegação:** Criar sala → T06; Entrar em sala → T07; Voltar → T04.
 - **Legado:** correspondência direta com `#mode-screen` (`index.html:117`) e `#online-screen` (`index.html:224`), que hoje reúne criar/entrar. Modos local e bot ficam fora do escopo online.
 - **Status:** Porte.
@@ -96,10 +96,10 @@ Todas as telas desta categoria usam a barra de navegação global (desktop: late
 
 ---
 
-## Fluxo de partida
+## Fluxo de partida / Seção de html/online.html
 
 ### T06 · Criar sala
-- **Arquivo:** `html/t06-criar-sala.html`
+- **Arquivo:** `Seção de html/online.html`
 - **Objetivo:** criar sala privada e obter PIN.
 - **Elementos:** escolha de série (1, 3 ou 5, travada após criação), escolha de cor do dono, botão "Criar sala", PIN de 6 dígitos com destaque visual, botão Voltar.
 - **Navegação:** criar → T08 (lobby); voltar → T05.
@@ -108,7 +108,7 @@ Todas as telas desta categoria usam a barra de navegação global (desktop: late
 - **Status:** Porte, bloqueado até `services/rooms.js` existir.
 
 ### T07 · Entrar em sala
-- **Arquivo:** `html/t07-entrar-sala.html`
+- **Arquivo:** `Seção de html/online.html`
 - **Objetivo:** entrar em sala existente pelo PIN.
 - **Elementos:** campo PIN (6 dígitos, só numérico), escolha de cor (diferente do dono), botão "Entrar", botão Voltar.
 - **Navegação:** entrar → T08; voltar → T05.
@@ -117,16 +117,16 @@ Todas as telas desta categoria usam a barra de navegação global (desktop: late
 - **Status:** Porte, bloqueado até `services/rooms.js` existir.
 
 ### T08 · Lobby
-- **Arquivo:** `html/t08-lobby.html`
+- **Arquivo:** `Seção de html/online.html`
 - **Objetivo:** aguardar o segundo jogador e iniciar a partida.
-- **Elementos:** PIN da sala em destaque, cores dos dois jogadores, indicação de dono, botão "Começar partida" (só dono, só com dois jogadores e cores diferentes), botão Sair da sala. Sem chat (ver conflito em `game-rules.md`).
+- **Elementos:** PIN da sala em destaque, cores dos dois jogadores, indicação de dono, botão "Começar partida" (só dono, só com dois jogadores e cores diferentes), botão Sair da sala. Sem chat (fora do protótipo; implementação futura).
 - **Navegação:** começar → T09; sair → T05.
 - **Dados:** `services/rooms.js` (`watchRoom`, `startMatch`, `leaveRoom`) — **a criar**.
 - **Legado:** lobby e countdown em `online.js` (`renderLobby`, `startSeriesOnline`). O legado tem chat nesta fase, que contraria o DESIGN.md.
 - **Status:** Porte, bloqueado até `services/rooms.js` existir.
 
 ### T09 · Partida
-- **Arquivo:** `html/t09-partida.html`
+- **Arquivo:** `Seção de html/online.html`
 - **Objetivo:** jogar a série no tabuleiro e exibir o resultado.
 - **Elementos:** tabuleiro 7x6 (alta fidelidade), placar, indicação de turno, PIN da sala (discreto), botão Sair da sala. Barra de navegação global oculta, ou reduzida ao botão Sair.
 - **Navegação:** fim da série → T08 ou T05 (conforme ação de replay ou saída); sair → T05.
@@ -137,7 +137,7 @@ Todas as telas desta categoria usam a barra de navegação global (desktop: late
 
 ---
 
-## Telas do legado sem correspondência
+## Telas do legado sem correspondência ("origem de T05 a T09")
 
 Estas telas do legado não têm ID no fluxo e ficam fora da fase atual, salvo decisão posterior:
 
@@ -149,7 +149,9 @@ Estas telas do legado não têm ID no fluxo e ficam fora da fase atual, salvo de
 
 ---
 
-## Pendências que bloqueiam telas
+## Pendências que bloqueiam telas 
+“Estado do fluxo online: resolvido por online.html (ver DESIGN.md)”
+
 - Estado entre trocas de página (T05 → T06 → T08 → T09): decidir entre `sessionStorage`, URL ou `services/`. Bloqueia T06 em diante.
 - Serviço de salas (`services/rooms.js`): bloqueia T06, T07, T08 e T09.
 - Regras puras (`js/game/`): bloqueiam T09.

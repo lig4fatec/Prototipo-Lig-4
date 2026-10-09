@@ -5,10 +5,9 @@
 - Tailwind, Bootstrap, ou outras ferramentas apenas via CDN, sem afetar a estrutura do projeto significativamente.
 
 ## Estrutura
-- `html/`: uma página por tela (`t01-boas-vindas.html`, `t02-login.html`, `t03-cadastro.html`).
+- `html/`: uma página por tela (`t01-boas-vindas.html`, `t02-login.html`, `t03-cadastro.html`), exceto páginas T06 a T09, que viverão em `online.html`.
 - `css/`: `variables.css` (tokens em `:root`), `base.css`, `components.css`, `screens/`.
-- `js/services/`: camada de dados (`auth.js` com mock em localStorage).
-- `js/`: validação de formulários e navegação.
+- `js/services/`: camada de dados. `auth.js`, `rooms.js` (mock descartável com persistência em `localStorage`), `store.js`, `profile.js`, `history.js`.- `js/`: validação de formulários e navegação.
 - `assets/images/logo/`: logo da Proposta B.
 - `assets/favicon/`: favicon derivado do logo.
 - `assets/icons/`: ícones de interface (olho da senha, seta de voltar, etc.).
@@ -99,8 +98,15 @@ T01 (boas-vindas), T02 (login), T03 (cadastro). As demais telas ficam fora deste
 - Visual: sempre `variables.css` e `components.css`. Nada de estilo legado copiado.
 - Lógica de jogo: funções puras em `js/game/`, sem DOM nem Firebase.
 
+## Fluxo online (T05 a T09)
+- `online.html` é uma única página. T06 (criar), T07 (entrar), T08 (lobby) e T09 (partida) são seções que aparecem e somem via `js/online/controller.js`.
+- A URL não muda dentro do fluxo online. Cada seção tem módulo próprio; o controlador só troca visibilidade e estado.
+- Ao abrir `online.html`, o controlador lê `{ pin, role }` do `sessionStorage`. Sem sala válida (ausente ou `PIN_NAO_ENCONTRADO`), limpa a chave e volta para T05 com aviso.
+- Botão "Voltar" do navegador: decisão pendente. Recomendado: tratar com `history.pushState` por seção, ou bloquear voltar dentro do fluxo e registrar a decisão aqui.
+- Layout de T06 a T08 reutiliza os componentes de T05 e `components.css`.
+
 ## Escopo do protótipo e decisões
 - Fora do escopo: modos Local e contra bot (decisão da liderança); poderes/habilidades; chat na sala de espera (implementação futura).
 - Série: "Melhor de 1" é o padrão. Opções 1, 3 e 5 na criação de sala. Semântica de vitória a confirmar com o time.
 - Cores: preferência da conta, editável em T10 (perfil). Prévia das duas cores no lobby (T08). Validação de cores diferentes feita no serviço, antes de gravar.
-- Estado: `sessionStorage` guarda só identificadores da sessão (PIN e papel). Dados de sala e partida vêm de `services/rooms.js`, único arquivo que acessa o Firebase.
+- Estado: `sessionStorage` guarda só `{ pin, role }`. Dados de sala e partida vêm de `services/rooms.js`. Em reload, o mock perde a sala (escopo do mock); o aviso de sala perdida fica como pendência até o backend.
