@@ -91,3 +91,10 @@ T01 (boas-vindas), T02 (login), T03 (cadastro). As demais telas ficam fora deste
 - Senha: mínimo de 6 caracteres (obrigatório). Sem exigência de composição.
 - Texto de ajuda (recomendação, não bloqueio): "Recomendado: use letras maiúsculas e minúsculas, números e símbolos."
 - Confirmação de senha: deve ser igual à senha.
+
+## Arquitetura de origem
+- Projeto novo é o host. O HTML legado (`docs/legacy/index.html`) é fonte de telas, estrutura e regras.
+- Cada tela do fluxo vira um arquivo em `html/`, mesmo que venha da mesma página legada.
+- Estado que precisa sobreviver a trocas de tela fica em `js/services/`, não em variáveis globais.
+- Visual: sempre `variables.css` e `components.css`. Nada de estilo legado copiado.
+- Lógica de jogo: funções puras em `js/game/`, sem DOM nem Firebase.
