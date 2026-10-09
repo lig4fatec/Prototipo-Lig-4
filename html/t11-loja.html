@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#18301D">
+    <title>Loja | LIG-4 Online</title>
+    <link rel="stylesheet" href="../css/base.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/screens/t11-loja.css">
+    <script type="module" src="../js/store-page.js"></script>
+  </head>
+  <body class="store-screen">
+    <aside class="app-sidebar app-sidebar--global" aria-label="Navegação principal">
+      <a class="app-sidebar__brand" href="./t04-home.html" aria-label="LIG-4 Online, início">
+        <img class="app-sidebar__logo" src="../assets/images/logo/lig4-mark.svg" alt="">
+        <span class="app-sidebar__wordmark">LIG-4</span>
+      </a>
+      <nav class="app-sidebar__nav" aria-label="Seções principais">
+        <a class="app-sidebar__link" href="./t05-jogar.html">Jogar</a>
+        <a class="app-sidebar__link" href="./t11-loja.html" aria-current="page">Loja</a>
+        <a class="app-sidebar__link" href="./t12-historico.html">Histórico</a>
+        <a class="app-sidebar__link" href="./t10-perfil.html">Perfil</a>
+      </nav>
+      <div class="app-sidebar__footer">
+        <button class="app-sidebar__link" type="button" data-store-logout>Sair</button>
+      </div>
+    </aside>
+
+    <main class="store-main">
+      <header class="store-page-header">
+        <div class="store-heading">
+          <a class="button button-primary-dark store-back" href="./t04-home.html" aria-label="Voltar para a Home" title="Voltar para a Home">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="m14.5 5-7 7 7 7M8 12h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+          <div>
+            <h1>Loja</h1>
+            <p>Personalize o seu jeito de jogar.</p>
+          </div>
+        </div>
+
+        <div class="store-wallet" aria-label="Saldo de moedas">
+          <span class="store-wallet__label">Suas moedas</span>
+          <div class="store-wallet__row">
+            <svg class="store-coin-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
+              <circle cx="12" cy="12" r="3" fill="currentColor"/>
+            </svg>
+            <strong data-store-balance>--</strong>
+            <button class="button button-primary-light store-wallet__add" type="button" disabled title="Em breve" aria-describedby="store-wallet-note" aria-label="Adicionar moedas, em breve">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+          <span class="store-wallet__note" id="store-wallet-note">Em breve</span>
+        </div>
+      </header>
+
+      <div class="store-layout">
+        <nav class="ui-tab-list store-category-tabs" role="tablist" aria-label="Categorias da loja">
+          <button class="ui-tab" id="store-tab-avatar" type="button" role="tab" aria-selected="true" aria-controls="store-panel-avatar" tabindex="0" data-store-tab="avatar">Avatares</button>
+          <button class="ui-tab" id="store-tab-board" type="button" role="tab" aria-selected="false" aria-controls="store-panel-board" tabindex="-1" data-store-tab="board">Tabuleiros</button>
+          <button class="ui-tab" id="store-tab-emote" type="button" role="tab" aria-selected="false" aria-controls="store-panel-emote" tabindex="-1" data-store-tab="emote">Emotes</button>
+        </nav>
+
+        <div class="store-content">
+          <section class="ui-banner store-feature" aria-labelledby="store-feature-title">
+            <p class="store-feature__eyebrow">Seu espaço, seu estilo</p>
+            <h2 id="store-feature-title">Pequenos detalhes. A sua cara.</h2>
+            <p>Escolha entre avatares, tabuleiros e emotes para personalizar suas partidas.</p>
+          </section>
+
+          <p class="store-message" data-store-message role="status" aria-live="polite"></p>
+
+          <div class="store-catalog" data-store-catalog>
+            <section class="store-section" id="store-panel-avatar" role="tabpanel" aria-labelledby="store-tab-avatar" tabindex="0" data-store-section="avatar">
+              <header class="store-section__heading">
+                <h2>Avatares</h2>
+                <p>Uma assinatura visual para o seu perfil.</p>
+              </header>
+              <ul class="store-grid" data-store-items="avatar" aria-label="Avatares disponíveis"></ul>
+            </section>
+
+            <section class="store-section" id="store-panel-board" role="tabpanel" aria-labelledby="store-tab-board" tabindex="0" data-store-section="board">
+              <header class="store-section__heading">
+                <h2>Tabuleiros</h2>
+                <p>Uma nova moldura para cada partida.</p>
+              </header>
+              <ul class="store-grid" data-store-items="board" aria-label="Tabuleiros disponíveis"></ul>
+            </section>
+
+            <section class="store-section" id="store-panel-emote" role="tabpanel" aria-labelledby="store-tab-emote" tabindex="0" data-store-section="emote">
+              <header class="store-section__heading">
+                <h2>Emotes</h2>
+                <p>Reações rápidas para os momentos decisivos.</p>
+              </header>
+              <ul class="store-grid" data-store-items="emote" aria-label="Emotes disponíveis"></ul>
+            </section>
+          </div>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>
