@@ -98,3 +98,9 @@ T01 (boas-vindas), T02 (login), T03 (cadastro). As demais telas ficam fora deste
 - Estado que precisa sobreviver a trocas de tela fica em `js/services/`, não em variáveis globais.
 - Visual: sempre `variables.css` e `components.css`. Nada de estilo legado copiado.
 - Lógica de jogo: funções puras em `js/game/`, sem DOM nem Firebase.
+
+## Escopo do protótipo e decisões
+- Fora do escopo: modos Local e contra bot (decisão da liderança); poderes/habilidades; chat na sala de espera (implementação futura).
+- Série: "Melhor de 1" é o padrão. Opções 1, 3 e 5 na criação de sala. Semântica de vitória a confirmar com o time.
+- Cores: preferência da conta, editável em T10 (perfil). Prévia das duas cores no lobby (T08). Validação de cores diferentes feita no serviço, antes de gravar.
+- Estado: `sessionStorage` guarda só identificadores da sessão (PIN e papel). Dados de sala e partida vêm de `services/rooms.js`, único arquivo que acessa o Firebase.

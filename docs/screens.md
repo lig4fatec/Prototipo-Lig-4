@@ -154,3 +154,12 @@ Estas telas do legado não têm ID no fluxo e ficam fora da fase atual, salvo de
 - Serviço de salas (`services/rooms.js`): bloqueia T06, T07, T08 e T09.
 - Regras puras (`js/game/`): bloqueiam T09.
 - Autenticação real: fora do escopo; T02 e T03 seguem com mock.
+
+## Fora do escopo do protótipo
+Decisões da liderança (GP/Proj Mgr). Não entram nesta fase, salvo mudança de decisão.
+
+- **Modos Local e contra bot** (`#setup-screen`, `#singleplayer-screen`): decisão da liderança.
+- **Partida rápida** (entrada extra em T05, sem lobby): implementação futura.
+- **Chat na sala de espera** (T08): implementação futura.
+- **Poderes e habilidades** (bomba, inversão, gelo, elétrica): descartados para este protótipo.
+- **Tela de pagamento e compra real** (T11): fora do escopo; depende de backend de pagamento.
