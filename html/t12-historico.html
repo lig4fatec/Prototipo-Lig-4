@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#18301D">
+    <title>Histórico | LIG-4 Online</title>
+    <link rel="stylesheet" href="../css/base.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/screens/t12-historico.css">
+    <script type="module" src="../js/global-nav.js"></script>
+    <script type="module" src="../js/history-page.js"></script>
+  </head>
+  <body class="history-screen">
+    <aside class="app-sidebar app-sidebar--global" aria-label="Navegação principal">
+      <a class="app-sidebar__brand" href="./t04-home.html" aria-label="LIG-4 Online, início">
+        <img class="app-sidebar__logo" src="../assets/images/logo/lig4-mark.svg" alt="">
+        <span class="app-sidebar__wordmark">LIG-4</span>
+      </a>
+      <nav class="app-sidebar__nav" aria-label="Seções principais">
+        <a class="app-sidebar__link" href="./t04-home.html">Home</a>
+        <a class="app-sidebar__link" href="./t05-jogar.html">Jogar</a>
+        <a class="app-sidebar__link" href="./t11-loja.html">Loja</a>
+        <a class="app-sidebar__link" href="./t12-historico.html" aria-current="page">Histórico</a>
+        <a class="app-sidebar__link" href="./t10-perfil.html">Perfil</a>
+      </nav>
+      <div class="app-sidebar__footer">
+        <button class="app-sidebar__link" type="button" data-global-logout>Sair</button>
+      </div>
+    </aside>
+
+    <main class="history-main">
+      <header class="history-heading">
+        <div>
+          <h1>Histórico</h1>
+          <p>Suas partidas recentes.</p>
+        </div>
+        <label class="history-search">
+          <span>Buscar partidas</span>
+          <input type="search" placeholder="Buscar" aria-label="Buscar partidas (visual, sem filtro)">
+        </label>
+      </header>
+
+      <nav class="ui-tab-list history-filters" role="tablist" aria-label="Filtrar partidas">
+        <button class="ui-tab" type="button" role="tab" aria-selected="true" data-history-filter="todos">Todos</button>
+        <button class="ui-tab" type="button" role="tab" aria-selected="false" data-history-filter="online">Online</button>
+        <button class="ui-tab" type="button" role="tab" aria-selected="false" data-history-filter="diario">Diário</button>
+        <button class="ui-tab history-filter--soon" type="button" disabled title="Em breve" aria-describedby="history-soon-favorites">Favoritos <small id="history-soon-favorites">Em breve</small></button>
+        <button class="ui-tab history-filter--soon" type="button" disabled title="Em breve" aria-describedby="history-soon-live">Ao vivo <small id="history-soon-live">Em breve</small></button>
+        <button class="ui-tab history-filter--soon" type="button" disabled title="Em breve" aria-describedby="history-soon-bot">Bot <small id="history-soon-bot">Em breve</small></button>
+      </nav>
+
+      <p class="history-status" data-history-status role="status" aria-live="polite"></p>
+
+      <div class="history-table-wrap" tabindex="0" aria-label="Lista de partidas">
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th scope="col">Data</th>
+              <th scope="col">Adversário</th>
+              <th scope="col">Resultado</th>
+              <th scope="col">Lances</th>
+              <th scope="col">Modo</th>
+            </tr>
+          </thead>
+          <tbody data-history-list></tbody>
+        </table>
+      </div>
+    </main>
+  </body>
+</html>

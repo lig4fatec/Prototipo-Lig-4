@@ -6,4 +6,12 @@
   --color-button-dark: #011205;
   --color-secondary: #0460D9;
   --color-primary-text: #000000;
+  --game-color-blue: var(--color-secondary);
+  --game-color-red: var(--color-highlight);
+  --game-color-purple: color-mix(in srgb, var(--color-secondary) 55%, var(--color-highlight));
+  --game-color-green: color-mix(in srgb, var(--color-background) 35%, var(--color-text));
+  --game-color-orange: color-mix(in srgb, var(--color-primary) 65%, var(--color-highlight));
+  --game-color-yellow: var(--color-primary);
+  --game-color-brown: color-mix(in srgb, var(--color-button-dark) 55%, var(--color-primary));
+  --color-win: color-mix(in srgb, var(--color-background) 35%, var(--color-text));
 }

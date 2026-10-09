@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#18301D">
+    <title>Home | LIG-4 Online</title>
+    <link rel="stylesheet" href="../css/base.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/screens/t04-home.css">
+    <script type="module" src="../js/global-nav.js"></script>
+  </head>
+  <body class="home-screen">
+    <aside class="app-sidebar app-sidebar--global" aria-label="Navegação principal">
+      <a class="app-sidebar__brand" href="./t04-home.html" aria-label="LIG-4 Online, início">
+        <img class="app-sidebar__logo" src="../assets/images/logo/lig4-mark.svg" alt="">
+        <span class="app-sidebar__wordmark">LIG-4</span>
+      </a>
+      <nav class="app-sidebar__nav" aria-label="Seções principais">
+        <a class="app-sidebar__link" href="./t04-home.html" aria-current="page">Home</a>
+        <a class="app-sidebar__link" href="./t05-jogar.html">Jogar</a>
+        <a class="app-sidebar__link" href="./t11-loja.html">Loja</a>
+        <a class="app-sidebar__link" href="./t12-historico.html">Histórico</a>
+        <a class="app-sidebar__link" href="./t10-perfil.html">Perfil</a>
+      </nav>
+      <div class="app-sidebar__footer">
+        <button class="app-sidebar__link" type="button" data-global-logout>Sair</button>
+      </div>
+    </aside>
+
+    <main class="home-main">
+      <section class="home-content" aria-labelledby="home-title">
+        <div class="home-brand" aria-label="LIG-4 Online">
+          <img src="../assets/images/logo/lig4-mark.svg" alt="" width="88" height="88">
+          <span>LIG-4</span>
+        </div>
+        <h1 id="home-title">Escolha as opções abaixo:</h1>
+        <nav class="home-actions" aria-label="Opções">
+          <a class="button button-primary-light home-action" href="./t05-jogar.html">
+            <span class="home-action__copy">
+              <strong>Jogar partida Online</strong>
+              <small>Jogue com outra pessoa pela internet</small>
+            </span>
+            <span class="home-action__arrow" aria-hidden="true">→</span>
+          </a>
+          <a class="button button-primary-dark home-action" href="./t10-perfil.html">
+            <span class="home-action__copy">
+              <strong>Área de perfil</strong>
+              <small>Tela de perfil</small>
+            </span>
+            <span class="home-action__arrow" aria-hidden="true">→</span>
+          </a>
+        </nav>
+      </section>
+    </main>
+  </body>
+</html>
