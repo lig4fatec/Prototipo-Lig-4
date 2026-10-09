@@ -115,6 +115,41 @@
             <button class="button button-secondary" type="button" data-lobby-leave>Sair da sala</button>
           </div>
         </section>
+
+        <section class="online-game-panel online-section" id="secao-partida" aria-labelledby="game-title" hidden>
+          <header class="online-game-heading">
+            <div>
+              <h1 id="game-title">Partida</h1>
+              <p class="online-game-pin">PIN <strong data-game-pin>------</strong></p>
+            </div>
+            <p class="online-game-turn" data-game-turn role="status" aria-live="polite">Carregando turno...</p>
+          </header>
+
+          <section class="online-game-score" aria-label="Placar da partida atual">
+            <div class="ui-card online-game-player-score" data-score-player="1">
+              <span>Jogador 1 · Dono</span>
+              <strong data-game-score="1">0</strong>
+            </div>
+            <div class="ui-card online-game-player-score" data-score-player="2">
+              <span>Jogador 2 · Convidado</span>
+              <strong data-game-score="2">0</strong>
+            </div>
+          </section>
+
+          <div class="online-game-board-wrap">
+            <div class="online-game-columns" data-game-columns aria-label="Escolher coluna"></div>
+            <div class="online-game-board" data-game-board role="grid" aria-label="Tabuleiro Connect-4, 6 linhas por 7 colunas"></div>
+          </div>
+
+          <p class="online-game-status" data-game-status role="status" aria-live="polite"></p>
+          <section class="online-game-result" data-game-result-panel aria-labelledby="game-result-title" hidden>
+            <h2 id="game-result-title">Resultado</h2>
+            <p data-game-result></p>
+            <p data-game-rematch-status role="status" aria-live="polite"></p>
+            <button class="button button-primary-dark" type="button" data-game-rematch disabled>Revanche</button>
+          </section>
+          <button class="button button-secondary online-game-leave" type="button" data-game-leave>Sair da sala</button>
+        </section>
       </div>
     </main>
   </body>

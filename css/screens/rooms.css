@@ -246,6 +246,184 @@
   opacity: 0.55;
 }
 
+.online-game-panel {
+  display: grid;
+  width: min(100%, 900px);
+  gap: 1rem;
+  margin-inline: auto;
+}
+
+.online-game-panel[hidden],
+.online-game-result[hidden] {
+  display: none;
+}
+
+.rooms-screen[data-current-section="partida"] .app-sidebar {
+  display: none;
+}
+
+.rooms-screen[data-current-section="partida"] .rooms-main {
+  min-height: 100vh;
+  margin-left: 0;
+}
+
+.online-game-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.online-game-heading h1 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 2rem;
+}
+
+.online-game-pin,
+.online-game-turn {
+  margin: 0.25rem 0 0;
+  color: color-mix(in srgb, var(--color-text) 78%, transparent);
+}
+
+.online-game-pin {
+  font-size: 0.8125rem;
+}
+
+.online-game-pin strong {
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+}
+
+.online-game-turn {
+  font-weight: 700;
+  text-align: right;
+}
+
+.online-game-score {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.online-game-player-score {
+  display: flex;
+  min-height: 56px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  font-weight: 700;
+}
+
+.online-game-player-score strong {
+  color: var(--color-primary);
+  font-size: 1.25rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.online-game-board-wrap {
+  width: min(100%, 680px);
+  margin-inline: auto;
+}
+
+.online-game-columns,
+.online-game-board {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: clamp(0.25rem, 1vw, 0.625rem);
+}
+
+.online-game-columns {
+  margin-bottom: 0.5rem;
+}
+
+.online-game-columns button {
+  min-height: 40px;
+  border: 1px solid color-mix(in srgb, var(--color-text) 25%, transparent);
+  border-radius: 6px;
+  background: var(--color-button-dark);
+  color: var(--color-text);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.online-game-columns button:not(:disabled):hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.online-game-columns button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.online-game-board {
+  padding: clamp(0.5rem, 2vw, 1rem);
+  border: 2px solid color-mix(in srgb, var(--color-text) 20%, transparent);
+  border-radius: 8px;
+  background: var(--color-secondary);
+}
+
+.online-game-cell {
+  width: 100%;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--color-text) 12%, transparent);
+  border-radius: 50%;
+  background: var(--color-button-dark);
+}
+
+.online-game-cell[data-color="blue"] { background: var(--game-color-blue); }
+.online-game-cell[data-color="red"] { background: var(--game-color-red); }
+.online-game-cell[data-color="purple"] { background: var(--game-color-purple); }
+.online-game-cell[data-color="green"] { background: var(--game-color-green); }
+.online-game-cell[data-color="orange"] { background: var(--game-color-orange); }
+.online-game-cell[data-color="yellow"] { background: var(--game-color-yellow); }
+.online-game-cell[data-color="brown"] { background: var(--game-color-brown); }
+
+.online-game-cell[data-falling="true"] {
+  outline: 3px solid var(--color-text);
+  outline-offset: 2px;
+}
+
+.online-game-status,
+.online-game-result p {
+  min-height: 1.5rem;
+  margin: 0;
+}
+
+.online-game-result {
+  display: grid;
+  justify-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid color-mix(in srgb, var(--color-text) 18%, transparent);
+  border-radius: 6px;
+  background: var(--color-button-dark);
+  text-align: center;
+}
+
+.online-game-result h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.online-game-result [data-game-result] {
+  font-size: 1.125rem;
+  font-weight: 750;
+}
+
+.online-game-leave {
+  justify-self: start;
+}
+
+.online-game-panel[data-current-player="1"] .online-game-player-score[data-score-player="1"],
+.online-game-panel[data-current-player="2"] .online-game-player-score[data-score-player="2"] {
+  border-color: var(--color-primary);
+}
+
 @media (max-width: 1000px) {
   .rooms-main {
     padding: 2rem 1.5rem;
@@ -281,8 +459,207 @@
     font-size: 2.25rem;
   }
 
+  .rooms-screen[data-current-section="partida"] .rooms-main {
+    padding: 1rem;
+  }
+
+  .online-game-heading h1 {
+    font-size: 1.75rem;
+  }
+
+  .online-game-player-score {
+    align-items: flex-start;
+    font-size: 0.8125rem;
+  }
+
+  .online-game-columns button {
+    min-height: 36px;
+  }
+
   .rooms-form-actions .button,
   .lobby-actions .button {
     flex: 1;
+  }
+}
+
+.online-game-panel {
+  display: grid;
+  width: min(100%, 780px);
+  gap: 1rem;
+  margin-inline: auto;
+}
+
+.online-game-panel[hidden] {
+  display: none;
+}
+
+.online-game-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.online-game-heading h1 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 2rem;
+}
+
+.online-game-pin,
+.online-game-turn {
+  margin: 0.25rem 0 0;
+  color: color-mix(in srgb, var(--color-text) 78%, transparent);
+}
+
+.online-game-pin {
+  font-size: 0.8125rem;
+}
+
+.online-game-pin strong {
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+}
+
+.online-game-turn {
+  font-weight: 700;
+  text-align: right;
+}
+
+.online-game-score {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.online-game-player-score {
+  display: flex;
+  min-height: 56px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  font-weight: 700;
+}
+
+.online-game-player-score strong {
+  color: var(--color-primary);
+  font-size: 1.25rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.online-game-board-wrap {
+  width: min(100%, 680px);
+  margin-inline: auto;
+}
+
+.online-game-columns,
+.online-game-board {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: clamp(0.25rem, 1vw, 0.625rem);
+}
+
+.online-game-columns {
+  margin-bottom: 0.5rem;
+}
+
+.online-game-columns button {
+  min-height: 40px;
+  border: 1px solid color-mix(in srgb, var(--color-text) 25%, transparent);
+  border-radius: 6px;
+  background: var(--color-button-dark);
+  color: var(--color-text);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.online-game-columns button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.online-game-columns button:not(:disabled):hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.online-game-board {
+  padding: clamp(0.5rem, 2vw, 1rem);
+  border: 2px solid color-mix(in srgb, var(--color-text) 20%, transparent);
+  border-radius: 8px;
+  background: var(--color-secondary);
+}
+
+.online-game-cell {
+  width: 100%;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--color-text) 12%, transparent);
+  border-radius: 50%;
+  background: var(--color-button-dark);
+  cursor: default;
+}
+
+.online-game-cell[data-color="blue"] { background: var(--game-color-blue); }
+.online-game-cell[data-color="red"] { background: var(--game-color-red); }
+.online-game-cell[data-color="purple"] { background: var(--game-color-purple); }
+.online-game-cell[data-color="green"] { background: var(--game-color-green); }
+.online-game-cell[data-color="orange"] { background: var(--game-color-orange); }
+.online-game-cell[data-color="yellow"] { background: var(--game-color-yellow); }
+.online-game-cell[data-color="brown"] { background: var(--game-color-brown); }
+
+.online-game-cell[data-falling="true"] {
+  outline: 3px solid var(--color-text);
+  outline-offset: 2px;
+}
+
+.online-game-status,
+.online-game-result p {
+  min-height: 1.5rem;
+  margin: 0;
+}
+
+.online-game-result {
+  display: grid;
+  justify-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid color-mix(in srgb, var(--color-text) 18%, transparent);
+  border-radius: 6px;
+  background: var(--color-button-dark);
+  text-align: center;
+}
+
+.online-game-result[hidden] {
+  display: none;
+}
+
+.online-game-result [data-game-result] {
+  font-size: 1.25rem;
+  font-weight: 750;
+}
+
+.online-game-leave {
+  justify-self: start;
+}
+
+@media (max-width: 700px) {
+  .online-game-panel {
+    gap: 0.75rem;
+  }
+
+  .online-game-heading h1 {
+    font-size: 1.75rem;
+  }
+
+  .online-game-player-score {
+    align-items: flex-start;
+    font-size: 0.875rem;
+  }
+
+  .online-game-columns button {
+    min-height: 36px;
   }
 }
