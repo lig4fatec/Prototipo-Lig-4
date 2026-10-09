@@ -1,4 +1,4 @@
-// Mock em memória para salas; Firebase substituirá o miolo mantendo estas assinaturas.
+// MOCK DESCARTÁVEL. Persistência em localStorage apenas para desenvolvimento. Será removida quando o miolo for substituído pelo Firebase, mantendo as assinaturas.
 
 export const CORES_VALIDAS = Object.freeze([
   "blue",
@@ -10,7 +10,7 @@ export const CORES_VALIDAS = Object.freeze([
   "brown",
 ]);
 
-const rooms = new Map();
+const ROOMS_STORAGE_KEY = "lig4-mock-rooms";
 const roomWatchers = new Map();
 const SESSION_KEYS = Object.freeze({
   pin: "lig4.room.pin",
@@ -20,6 +20,70 @@ const SESSION_KEYS = Object.freeze({
 
 function roomError(code) {
   return { code };
+}
+
+function getRoomStorage() {
+  try {
+    if (globalThis.localStorage) return globalThis.localStorage;
+    // Node tests may lack localStorage; browser pages always use localStorage.
+    if (typeof window === "undefined" && globalThis.sessionStorage) {
+      return globalThis.sessionStorage;
+    }
+  } catch {
+    throw roomError("SEM_PERMISSAO");
+  }
+  throw roomError("SEM_PERMISSAO");
+}
+
+function readRooms() {
+  const storage = getRoomStorage();
+  let serialized;
+  try {
+    serialized = storage.getItem(ROOMS_STORAGE_KEY);
+  } catch {
+    throw roomError("SEM_PERMISSAO");
+  }
+
+  if (!serialized) return new Map();
+
+  try {
+    const entries = JSON.parse(serialized);
+    if (!Array.isArray(entries)) return new Map();
+    return new Map(entries.filter(entry => (
+      Array.isArray(entry)
+      && typeof entry[0] === "string"
+      && entry[1]
+      && typeof entry[1] === "object"
+    )));
+  } catch {
+    return new Map();
+  }
+}
+
+function writeRooms(rooms) {
+  try {
+    getRoomStorage().setItem(ROOMS_STORAGE_KEY, JSON.stringify([...rooms.entries()]));
+  } catch {
+    throw roomError("SEM_PERMISSAO");
+  }
+}
+
+function emptyGameState() {
+  return {
+    board: Array.from({ length: 6 }, () => Array(7).fill(0)),
+    turn: 1,
+    moveCount: 0,
+  };
+}
+
+function isValidBoard(board) {
+  return Array.isArray(board)
+    && board.length === 6
+    && board.every(row => (
+      Array.isArray(row)
+      && row.length === 7
+      && row.every(cell => cell === 0 || cell === 1 || cell === 2)
+    ));
 }
 
 function validatePin(pin) {
@@ -43,6 +107,15 @@ function getRoomSnapshot(room) {
       guest: room.players.guest ? { ...room.players.guest } : null,
     },
     phase: room.phase,
+    game: room.game
+      ? {
+        board: room.game.board.map(row => row.slice()),
+        turn: room.game.turn,
+        moveCount: room.game.moveCount,
+      }
+      : null,
+    result: room.result ? { ...room.result } : null,
+    rematchRequested: [...(room.rematchRequested || [])],
   };
 }
 
@@ -50,19 +123,26 @@ function notifyRoom(pin) {
   const watchers = roomWatchers.get(pin);
   if (!watchers) return;
 
-  const room = rooms.get(pin);
+  const room = readRooms().get(pin);
   const snapshot = room ? getRoomSnapshot(room) : null;
   for (const callback of watchers) {
     callback(snapshot);
   }
 }
 
-function generatePin() {
+function generatePin(rooms) {
   let pin;
   do {
     pin = String(Math.floor(100000 + Math.random() * 900000));
   } while (rooms.has(pin));
   return pin;
+}
+
+if (typeof globalThis.addEventListener === "function") {
+  globalThis.addEventListener("storage", event => {
+    if (event.key !== null && event.key !== ROOMS_STORAGE_KEY) return;
+    for (const pin of [...roomWatchers.keys()]) notifyRoom(pin);
+  });
 }
 
 function getSessionStorage() {
@@ -135,14 +215,19 @@ export async function createRoom(options = {}) {
   if (![1, 3, 5].includes(series)) throw roomError("SERIE_INVALIDA");
   validateColor(color);
 
-  const pin = generatePin();
+  const rooms = readRooms();
+  const pin = generatePin(rooms);
   saveSession(pin, "owner");
   rooms.set(pin, {
     pin,
     series,
     players: { owner: { color }, guest: null },
     phase: "waiting",
+    game: null,
+    result: null,
+    rematchRequested: [],
   });
+  writeRooms(rooms);
   notifyRoom(pin);
   return { pin };
 }
@@ -154,6 +239,7 @@ export async function joinRoom(options = {}) {
   validatePin(pin);
   validateColor(color);
 
+  const rooms = readRooms();
   const room = rooms.get(pin);
   if (!room) throw roomError("PIN_NAO_ENCONTRADO");
   if (room.phase !== "waiting" || room.players.guest) {
@@ -165,6 +251,7 @@ export async function joinRoom(options = {}) {
 
   saveSession(pin, "guest");
   room.players.guest = { color };
+  writeRooms(rooms);
   notifyRoom(pin);
   return { pin, role: "guest" };
 }
@@ -172,14 +259,14 @@ export async function joinRoom(options = {}) {
 export async function getRoom(pin) {
   await yieldMock();
   validatePin(pin);
-  const room = rooms.get(pin);
+  const room = readRooms().get(pin);
   if (!room) throw roomError("PIN_NAO_ENCONTRADO");
   return getRoomSnapshot(room);
 }
 
 export function watchRoom(pin, callback) {
   validatePin(pin);
-  const room = rooms.get(pin);
+  const room = readRooms().get(pin);
   if (!room) throw roomError("PIN_NAO_ENCONTRADO");
 
   let watchers = roomWatchers.get(pin);
@@ -205,6 +292,7 @@ export async function setPlayerColor(options = {}) {
   validateColor(color);
   assertSession(pin, role);
 
+  const rooms = readRooms();
   const room = rooms.get(pin);
   if (!room) throw roomError("PIN_NAO_ENCONTRADO");
   if (room.phase !== "waiting" || !room.players[role]) {
@@ -217,6 +305,7 @@ export async function setPlayerColor(options = {}) {
   }
 
   room.players[role].color = color;
+  writeRooms(rooms);
   notifyRoom(pin);
 }
 
@@ -226,6 +315,7 @@ export async function startMatch(options = {}) {
   validatePin(pin);
   assertSession(pin, "owner");
 
+  const rooms = readRooms();
   const room = rooms.get(pin);
   if (!room) throw roomError("PIN_NAO_ENCONTRADO");
   if (
@@ -238,7 +328,91 @@ export async function startMatch(options = {}) {
   }
 
   room.phase = "playing";
+  room.game = emptyGameState();
+  room.result = null;
+  room.rematchRequested = [];
+  writeRooms(rooms);
   notifyRoom(pin);
+}
+
+export async function publishState({ pin, role, board, turn, moveCount } = {}) {
+  await yieldMock();
+  validatePin(pin);
+  const rooms = readRooms();
+  const room = rooms.get(pin);
+  if (!room) throw roomError("PIN_NAO_ENCONTRADO");
+  if (room.phase !== "playing") throw roomError("FASE_INVALIDA");
+  if (!isValidBoard(board)) throw roomError("TABULEIRO_INVALIDO");
+
+  assertSession(pin, role);
+  const currentRole = room.game?.turn === 1 ? "owner" : room.game?.turn === 2 ? "guest" : null;
+  if (role !== currentRole || (turn !== 1 && turn !== 2)) {
+    throw roomError("SEM_PERMISSAO");
+  }
+
+  // O turno salvo autoriza a jogada; o turno recebido é o próximo a agir.
+  // Vitória e legalidade da queda pertencem a js/game/, não a este serviço.
+  room.game = {
+    board: board.map(row => row.slice()),
+    turn,
+    moveCount,
+  };
+  writeRooms(rooms);
+  notifyRoom(pin);
+  return { pin, turn, moveCount };
+}
+
+export async function publishResult({ pin, role, result } = {}) {
+  await yieldMock();
+  validatePin(pin);
+  const rooms = readRooms();
+  const room = rooms.get(pin);
+  if (!room) throw roomError("PIN_NAO_ENCONTRADO");
+
+  const validWin = result?.draw === false && (result.winner === 1 || result.winner === 2);
+  const validDraw = result?.draw === true && result.winner === null;
+  if (!validWin && !validDraw) throw roomError("RESULTADO_INVALIDO");
+
+  assertSession(pin, role);
+  if (room.result) {
+    if (room.result.winner !== result.winner || room.result.draw !== result.draw) {
+      throw roomError("RESULTADO_INVALIDO");
+    }
+    return { pin, phase: room.phase };
+  }
+  if (room.phase !== "playing") throw roomError("FASE_INVALIDA");
+
+  room.phase = "finished";
+  room.result = { winner: result.winner, draw: result.draw };
+  room.rematchRequested = [];
+  writeRooms(rooms);
+  notifyRoom(pin);
+  return { pin, phase: room.phase };
+}
+
+export async function requestRematch({ pin, role } = {}) {
+  await yieldMock();
+  validatePin(pin);
+  const rooms = readRooms();
+  const room = rooms.get(pin);
+  if (!room) throw roomError("PIN_NAO_ENCONTRADO");
+  if (room.phase !== "finished") throw roomError("FASE_INVALIDA");
+  assertSession(pin, role);
+
+  const requests = new Set(room.rematchRequested || []);
+  requests.add(role);
+  room.rematchRequested = [...requests];
+
+  if (requests.has("owner") && requests.has("guest")) {
+    room.phase = "playing";
+    room.game = emptyGameState();
+    room.result = null;
+    room.rematchRequested = [];
+  }
+
+  writeRooms(rooms);
+  notifyRoom(pin);
+  return { pin, phase: room.phase };
 }
 
 export async function leaveRoom(options = {}) {
@@ -248,6 +422,7 @@ export async function leaveRoom(options = {}) {
   validatePin(pin);
   assertSession(pin, role);
 
+  const rooms = readRooms();
   const room = rooms.get(pin);
   if (!room) throw roomError("PIN_NAO_ENCONTRADO");
 
@@ -259,6 +434,7 @@ export async function leaveRoom(options = {}) {
     room.phase = "waiting";
   }
 
+  writeRooms(rooms);
   clearSession(pin, role);
   notifyRoom(pin);
 }
