@@ -1,0 +1,127 @@
+/* =====================================================================
+   LIG-4 · BOAS-VINDAS (t01) — carregar depois de ../theme.css
+   Requer class="welcome-screen" no <body>.
+   Entrada única: o tabuleiro surge e o texto sobe em sequência.
+   ===================================================================== */
+
+@keyframes lig-rise {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes lig-board-in {
+  from { opacity: 0; transform: translateY(40px) rotate(-3deg) scale(0.94); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Sidebar (nesta tela não tem o modificador --global) */
+.welcome-screen .app-sidebar {
+  background: linear-gradient(180deg, rgba(15, 32, 20, 0.94), rgba(24, 48, 29, 0.94));
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 8px 0 32px rgba(0, 0, 0, 0.25);
+}
+
+/* Tabuleiro */
+.welcome-screen .welcome-board {
+  position: relative;
+  animation: lig-board-in 0.9s var(--lig-ease) backwards;
+}
+.welcome-screen .welcome-board::before {
+  content: "";
+  position: absolute;
+  inset: 8% 6%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 201, 60, 0.28), rgba(77, 163, 255, 0.14) 55%, transparent 72%);
+  filter: blur(36px);
+}
+.welcome-screen .welcome-board img {
+  max-width: 100%;
+  height: auto;
+  filter: drop-shadow(0 24px 36px rgba(0, 0, 0, 0.5));
+  transition: transform 0.6s var(--lig-ease-bounce);
+}
+.welcome-screen .welcome-board:hover img {
+  transform: scale(1.04) rotate(-1.5deg);
+}
+
+/* Texto */
+.welcome-screen .welcome-copy > * {
+  animation: lig-rise 0.6s var(--lig-ease) backwards;
+}
+.welcome-screen .welcome-copy > :nth-child(1) { animation-delay: 0.5s; }
+.welcome-screen .welcome-copy > :nth-child(2) { animation-delay: 0.62s; }
+.welcome-screen .welcome-copy > :nth-child(3) { animation-delay: 0.74s; }
+.welcome-screen .welcome-copy > :nth-child(4) { animation-delay: 0.86s; }
+.welcome-screen .welcome-copy > :nth-child(5) { animation-delay: 1s; }
+
+.welcome-screen .welcome-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-family: var(--lig-font-display);
+  font-weight: 500;
+  color: var(--lig-accent);
+  background: rgba(255, 201, 60, 0.14);
+  border: 1px solid rgba(255, 201, 60, 0.3);
+}
+.welcome-screen .welcome-kicker::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--lig-accent);
+  box-shadow: 0 0 0 4px rgba(255, 201, 60, 0.22);
+}
+
+.welcome-screen #welcome-title {
+  font-size: clamp(2rem, 4.4vw, 3.4rem);
+  font-weight: 700;
+  line-height: 1.1;
+  text-shadow: 0 4px 0 rgba(0, 0, 0, 0.22);
+}
+
+.welcome-screen .welcome-description {
+  max-width: 46ch;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: var(--lig-ink-soft);
+}
+
+.welcome-screen .welcome-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: var(--lig-ink);
+  transition: transform 0.3s var(--lig-ease);
+}
+.welcome-screen .welcome-brand img {
+  filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.4));
+  transition: transform 0.5s var(--lig-ease-bounce);
+}
+.welcome-screen .welcome-brand:hover img {
+  transform: rotate(-14deg) scale(1.12);
+}
+.welcome-screen .welcome-brand span {
+  font-family: var(--lig-font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.welcome-screen .welcome-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 34px;
+  font-size: 1.15rem;
+  text-decoration: none;
+  border-radius: var(--lig-radius-lg);
+}
+.welcome-screen .welcome-cta:hover {
+  transform: translateY(-4px) scale(1.05);
+}

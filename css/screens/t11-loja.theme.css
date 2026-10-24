@@ -1,0 +1,219 @@
+/* =====================================================================
+   LIG-4 · LOJA (t11) — carregar depois de ../theme.css
+   Usa o <body class="store-screen">.
+   Entrada única: cabeçalho, abas, banner e catálogo sobem em sequência.
+   Os itens do catálogo são criados pelo store-page.js; aqui eles são
+   estilizados pelo contêiner (.store-grid > li).
+   ===================================================================== */
+
+@keyframes lig-rise {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes lig-coin-flip {
+  from { transform: rotateY(0); }
+  to   { transform: rotateY(360deg); }
+}
+@keyframes lig-shine {
+  from { transform: translateX(-130%); }
+  to   { transform: translateX(130%); }
+}
+
+/* Entrada em sequência */
+.store-screen .store-page-header { animation: lig-rise 0.6s var(--lig-ease) 0.15s backwards; }
+.store-screen .store-category-tabs { animation: lig-rise 0.6s var(--lig-ease) 0.3s backwards; }
+.store-screen .store-feature { animation: lig-rise 0.6s var(--lig-ease) 0.42s backwards; }
+.store-screen .store-catalog { animation: lig-rise 0.6s var(--lig-ease) 0.56s backwards; }
+
+/* Cabeçalho */
+.store-screen .store-heading h1 {
+  font-size: clamp(1.9rem, 3.4vw, 2.6rem);
+  font-weight: 700;
+  text-shadow: 0 4px 0 rgba(0, 0, 0, 0.22);
+}
+.store-screen .store-heading p {
+  color: var(--lig-ink-soft);
+}
+.store-screen .store-back {
+  display: inline-grid;
+  place-items: center;
+  text-decoration: none;
+}
+.store-screen .store-back:not(:disabled):hover {
+  transform: translateX(-4px) scale(1.06);
+}
+
+/* Carteira de moedas */
+.store-screen .store-wallet {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--lig-radius-lg);
+  box-shadow: var(--lig-shadow-1);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  transition: transform 0.35s var(--lig-ease), box-shadow 0.35s ease;
+}
+.store-screen .store-wallet:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--lig-shadow-2);
+}
+.store-screen .store-wallet__label,
+.store-screen .store-wallet__note {
+  color: var(--lig-ink-soft);
+}
+.store-screen .store-coin-icon {
+  color: var(--lig-accent);
+  filter: drop-shadow(0 0 8px rgba(255, 201, 60, 0.45));
+  animation: lig-coin-flip 1s var(--lig-ease) 0.6s backwards;
+  transition: transform 0.6s var(--lig-ease);
+}
+.store-screen .store-wallet:hover .store-coin-icon {
+  transform: rotateY(360deg);
+}
+.store-screen [data-store-balance] {
+  font-family: var(--lig-font-display);
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--lig-accent);
+}
+
+/* Abas de categoria (a mesma aparência pode ser usada no Perfil) */
+.store-screen .ui-tab {
+  color: var(--lig-ink-soft);
+  border-radius: var(--lig-radius-md);
+}
+.store-screen .ui-tab:hover {
+  color: var(--lig-ink);
+  background-color: rgba(255, 255, 255, 0.1);
+}
+.store-screen .ui-tab[aria-selected="true"] {
+  color: #1b1400;
+  background-color: var(--lig-accent);
+  box-shadow: 0 6px 16px rgba(255, 201, 60, 0.3);
+}
+
+/* Banner de destaque */
+.store-screen .store-feature {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(120deg, rgba(255, 201, 60, 0.22), rgba(77, 163, 255, 0.18)), rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--lig-radius-lg);
+  box-shadow: var(--lig-shadow-1);
+}
+.store-screen .store-feature > * {
+  position: relative;
+  z-index: 1;
+}
+.store-screen .store-feature::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, 0.22) 50%, transparent 65%);
+  animation: lig-shine 1.6s var(--lig-ease) 0.9s backwards;
+  animation-fill-mode: backwards;
+}
+.store-screen .store-feature::after {
+  content: "";
+  position: absolute;
+  right: -34px;
+  top: 50%;
+  z-index: 0;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  transform: translateY(-50%);
+  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.5), transparent 35%), var(--lig-disc-yellow);
+  box-shadow: inset 0 -12px 24px rgba(0, 0, 0, 0.25);
+  opacity: 0.85;
+  pointer-events: none;
+}
+.store-screen .store-feature__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 14px;
+  border-radius: 999px;
+  font-family: var(--lig-font-display);
+  font-weight: 500;
+  color: var(--lig-accent);
+  background: rgba(255, 201, 60, 0.14);
+  border: 1px solid rgba(255, 201, 60, 0.3);
+}
+.store-screen .store-feature h2 {
+  font-weight: 700;
+}
+.store-screen .store-feature p:not(.store-feature__eyebrow) {
+  color: var(--lig-ink-soft);
+}
+
+/* Mensagem de status (só aparece com texto) */
+.store-screen .store-message:not(:empty) {
+  padding: 12px 16px;
+  border-radius: var(--lig-radius-md);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  animation: lig-rise 0.35s var(--lig-ease);
+}
+.store-screen .store-message[data-state="success"] {
+  color: #9be59b;
+  background: rgba(155, 229, 155, 0.12);
+  border-color: rgba(155, 229, 155, 0.35);
+}
+.store-screen .store-message[data-state="error"] {
+  color: #ffd0d1;
+  background: rgba(255, 90, 95, 0.16);
+  border-color: rgba(255, 90, 95, 0.4);
+}
+
+/* Seções e catálogo */
+.store-screen .store-section__heading h2 {
+  font-weight: 700;
+}
+.store-screen .store-section__heading p {
+  color: var(--lig-ink-soft);
+}
+.store-screen .store-section {
+  animation: lig-rise 0.5s var(--lig-ease) backwards;
+}
+
+/* Cartões dos itens */
+.store-screen .store-grid > li {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--lig-radius-lg);
+  box-shadow: var(--lig-shadow-1);
+  transition:
+    transform 0.35s var(--lig-ease-bounce),
+    box-shadow 0.35s ease,
+    border-color 0.25s ease;
+  animation: lig-rise 0.5s var(--lig-ease) backwards;
+}
+.store-screen .store-grid > li:nth-child(1) { animation-delay: 0.05s; }
+.store-screen .store-grid > li:nth-child(2) { animation-delay: 0.1s; }
+.store-screen .store-grid > li:nth-child(3) { animation-delay: 0.15s; }
+.store-screen .store-grid > li:nth-child(4) { animation-delay: 0.2s; }
+.store-screen .store-grid > li:nth-child(5) { animation-delay: 0.25s; }
+.store-screen .store-grid > li:nth-child(6) { animation-delay: 0.3s; }
+.store-screen .store-grid > li:nth-child(7) { animation-delay: 0.35s; }
+.store-screen .store-grid > li:nth-child(8) { animation-delay: 0.4s; }
+
+.store-screen .store-grid > li:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: var(--lig-shadow-2);
+  border-color: rgba(255, 201, 60, 0.55);
+}
+.store-screen .store-grid > li img,
+.store-screen .store-grid > li svg {
+  transition: transform 0.5s var(--lig-ease-bounce);
+}
+.store-screen .store-grid > li:hover img,
+.store-screen .store-grid > li:hover svg {
+  transform: scale(1.08) rotate(-2deg);
+}
+.store-screen .store-grid > li h3,
+.store-screen .store-grid > li strong {
+  font-family: var(--lig-font-display);
+}

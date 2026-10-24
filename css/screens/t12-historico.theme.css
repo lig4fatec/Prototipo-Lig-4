@@ -1,0 +1,149 @@
+/* =====================================================================
+   LIG-4 · HISTÓRICO (t12) — carregar depois de ../theme.css
+   Usa o <body class="history-screen">.
+   Entrada única: cabeçalho, filtros e tabela sobem; as linhas entram
+   em sequência. As linhas são criadas pelo history-page.js.
+   ===================================================================== */
+
+@keyframes lig-rise {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Entrada em sequência */
+.history-screen .history-heading { animation: lig-rise 0.6s var(--lig-ease) 0.15s backwards; }
+.history-screen .history-filters { animation: lig-rise 0.6s var(--lig-ease) 0.3s backwards; }
+.history-screen .history-table-wrap { animation: lig-rise 0.6s var(--lig-ease) 0.45s backwards; }
+
+/* Cabeçalho */
+.history-screen .history-heading h1 {
+  font-size: clamp(1.9rem, 3.4vw, 2.6rem);
+  font-weight: 700;
+  text-shadow: 0 4px 0 rgba(0, 0, 0, 0.22);
+}
+.history-screen .history-heading p {
+  color: var(--lig-ink-soft);
+}
+
+/* Busca */
+.history-screen .history-search input {
+  color: var(--lig-ink);
+  color-scheme: dark;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  transform-origin: right center;
+  transition:
+    box-shadow 0.25s ease,
+    border-color 0.25s ease,
+    transform 0.3s var(--lig-ease);
+}
+.history-screen .history-search input::placeholder {
+  color: rgba(185, 205, 184, 0.6);
+}
+.history-screen .history-search input:hover {
+  border-color: rgba(255, 255, 255, 0.28);
+}
+.history-screen .history-search input:focus {
+  outline: none;
+  border-color: var(--lig-accent);
+  box-shadow: 0 0 0 3px rgba(255, 201, 60, 0.4);
+  transform: scale(1.03);
+}
+
+/* Filtros */
+.history-screen .ui-tab {
+  color: var(--lig-ink-soft);
+  border-radius: var(--lig-radius-md);
+}
+.history-screen .ui-tab:hover {
+  color: var(--lig-ink);
+  background-color: rgba(255, 255, 255, 0.1);
+}
+.history-screen .ui-tab[aria-selected="true"] {
+  color: #1b1400;
+  background-color: var(--lig-accent);
+  box-shadow: 0 6px 16px rgba(255, 201, 60, 0.3);
+}
+
+/* Filtros "Em breve" */
+.history-screen .history-filter--soon,
+.history-screen .ui-tab:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.history-screen .ui-tab:disabled:hover {
+  transform: none;
+  background-color: transparent;
+  color: var(--lig-ink-soft);
+}
+.history-screen .history-filter--soon small {
+  margin-left: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* Status (só aparece com texto) */
+.history-screen .history-status:not(:empty) {
+  display: inline-block;
+  padding: 10px 16px;
+  border-radius: var(--lig-radius-md);
+  color: var(--lig-ink-soft);
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  animation: lig-rise 0.35s var(--lig-ease);
+}
+
+/* Tabela */
+.history-screen .history-table-wrap {
+  overflow-x: auto;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--lig-radius-lg);
+  box-shadow: var(--lig-shadow-2);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+.history-screen .history-table-wrap:focus-visible {
+  outline: 3px solid var(--lig-accent);
+  outline-offset: 3px;
+}
+.history-screen .history-table {
+  color: var(--lig-ink);
+}
+.history-screen .history-table thead th {
+  font-family: var(--lig-font-display);
+  font-weight: 600;
+  color: var(--lig-ink-soft);
+  background: rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+}
+.history-screen .history-table tbody td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  transition: background-color 0.25s ease, box-shadow 0.25s ease;
+}
+.history-screen .history-table tbody tr {
+  animation: lig-rise 0.45s var(--lig-ease) backwards;
+}
+.history-screen .history-table tbody tr:nth-child(1) { animation-delay: 0.55s; }
+.history-screen .history-table tbody tr:nth-child(2) { animation-delay: 0.6s; }
+.history-screen .history-table tbody tr:nth-child(3) { animation-delay: 0.65s; }
+.history-screen .history-table tbody tr:nth-child(4) { animation-delay: 0.7s; }
+.history-screen .history-table tbody tr:nth-child(5) { animation-delay: 0.75s; }
+.history-screen .history-table tbody tr:nth-child(6) { animation-delay: 0.8s; }
+.history-screen .history-table tbody tr:nth-child(7) { animation-delay: 0.85s; }
+.history-screen .history-table tbody tr:nth-child(8) { animation-delay: 0.9s; }
+.history-screen .history-table tbody tr:nth-child(n + 9) { animation-delay: 0.95s; }
+
+.history-screen .history-table tbody tr:hover td {
+  background-color: rgba(255, 201, 60, 0.09);
+}
+.history-screen .history-table tbody tr:hover td:first-child {
+  box-shadow: inset 3px 0 0 var(--lig-accent);
+}
+.history-screen .history-table tbody td:nth-child(3) {
+  font-family: var(--lig-font-display);
+  font-weight: 600;
+}

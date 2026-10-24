@@ -1,0 +1,150 @@
+/* =====================================================================
+   LIG-4 · HOME (t04) — carregar depois de ../theme.css
+   Momento único de entrada: a ficha cai, depois título e ações sobem.
+   ===================================================================== */
+
+@keyframes lig-drop {
+  0%   { transform: translateY(-260px) scale(0.9); opacity: 0; }
+  50%  { transform: translateY(0); opacity: 1; }
+  66%  { transform: translateY(-30px); }
+  82%  { transform: translateY(0); }
+  91%  { transform: translateY(-9px); }
+  100% { transform: translateY(0); }
+}
+@keyframes lig-rise {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes lig-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-14px); }
+}
+
+.home-screen .home-main {
+  position: relative;
+}
+.home-screen .home-content {
+  position: relative;
+  z-index: 1;
+}
+
+/* Marca */
+.home-screen .home-brand img {
+  filter: drop-shadow(0 14px 22px rgba(0, 0, 0, 0.45));
+  animation: lig-drop 1.2s backwards;
+  transition: transform 0.5s var(--lig-ease-bounce);
+}
+.home-screen .home-brand:hover img {
+  transform: scale(1.1) rotate(-8deg);
+}
+.home-screen .home-brand span {
+  font-family: var(--lig-font-display);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.25);
+}
+
+/* Título */
+.home-screen #home-title {
+  font-size: clamp(1.4rem, 2.6vw, 2rem);
+  font-weight: 600;
+  animation: lig-rise 0.6s var(--lig-ease) 0.7s backwards;
+}
+
+/* Ações */
+.home-screen .home-actions {
+  display: grid;
+  gap: 16px;
+}
+.home-screen .home-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px;
+  border-radius: var(--lig-radius-lg);
+  text-align: left;
+  text-decoration: none;
+  animation: lig-rise 0.6s var(--lig-ease) backwards;
+}
+.home-screen .home-action:nth-child(1) { animation-delay: 0.85s; }
+.home-screen .home-action:nth-child(2) { animation-delay: 1s; }
+
+.home-screen .home-action:not(:disabled):hover {
+  transform: translateY(-5px) scale(1.03);
+}
+
+.home-screen .home-action__copy {
+  display: grid;
+  gap: 4px;
+}
+.home-screen .home-action__copy strong {
+  font-family: var(--lig-font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+.home-screen .home-action__copy small {
+  font-family: var(--lig-font-body);
+  font-size: 0.9rem;
+  font-weight: 400;
+  opacity: 0.75;
+}
+
+.home-screen .home-action__arrow {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.12);
+  transition:
+    transform 0.4s var(--lig-ease-bounce),
+    background-color 0.25s ease,
+    color 0.25s ease;
+}
+.home-screen .button-primary-dark .home-action__arrow {
+  background: rgba(255, 255, 255, 0.14);
+}
+.home-screen .home-action:hover .home-action__arrow {
+  transform: translateX(6px) scale(1.12);
+  background: var(--lig-accent);
+  color: #1b1400;
+}
+
+/* Fichas decorativas (só em telas largas) */
+.home-screen .home-main::before,
+.home-screen .home-main::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: 50%;
+  box-shadow: inset 0 -10px 20px rgba(0, 0, 0, 0.28), 0 20px 40px rgba(0, 0, 0, 0.35);
+  animation: lig-float 7s ease-in-out infinite;
+}
+.home-screen .home-main::before {
+  top: 10%;
+  right: 8%;
+  width: 120px;
+  height: 120px;
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.55), transparent 35%),
+    var(--lig-disc-yellow);
+}
+.home-screen .home-main::after {
+  bottom: 12%;
+  right: 20%;
+  width: 78px;
+  height: 78px;
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.5), transparent 35%),
+    var(--lig-disc-red);
+  animation-delay: -3s;
+}
+@media (max-width: 900px) {
+  .home-screen .home-main::before,
+  .home-screen .home-main::after {
+    display: none;
+  }
+}

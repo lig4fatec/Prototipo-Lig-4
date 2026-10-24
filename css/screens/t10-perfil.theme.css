@@ -1,0 +1,297 @@
+/* =====================================================================
+   LIG-4 · PERFIL (t10) — carregar depois de ../theme.css
+   Usa o <body class="profile-screen">.
+   Destaque desta tela: a prévia do perfil assume a cor escolhida
+   (anel do avatar, brilho, números), mudando ao vivo.
+   ===================================================================== */
+
+@keyframes lig-rise {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes lig-pop {
+  0%   { transform: scale(0.92); }
+  60%  { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+@keyframes lig-shake {
+  0%, 100% { transform: translateX(0); }
+  20%      { transform: translateX(-6px); }
+  40%      { transform: translateX(5px); }
+  60%      { transform: translateX(-4px); }
+  80%      { transform: translateX(2px); }
+}
+
+.profile-screen {
+  --disc-blue: #4da3ff;
+  --disc-red: #ff5a5f;
+  --disc-purple: #a77bff;
+  --disc-green: #4fd17a;
+  --disc-orange: #ff9f43;
+  --disc-yellow: #ffc93c;
+  --disc-brown: #a9714b;
+}
+
+/* Entrada em sequência */
+.profile-screen .screen-heading { animation: lig-rise 0.6s var(--lig-ease) 0.15s backwards; }
+.profile-screen .profile-view-tabs { animation: lig-rise 0.6s var(--lig-ease) 0.3s backwards; }
+.profile-screen .profile-data > .profile-section:nth-child(1) { animation: lig-rise 0.6s var(--lig-ease) 0.42s backwards; }
+.profile-screen .profile-data > .profile-section:nth-child(2) { animation: lig-rise 0.6s var(--lig-ease) 0.56s backwards; }
+.profile-screen .profile-preview { animation: lig-rise 0.6s var(--lig-ease) 0.45s backwards; }
+.profile-screen .profile-shortcuts { animation: lig-rise 0.6s var(--lig-ease) 0.6s backwards; }
+
+.profile-screen .screen-heading h1 {
+  font-size: clamp(1.9rem, 3.4vw, 2.6rem);
+  font-weight: 700;
+  text-shadow: 0 4px 0 rgba(0, 0, 0, 0.22);
+}
+
+/* Abas (Dados / Prévia) */
+.profile-screen .ui-tab {
+  color: var(--lig-ink-soft);
+  border-radius: var(--lig-radius-md);
+}
+.profile-screen .ui-tab:hover {
+  color: var(--lig-ink);
+  background-color: rgba(255, 255, 255, 0.1);
+}
+.profile-screen .ui-tab[aria-selected="true"] {
+  color: #1b1400;
+  background-color: var(--lig-accent);
+  box-shadow: 0 6px 16px rgba(255, 201, 60, 0.3);
+}
+
+/* Seções */
+.profile-screen .profile-section {
+  padding: clamp(18px, 3vw, 28px);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--lig-radius-lg);
+  box-shadow: var(--lig-shadow-1);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+.profile-screen .profile-section h2 {
+  font-weight: 700;
+}
+
+/* Formulário */
+.profile-screen .form-field__label,
+.profile-screen .profile-color-field legend {
+  font-family: var(--lig-font-display);
+  font-weight: 500;
+  color: var(--lig-ink);
+}
+.profile-screen .form-field__control {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--lig-radius-md);
+  transition: box-shadow 0.25s ease, transform 0.25s var(--lig-ease), border-color 0.25s ease;
+}
+.profile-screen .form-field__control input,
+.profile-screen .form-field__control textarea {
+  color: var(--lig-ink);
+  background: transparent;
+  font-family: var(--lig-font-body);
+}
+.profile-screen .form-field__control textarea {
+  resize: vertical;
+}
+.profile-screen .form-field__control:hover {
+  border-color: rgba(255, 255, 255, 0.28);
+}
+.profile-screen .form-field__control:focus-within {
+  border-color: var(--lig-accent);
+}
+.profile-screen .form-field__control:has(input[aria-invalid="true"]) {
+  border-color: var(--lig-disc-red);
+  animation: lig-shake 0.4s ease;
+}
+
+/* Seletor de cor */
+.profile-screen .color-picker__option {
+  cursor: pointer;
+  border-radius: 999px;
+  transition:
+    transform 0.3s var(--lig-ease-bounce),
+    background-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+.profile-screen .color-picker__option:hover {
+  transform: translateY(-3px);
+  background-color: rgba(255, 255, 255, 0.08);
+}
+/* Cada opção conhece a própria cor (--opt) */
+.profile-screen .color-picker__option:has([data-color="blue"])   { --opt: var(--disc-blue); }
+.profile-screen .color-picker__option:has([data-color="red"])    { --opt: var(--disc-red); }
+.profile-screen .color-picker__option:has([data-color="purple"]) { --opt: var(--disc-purple); }
+.profile-screen .color-picker__option:has([data-color="green"])  { --opt: var(--disc-green); }
+.profile-screen .color-picker__option:has([data-color="orange"]) { --opt: var(--disc-orange); }
+.profile-screen .color-picker__option:has([data-color="yellow"]) { --opt: var(--disc-yellow); }
+.profile-screen .color-picker__option:has([data-color="brown"])  { --opt: var(--disc-brown); }
+
+/* Selecionada: fundo e borda fina na própria cor, sem contorno branco */
+.profile-screen .color-picker__option:has(input:checked) {
+  background-color: color-mix(in srgb, var(--opt, var(--lig-accent)) 22%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--opt, var(--lig-accent)) 75%, transparent);
+}
+
+/* Anula anéis/contornos que o CSS antigo põe na ficha selecionada */
+.profile-screen .color-picker__option .color-picker__swatch,
+.profile-screen .color-picker__option input:checked + .color-picker__swatch,
+.profile-screen .color-picker__option input:checked ~ .color-picker__swatch {
+  outline: none;
+  border: 0;
+  box-shadow: inset 0 -4px 8px rgba(0, 0, 0, 0.28), 0 4px 10px rgba(0, 0, 0, 0.35);
+}
+.profile-screen .color-picker__option:has(input:focus-visible) {
+  outline: 3px solid var(--lig-accent);
+  outline-offset: 3px;
+}
+.profile-screen .color-picker__swatch {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.55), transparent 38%),
+    var(--swatch, var(--disc-blue));
+  box-shadow: inset 0 -4px 8px rgba(0, 0, 0, 0.28), 0 4px 10px rgba(0, 0, 0, 0.35);
+  transition: transform 0.4s var(--lig-ease-bounce);
+}
+.profile-screen .color-picker__option:hover .color-picker__swatch {
+  transform: scale(1.18) rotate(-8deg);
+}
+.profile-screen .color-picker__option:has(input:checked) .color-picker__swatch {
+  transform: scale(1.18);
+}
+.profile-screen .color-picker__swatch[data-color="blue"]   { --swatch: var(--disc-blue); }
+.profile-screen .color-picker__swatch[data-color="red"]    { --swatch: var(--disc-red); }
+.profile-screen .color-picker__swatch[data-color="purple"] { --swatch: var(--disc-purple); }
+.profile-screen .color-picker__swatch[data-color="green"]  { --swatch: var(--disc-green); }
+.profile-screen .color-picker__swatch[data-color="orange"] { --swatch: var(--disc-orange); }
+.profile-screen .color-picker__swatch[data-color="yellow"] { --swatch: var(--disc-yellow); }
+.profile-screen .color-picker__swatch[data-color="brown"]  { --swatch: var(--disc-brown); }
+
+/* Status e botão de salvar */
+.profile-screen .profile-form-status:not(:empty) {
+  display: inline-block;
+  padding: 10px 16px;
+  border-radius: var(--lig-radius-md);
+  color: var(--lig-ink);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  animation: lig-rise 0.35s var(--lig-ease);
+}
+.profile-screen .profile-save:not(:disabled) {
+  animation: lig-pop 0.45s var(--lig-ease-bounce);
+}
+
+/* Segurança */
+.profile-screen .profile-security-row {
+  padding: 14px 16px;
+  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--lig-radius-md);
+  transition: border-color 0.25s ease, background-color 0.25s ease;
+}
+.profile-screen .profile-security-row:hover {
+  border-color: rgba(255, 255, 255, 0.24);
+  background: rgba(0, 0, 0, 0.26);
+}
+.profile-screen .profile-security-row h3 {
+  font-weight: 600;
+}
+.profile-screen .profile-security-row p {
+  color: var(--lig-ink-soft);
+}
+.profile-screen .profile-security-row > span {
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  color: var(--lig-ink-soft);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* Prévia: toda a tela de cor da prévia vem da cor escolhida */
+.profile-screen .profile-preview {
+  --profile-color: var(--disc-blue);
+  border-top: 4px solid var(--profile-color);
+  transition:
+    transform 0.35s var(--lig-ease),
+    box-shadow 0.35s ease,
+    border-color 0.4s ease;
+}
+.profile-screen .profile-preview:has([data-profile-preview-swatch][data-color="red"])    { --profile-color: var(--disc-red); }
+.profile-screen .profile-preview:has([data-profile-preview-swatch][data-color="purple"]) { --profile-color: var(--disc-purple); }
+.profile-screen .profile-preview:has([data-profile-preview-swatch][data-color="green"])  { --profile-color: var(--disc-green); }
+.profile-screen .profile-preview:has([data-profile-preview-swatch][data-color="orange"]) { --profile-color: var(--disc-orange); }
+.profile-screen .profile-preview:has([data-profile-preview-swatch][data-color="yellow"]) { --profile-color: var(--disc-yellow); }
+.profile-screen .profile-preview:has([data-profile-preview-swatch][data-color="brown"])  { --profile-color: var(--disc-brown); }
+
+.profile-screen .profile-avatar {
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  color: var(--lig-ink);
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.2), transparent 50%),
+    rgba(0, 0, 0, 0.28);
+  border: 3px solid var(--profile-color);
+  box-shadow:
+    0 0 0 7px color-mix(in srgb, var(--profile-color) 24%, transparent),
+    0 16px 32px rgba(0, 0, 0, 0.4);
+  transition:
+    transform 0.5s var(--lig-ease-bounce),
+    border-color 0.4s ease,
+    box-shadow 0.4s ease;
+}
+.profile-screen .profile-avatar svg {
+  width: 56px;
+  height: 56px;
+}
+.profile-screen .profile-preview:hover .profile-avatar {
+  transform: scale(1.08) rotate(-4deg);
+}
+
+.profile-screen .profile-preview h2 {
+  font-size: 1.7rem;
+  font-weight: 700;
+}
+.profile-screen .profile-preview-name,
+.profile-screen .profile-preview-bio {
+  color: var(--lig-ink-soft);
+}
+.profile-screen .profile-preview-color .color-picker__swatch {
+  width: 22px;
+  height: 22px;
+}
+
+.profile-screen .profile-stats > div {
+  padding: 12px 16px;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--lig-radius-md);
+  transition: transform 0.3s var(--lig-ease-bounce);
+}
+.profile-screen .profile-stats > div:hover {
+  transform: translateY(-3px) scale(1.04);
+}
+.profile-screen .profile-stats dt {
+  color: var(--lig-ink-soft);
+}
+.profile-screen .profile-stats dd {
+  font-family: var(--lig-font-display);
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: var(--profile-color);
+  transition: color 0.4s ease;
+}
+
+/* Atalhos */
+.profile-screen .profile-shortcuts .button {
+  text-decoration: none;
+}

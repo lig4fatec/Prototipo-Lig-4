@@ -1,0 +1,218 @@
+/* =====================================================================
+   LIG-4 · AUTENTICAÇÃO (t02 login + t03 cadastro) — depois de ../theme.css
+   Usa o <body class="auth-screen"> que as duas telas já têm.
+   Entrada única: o cartão sobe e os campos aparecem em sequência.
+   ===================================================================== */
+
+@keyframes lig-rise {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes lig-shake {
+  0%, 100% { transform: translateX(0); }
+  20%      { transform: translateX(-6px); }
+  40%      { transform: translateX(5px); }
+  60%      { transform: translateX(-4px); }
+  80%      { transform: translateX(2px); }
+}
+@keyframes lig-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-14px); }
+}
+
+/* Cabeçalho */
+.auth-screen .auth-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--lig-ink);
+}
+.auth-screen .auth-brand img {
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.4));
+  transition: transform 0.5s var(--lig-ease-bounce);
+}
+.auth-screen .auth-brand:hover img {
+  transform: rotate(-14deg) scale(1.12);
+}
+.auth-screen .auth-brand span {
+  font-family: var(--lig-font-display);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.auth-screen .auth-back {
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--lig-ink);
+  background: rgba(255, 255, 255, 0.08);
+  transition: transform 0.3s var(--lig-ease-bounce), background-color 0.25s ease, color 0.25s ease;
+}
+.auth-screen .auth-back:hover {
+  transform: translateX(-4px) scale(1.08);
+  background: var(--lig-accent);
+  color: #1b1400;
+}
+.auth-screen .auth-back:focus-visible,
+.auth-screen .auth-brand:focus-visible,
+.auth-screen .auth-footer a:focus-visible,
+.auth-screen .password-toggle:focus-visible {
+  outline: 3px solid var(--lig-accent);
+  outline-offset: 3px;
+}
+
+/* Cartão */
+.auth-screen .auth-main {
+  position: relative;
+}
+.auth-screen .auth-card {
+  position: relative;
+  z-index: 1;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--lig-radius-lg);
+  box-shadow: var(--lig-shadow-2);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  animation: lig-rise 0.7s var(--lig-ease) backwards;
+}
+.auth-screen .auth-card h1 {
+  font-size: clamp(1.7rem, 3vw, 2.2rem);
+  font-weight: 700;
+  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.22);
+}
+.auth-screen .auth-intro {
+  color: var(--lig-ink-soft);
+}
+
+/* Campos em sequência */
+.auth-screen .auth-form > * {
+  animation: lig-rise 0.55s var(--lig-ease) backwards;
+}
+.auth-screen .auth-form > :nth-child(1) { animation-delay: 0.3s; }
+.auth-screen .auth-form > :nth-child(2) { animation-delay: 0.4s; }
+.auth-screen .auth-form > :nth-child(3) { animation-delay: 0.5s; }
+.auth-screen .auth-form > :nth-child(4) { animation-delay: 0.6s; }
+.auth-screen .auth-form > :nth-child(5) { animation-delay: 0.7s; }
+
+.auth-screen .form-field__label {
+  font-family: var(--lig-font-display);
+  font-weight: 500;
+  color: var(--lig-ink);
+}
+.auth-screen .form-field__control {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--lig-radius-md);
+  transition: box-shadow 0.25s ease, transform 0.25s var(--lig-ease), border-color 0.25s ease;
+}
+.auth-screen .form-field__control input {
+  background: transparent;
+  color: var(--lig-ink);
+}
+.auth-screen .form-field__control input::placeholder {
+  color: rgba(185, 205, 184, 0.6);
+}
+.auth-screen .form-field__control:hover {
+  border-color: rgba(255, 255, 255, 0.28);
+}
+.auth-screen .form-field__control:focus-within {
+  border-color: var(--lig-accent);
+}
+.auth-screen .form-field__icon {
+  color: var(--lig-ink-soft);
+  transition: color 0.25s ease, transform 0.3s var(--lig-ease-bounce);
+}
+.auth-screen .form-field__control:focus-within .form-field__icon {
+  color: var(--lig-accent);
+  transform: scale(1.15);
+}
+
+/* Campo com erro: borda vermelha e uma sacudida curta */
+.auth-screen .form-field__control:has(input[aria-invalid="true"]) {
+  border-color: var(--lig-disc-red);
+  animation: lig-shake 0.4s ease;
+}
+
+.auth-screen .password-toggle {
+  cursor: pointer;
+  color: var(--lig-ink-soft);
+  transition: transform 0.25s var(--lig-ease-bounce), color 0.25s ease;
+}
+.auth-screen .password-toggle:hover {
+  transform: scale(1.18);
+  color: var(--lig-accent);
+}
+.auth-screen .password-toggle[aria-pressed="true"] {
+  color: var(--lig-accent);
+}
+
+.auth-screen .form-field__help {
+  color: var(--lig-ink-soft);
+}
+.auth-screen .form-field__error {
+  color: #ffb3b5;
+}
+
+/* Status do envio */
+.auth-screen .auth-status[data-state="success"] {
+  color: #9be59b;
+}
+.auth-screen .auth-status[data-state="error"] {
+  color: #ffb3b5;
+}
+
+/* Botão de envio */
+.auth-screen .auth-form .button {
+  padding-block: 14px;
+  font-size: 1.05rem;
+}
+
+/* Link do rodapé com sublinhado que cresce */
+.auth-screen .auth-footer {
+  color: var(--lig-ink-soft);
+}
+.auth-screen .auth-footer a {
+  color: var(--lig-accent);
+  font-weight: 700;
+  text-decoration: none;
+  background: linear-gradient(currentColor, currentColor) 0 100% / 0 2px no-repeat;
+  transition: background-size 0.35s var(--lig-ease);
+}
+.auth-screen .auth-footer a:hover {
+  background-size: 100% 2px;
+}
+
+/* Fichas decorativas (só telas largas) */
+.auth-screen .auth-main::before,
+.auth-screen .auth-main::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: 50%;
+  box-shadow: inset 0 -10px 20px rgba(0, 0, 0, 0.28), 0 20px 40px rgba(0, 0, 0, 0.35);
+  animation: lig-float 7s ease-in-out infinite;
+}
+.auth-screen .auth-main::before {
+  top: 12%;
+  left: 12%;
+  width: 96px;
+  height: 96px;
+  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.55), transparent 35%), var(--lig-disc-yellow);
+}
+.auth-screen .auth-main::after {
+  bottom: 14%;
+  right: 12%;
+  width: 72px;
+  height: 72px;
+  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.5), transparent 35%), var(--lig-disc-red);
+  animation-delay: -3s;
+}
+@media (max-width: 900px) {
+  .auth-screen .auth-main::before,
+  .auth-screen .auth-main::after {
+    display: none;
+  }
+}

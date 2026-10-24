@@ -1,0 +1,55 @@
+<!doctype html>
+<link rel="stylesheet" href="../css/base.css">
+<link rel="stylesheet" href="../css/components.css">
+<link rel="stylesheet" href="../css/screens/rooms.css">
+<link rel="stylesheet" href="../css/theme.css">
+<link rel="stylesheet" href="../css/screens/rooms.theme.css">
+<script type="module" src="../js/global-nav.js"></script>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#18301D">
+    <title>Jogar | LIG-4 Online</title>
+    <link rel="stylesheet" href="../css/base.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/screens/rooms.css">
+    <script type="module" src="../js/global-nav.js"></script>
+  </head>
+  <body class="rooms-screen">
+    <aside class="app-sidebar app-sidebar--global" aria-label="Navegação principal">
+      <a class="app-sidebar__brand" href="./t04-home.html" aria-label="LIG-4 Online, início">
+        <img class="app-sidebar__logo" src="../assets/images/logo/lig4-mark.svg" alt="">
+        <span class="app-sidebar__wordmark">LIG-4</span>
+      </a>
+      <nav class="app-sidebar__nav" aria-label="Seções principais">
+        <a class="app-sidebar__link" href="./t04-home.html">Home</a>
+        <a class="app-sidebar__link" href="./t05-jogar.html" aria-current="page">Jogar</a>
+        <a class="app-sidebar__link" href="./t11-loja.html">Loja</a>
+        <a class="app-sidebar__link" href="./t12-historico.html">Histórico</a>
+        <a class="app-sidebar__link" href="./t10-perfil.html">Perfil</a>
+      </nav>
+      <div class="app-sidebar__footer"><button class="app-sidebar__link" type="button" data-global-logout>Sair</button></div>
+    </aside>
+
+    <main class="rooms-main">
+      <section class="rooms-content" aria-labelledby="play-title">
+        <h1 id="play-title">Lig - 4 Online</h1>
+        <p class="rooms-subtitle">Escolha uma opção para jogar online</p>
+        <p class="rooms-warning" data-room-warning role="status" aria-live="polite" hidden></p>
+        <nav class="rooms-options" aria-label="Opções de partida">
+          <a class="button button-primary-light rooms-option" href="./online.html#criar">
+            <span><strong>Criar uma sala</strong><small>Crie uma sala para outro jogador entrar</small></span>
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+          <a class="button button-primary-dark rooms-option" href="./online.html#entrar">
+            <span><strong>Entrar em uma sala</strong><small>Entre em uma sala existente</small></span>
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+        </nav>
+        <a class="button button-secondary rooms-back" href="./t04-home.html">Voltar</a>
+      </section>
+    </main>
+    <script type="module" src="../js/online/aviso-t05.js"></script>
+  </body>
+</html>

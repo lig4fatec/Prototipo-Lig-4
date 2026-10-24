@@ -1,0 +1,164 @@
+<!doctype html>
+<link rel="stylesheet" href="../css/base.css">
+<link rel="stylesheet" href="../css/components.css">
+<link rel="stylesheet" href="../css/screens/rooms.css">
+<link rel="stylesheet" href="../css/theme.css">
+<link rel="stylesheet" href="../css/screens/rooms.theme.css">
+<link rel="stylesheet" href="../css/screens/online.theme.css">
+<script type="module" src="../js/online/controller.js"></script>
+<script type="module" src="../js/global-nav.js"></script>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#18301D">
+    <title>Jogar Online | LIG-4 Online</title>
+    <link rel="stylesheet" href="../css/base.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/screens/rooms.css">
+    <script type="module" src="../js/online/controller.js"></script>
+    <script type="module" src="../js/global-nav.js"></script>
+  </head>
+  <body class="rooms-screen">
+    <aside class="app-sidebar app-sidebar--global" aria-label="Navegação principal">
+      <a class="app-sidebar__brand" href="./t04-home.html" aria-label="LIG-4 Online, início">
+        <img class="app-sidebar__logo" src="../assets/images/logo/lig4-mark.svg" alt="">
+        <span class="app-sidebar__wordmark">LIG-4</span>
+      </a>
+      <nav class="app-sidebar__nav" aria-label="Seções principais">
+        <a class="app-sidebar__link" href="./t04-home.html">Home</a>
+        <a class="app-sidebar__link" href="./t05-jogar.html" aria-current="page">Jogar</a>
+        <a class="app-sidebar__link" href="./t11-loja.html">Loja</a>
+        <a class="app-sidebar__link" href="./t12-historico.html">Histórico</a>
+        <a class="app-sidebar__link" href="./t10-perfil.html">Perfil</a>
+      </nav>
+      <div class="app-sidebar__footer">
+        <button class="app-sidebar__link" type="button" data-global-logout>Sair</button>
+      </div>
+    </aside>
+
+    <main class="rooms-main">
+      <div class="rooms-online-shell">
+        <section class="rooms-form-panel online-section" id="secao-criar" aria-labelledby="create-room-title" hidden>
+          <h1 id="create-room-title">Criar sala</h1>
+          <form class="rooms-form" data-create-room-form novalidate>
+            <fieldset class="room-field">
+              <legend>Série</legend>
+              <div class="series-picker">
+                <label class="series-option"><input type="radio" name="series" value="1" checked><span>Melhor de 1</span></label>
+                <label class="series-option"><input type="radio" name="series" value="3"><span>Melhor de 3</span></label>
+                <label class="series-option"><input type="radio" name="series" value="5"><span>Melhor de 5</span></label>
+              </div>
+              <p class="form-field__error" data-room-error="series" aria-live="polite"></p>
+            </fieldset>
+            <fieldset class="room-field">
+              <legend>Sua cor</legend>
+              <div class="color-picker" data-room-colors></div>
+              <p class="form-field__error" data-room-error="color" aria-live="polite"></p>
+            </fieldset>
+            <p class="room-status" data-room-status role="status" aria-live="polite"></p>
+            <div class="rooms-form-actions">
+              <a class="button button-secondary" href="./t05-jogar.html">Voltar</a>
+              <button class="button button-primary-light" type="submit">Criar sala</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="rooms-form-panel online-section" id="secao-entrar" aria-labelledby="join-room-title" hidden>
+          <h1 id="join-room-title">Entrar em sala</h1>
+          <form class="rooms-form" data-join-room-form novalidate>
+            <div class="form-field">
+              <label class="form-field__label" for="room-pin">PIN da sala</label>
+              <div class="form-field__control"><input id="room-pin" name="pin" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" data-room-pin aria-describedby="room-pin-error" aria-invalid="false" required></div>
+              <p class="form-field__error" id="room-pin-error" data-room-error="pin" aria-live="polite"></p>
+            </div>
+            <fieldset class="room-field">
+              <legend>Sua cor</legend>
+              <div class="color-picker" data-room-colors></div>
+              <p class="form-field__error" data-room-error="color" aria-live="polite"></p>
+            </fieldset>
+            <p class="room-status" data-room-status role="status" aria-live="polite"></p>
+            <div class="rooms-form-actions">
+              <a class="button button-secondary" href="./t05-jogar.html">Voltar</a>
+              <button class="button button-primary-light" type="submit">Entrar</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="lobby-panel online-section" id="secao-lobby" aria-labelledby="lobby-title" hidden>
+          <h1 id="lobby-title">Sala de espera</h1>
+          <div class="lobby-pin-block">
+            <p>PIN da sala</p>
+            <strong data-lobby-pin>------</strong>
+          </div>
+
+          <div class="lobby-players" data-lobby-players aria-label="Jogadores da sala">
+            <article class="ui-card lobby-player" data-player-card="owner">
+              <p data-player-role="owner">Dono</p>
+              <div class="lobby-player-color"><span class="color-picker__swatch" data-player-swatch="owner" data-color="blue" aria-hidden="true"></span><strong data-player-color="owner">—</strong></div>
+            </article>
+            <article class="ui-card lobby-player" data-player-card="guest">
+              <p data-player-role="guest">Aguardando jogador</p>
+              <div class="lobby-player-color"><span class="color-picker__swatch" data-player-swatch="guest" data-color="empty" aria-hidden="true"></span><strong data-player-color="guest">—</strong></div>
+            </article>
+          </div>
+
+          <section class="lobby-color-preview" aria-labelledby="lobby-colors-title">
+            <h2 id="lobby-colors-title">Cores dos jogadores</h2>
+            <div class="lobby-color-pair" aria-label="Prévia das duas cores">
+              <span class="color-picker__swatch" data-player-swatch-preview="owner" data-color="blue" aria-label="Cor do dono"></span>
+              <span class="color-picker__swatch" data-player-swatch-preview="guest" data-color="empty" aria-label="Cor do convidado"></span>
+            </div>
+          </section>
+
+          <fieldset class="room-field lobby-color-field">
+            <legend>Sua cor</legend>
+            <div class="color-picker" data-lobby-colors></div>
+            <p class="form-field__error" data-lobby-error="color" aria-live="polite"></p>
+          </fieldset>
+
+          <p class="room-status" data-lobby-status role="status" aria-live="polite"></p>
+          <div class="lobby-actions">
+            <button class="button button-primary-light" type="button" data-lobby-start disabled>Começar partida</button>
+            <button class="button button-secondary" type="button" data-lobby-leave>Sair da sala</button>
+          </div>
+        </section>
+
+        <section class="online-game-panel online-section" id="secao-partida" aria-labelledby="game-title" hidden>
+          <header class="online-game-heading">
+            <div>
+              <h1 id="game-title">Partida</h1>
+              <p class="online-game-pin">PIN <strong data-game-pin>------</strong></p>
+            </div>
+            <p class="online-game-turn" data-game-turn role="status" aria-live="polite">Carregando turno...</p>
+          </header>
+
+          <section class="online-game-score" aria-label="Placar da partida atual">
+            <div class="ui-card online-game-player-score" data-score-player="1">
+              <span>Jogador 1 · Dono</span>
+              <strong data-game-score="1">0</strong>
+            </div>
+            <div class="ui-card online-game-player-score" data-score-player="2">
+              <span>Jogador 2 · Convidado</span>
+              <strong data-game-score="2">0</strong>
+            </div>
+          </section>
+
+          <div class="online-game-board-wrap">
+            <div class="online-game-columns" data-game-columns aria-label="Escolher coluna"></div>
+            <div class="online-game-board" data-game-board role="grid" aria-label="Tabuleiro Connect-4, 6 linhas por 7 colunas"></div>
+          </div>
+
+          <p class="online-game-status" data-game-status role="status" aria-live="polite"></p>
+          <section class="online-game-result" data-game-result-panel aria-labelledby="game-result-title" hidden>
+            <h2 id="game-result-title">Resultado</h2>
+            <p data-game-result></p>
+            <p data-game-rematch-status role="status" aria-live="polite"></p>
+            <button class="button button-primary-dark" type="button" data-game-rematch disabled>Revanche</button>
+          </section>
+          <button class="button button-secondary online-game-leave" type="button" data-game-leave>Sair da sala</button>
+        </section>
+      </div>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,348 @@
+/* =====================================================================
+   LIG-4 · JOGAR ONLINE (online.html) — carregar depois de
+   ../theme.css e ./rooms.theme.css. Usa o <body class="rooms-screen">.
+   As 4 seções (criar, entrar, lobby, partida) são mostradas/escondidas
+   pelo JS com o atributo hidden; aqui não se mexe em display delas.
+   Entrada: cada seção sobe quando aparece.
+   ===================================================================== */
+
+@keyframes lig-rise {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes lig-pop {
+  0%   { opacity: 0; transform: scale(0.9); }
+  60%  { opacity: 1; transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+@keyframes lig-shake {
+  0%, 100% { transform: translateX(0); }
+  20%      { transform: translateX(-6px); }
+  40%      { transform: translateX(5px); }
+  60%      { transform: translateX(-4px); }
+  80%      { transform: translateX(2px); }
+}
+@keyframes lig-wait {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 1; }
+}
+
+.rooms-screen {
+  --disc-blue: #4da3ff;
+  --disc-red: #ff5a5f;
+  --disc-purple: #a77bff;
+  --disc-green: #4fd17a;
+  --disc-orange: #ff9f43;
+  --disc-yellow: #ffc93c;
+  --disc-brown: #a9714b;
+  accent-color: var(--lig-accent);
+}
+
+/* Nesta tela não há fichas flutuantes atrás do jogo */
+.rooms-screen .rooms-main:has(.rooms-online-shell)::before,
+.rooms-screen .rooms-main:has(.rooms-online-shell)::after {
+  display: none;
+}
+.rooms-screen .rooms-online-shell {
+  position: relative;
+  z-index: 1;
+}
+
+/* Entrada de cada seção */
+.rooms-screen .online-section:not([hidden]) {
+  animation: lig-rise 0.6s var(--lig-ease) backwards;
+}
+
+/* Títulos */
+.rooms-screen .online-section h1 {
+  font-size: clamp(1.8rem, 3.4vw, 2.6rem);
+  font-weight: 700;
+  text-shadow: 0 4px 0 rgba(0, 0, 0, 0.22);
+}
+.rooms-screen .online-section h2 {
+  font-weight: 700;
+}
+
+/* Painéis de formulário e lobby (cartões de vidro) */
+.rooms-screen .rooms-form-panel,
+.rooms-screen .lobby-panel,
+.rooms-screen .online-game-result {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--lig-radius-lg);
+  box-shadow: var(--lig-shadow-2);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+.rooms-screen .rooms-form-panel,
+.rooms-screen .lobby-panel {
+  padding: clamp(18px, 3vw, 30px);
+}
+
+/* Campos */
+.rooms-screen .room-field legend,
+.rooms-screen .form-field__label {
+  font-family: var(--lig-font-display);
+  font-weight: 500;
+  color: var(--lig-ink);
+}
+.rooms-screen .form-field__control {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--lig-radius-md);
+  transition: box-shadow 0.25s ease, transform 0.25s var(--lig-ease), border-color 0.25s ease;
+}
+.rooms-screen .form-field__control input {
+  color: var(--lig-ink);
+  background: transparent;
+}
+.rooms-screen .form-field__control:hover {
+  border-color: rgba(255, 255, 255, 0.28);
+}
+.rooms-screen .form-field__control:focus-within {
+  border-color: var(--lig-accent);
+}
+.rooms-screen .form-field__control:has(input[aria-invalid="true"]) {
+  border-color: var(--lig-disc-red);
+  animation: lig-shake 0.4s ease;
+}
+
+/* PIN: dígitos grandes e espaçados */
+.rooms-screen #room-pin {
+  font-family: var(--lig-font-display);
+  font-size: 1.7rem;
+  font-weight: 600;
+  letter-spacing: 0.35em;
+  text-align: center;
+}
+
+/* Série (Melhor de 1 / 3 / 5) */
+.rooms-screen .series-option {
+  position: relative;
+  cursor: pointer;
+  padding: 10px 18px;
+  border-radius: 999px;
+  color: var(--lig-ink-soft);
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  transition:
+    transform 0.3s var(--lig-ease-bounce),
+    background-color 0.25s ease,
+    color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+.rooms-screen .series-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.rooms-screen .series-option:hover {
+  transform: translateY(-3px);
+  color: var(--lig-ink);
+  background-color: rgba(255, 255, 255, 0.12);
+}
+.rooms-screen .series-option:has(input:checked) {
+  color: #1b1400;
+  font-weight: 700;
+  background-color: var(--lig-accent);
+  border-color: var(--lig-accent);
+  box-shadow: 0 6px 16px rgba(255, 201, 60, 0.3);
+}
+.rooms-screen .series-option:has(input:focus-visible) {
+  outline: 3px solid var(--lig-accent);
+  outline-offset: 3px;
+}
+
+/* Seletor de cor (criar, entrar e lobby) */
+.rooms-screen .color-picker__option {
+  cursor: pointer;
+  border-radius: 999px;
+  transition:
+    transform 0.3s var(--lig-ease-bounce),
+    background-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+.rooms-screen .color-picker__option:hover {
+  transform: translateY(-3px);
+  background-color: rgba(255, 255, 255, 0.08);
+}
+.rooms-screen .color-picker__option:has([data-color="blue"])   { --opt: var(--disc-blue); }
+.rooms-screen .color-picker__option:has([data-color="red"])    { --opt: var(--disc-red); }
+.rooms-screen .color-picker__option:has([data-color="purple"]) { --opt: var(--disc-purple); }
+.rooms-screen .color-picker__option:has([data-color="green"])  { --opt: var(--disc-green); }
+.rooms-screen .color-picker__option:has([data-color="orange"]) { --opt: var(--disc-orange); }
+.rooms-screen .color-picker__option:has([data-color="yellow"]) { --opt: var(--disc-yellow); }
+.rooms-screen .color-picker__option:has([data-color="brown"])  { --opt: var(--disc-brown); }
+.rooms-screen .color-picker__option:has(input:checked) {
+  background-color: color-mix(in srgb, var(--opt, var(--lig-accent)) 22%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--opt, var(--lig-accent)) 75%, transparent);
+}
+.rooms-screen .color-picker__option:has(input:focus-visible) {
+  outline: 3px solid var(--lig-accent);
+  outline-offset: 3px;
+}
+
+/* Fichas de cor (usadas também no lobby) */
+.rooms-screen .color-picker__swatch {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.55), transparent 38%),
+    var(--swatch, var(--disc-blue));
+  box-shadow: inset 0 -4px 8px rgba(0, 0, 0, 0.28), 0 4px 10px rgba(0, 0, 0, 0.35);
+  transition: transform 0.4s var(--lig-ease-bounce), background-color 0.3s ease;
+}
+.rooms-screen .color-picker__option .color-picker__swatch,
+.rooms-screen .color-picker__option input:checked + .color-picker__swatch,
+.rooms-screen .color-picker__option input:checked ~ .color-picker__swatch {
+  outline: none;
+  border: 0;
+  box-shadow: inset 0 -4px 8px rgba(0, 0, 0, 0.28), 0 4px 10px rgba(0, 0, 0, 0.35);
+}
+.rooms-screen .color-picker__option:hover .color-picker__swatch {
+  transform: scale(1.18) rotate(-8deg);
+}
+.rooms-screen .color-picker__option:has(input:checked) .color-picker__swatch {
+  transform: scale(1.18);
+}
+.rooms-screen .color-picker__swatch[data-color="blue"]   { --swatch: var(--disc-blue); }
+.rooms-screen .color-picker__swatch[data-color="red"]    { --swatch: var(--disc-red); }
+.rooms-screen .color-picker__swatch[data-color="purple"] { --swatch: var(--disc-purple); }
+.rooms-screen .color-picker__swatch[data-color="green"]  { --swatch: var(--disc-green); }
+.rooms-screen .color-picker__swatch[data-color="orange"] { --swatch: var(--disc-orange); }
+.rooms-screen .color-picker__swatch[data-color="yellow"] { --swatch: var(--disc-yellow); }
+.rooms-screen .color-picker__swatch[data-color="brown"]  { --swatch: var(--disc-brown); }
+/* Vaga ainda sem cor/jogador */
+.rooms-screen .color-picker__swatch[data-color="empty"] {
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px dashed rgba(255, 255, 255, 0.3);
+  box-shadow: none;
+}
+
+/* Mensagens de status (só aparecem com texto) */
+.rooms-screen .room-status:not(:empty),
+.rooms-screen [data-lobby-status]:not(:empty),
+.rooms-screen .online-game-status:not(:empty),
+.rooms-screen [data-game-rematch-status]:not(:empty) {
+  display: inline-block;
+  padding: 10px 16px;
+  border-radius: var(--lig-radius-md);
+  color: var(--lig-ink);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  animation: lig-rise 0.35s var(--lig-ease);
+}
+
+/* ---------- Lobby ---------- */
+.rooms-screen .lobby-pin-block {
+  text-align: center;
+  padding: 18px 20px;
+  border-radius: var(--lig-radius-lg);
+  background: linear-gradient(135deg, rgba(255, 201, 60, 0.16), rgba(77, 163, 255, 0.12)), rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255, 201, 60, 0.35);
+}
+.rooms-screen .lobby-pin-block p {
+  color: var(--lig-ink-soft);
+}
+.rooms-screen [data-lobby-pin] {
+  display: block;
+  font-family: var(--lig-font-display);
+  font-size: clamp(2.2rem, 6vw, 3.4rem);
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  color: var(--lig-accent);
+  text-shadow: 0 0 22px rgba(255, 201, 60, 0.45);
+}
+
+.rooms-screen .lobby-player [data-player-role] {
+  font-family: var(--lig-font-display);
+  font-weight: 600;
+}
+.rooms-screen .lobby-player-color .color-picker__swatch {
+  width: 32px;
+  height: 32px;
+}
+/* Convidado ainda não entrou: borda tracejada e texto pulsando */
+.rooms-screen .lobby-player:has(.color-picker__swatch[data-color="empty"]) {
+  border-style: dashed;
+}
+.rooms-screen .lobby-player:has(.color-picker__swatch[data-color="empty"]) [data-player-role] {
+  animation: lig-wait 1.8s ease-in-out infinite;
+}
+
+.rooms-screen .lobby-color-pair {
+  display: flex;
+  gap: 16px;
+}
+.rooms-screen .lobby-color-pair .color-picker__swatch {
+  width: 56px;
+  height: 56px;
+}
+.rooms-screen .lobby-color-pair .color-picker__swatch:hover {
+  transform: scale(1.1) rotate(-6deg);
+}
+
+/* ---------- Partida ---------- */
+.rooms-screen .online-game-pin {
+  color: var(--lig-ink-soft);
+}
+.rooms-screen .online-game-pin strong {
+  font-family: var(--lig-font-display);
+  letter-spacing: 0.15em;
+  color: var(--lig-accent);
+}
+.rooms-screen .online-game-turn {
+  display: inline-block;
+  padding: 8px 18px;
+  border-radius: 999px;
+  font-family: var(--lig-font-display);
+  font-weight: 600;
+  color: var(--lig-accent);
+  background: rgba(255, 201, 60, 0.14);
+  border: 1px solid rgba(255, 201, 60, 0.35);
+}
+
+.rooms-screen .online-game-player-score span {
+  color: var(--lig-ink-soft);
+}
+.rooms-screen .online-game-player-score strong {
+  font-family: var(--lig-font-display);
+  font-size: 2.2rem;
+  font-weight: 700;
+}
+
+.rooms-screen .online-game-board {
+  background: linear-gradient(160deg, var(--lig-bg-600), #1b3a24);
+  border-radius: var(--lig-radius-lg);
+  box-shadow: var(--lig-shadow-2), inset 0 0 0 3px rgba(255, 255, 255, 0.08);
+}
+.rooms-screen .online-game-columns > * {
+  cursor: pointer;
+  border-radius: var(--lig-radius-sm);
+  transition: transform 0.25s var(--lig-ease-bounce), background-color 0.25s ease;
+}
+.rooms-screen .online-game-columns > *:not(:disabled):hover {
+  transform: translateY(-4px);
+  background-color: rgba(255, 201, 60, 0.2);
+}
+.rooms-screen .online-game-columns > *:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.rooms-screen .online-game-columns > *:focus-visible {
+  outline: 3px solid var(--lig-accent);
+  outline-offset: 2px;
+}
+
+.rooms-screen .online-game-result {
+  padding: 20px 24px;
+  border-top: 4px solid var(--lig-accent);
+}
+.rooms-screen .online-game-result:not([hidden]) {
+  animation: lig-pop 0.55s var(--lig-ease-bounce);
+}
+.rooms-screen .online-game-result h2 {
+  font-size: 1.6rem;
+}
