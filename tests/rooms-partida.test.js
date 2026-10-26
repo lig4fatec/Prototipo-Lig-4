@@ -122,3 +122,10 @@ test("requestRematch só reinicia depois dos dois pedidos", async () => {
     moveCount: 0,
   });
 });
+test("o modo escolhido pelo dono fica registrado na sala", async () => {
+  const { pin } = await createRoom({ series: 1, color: "blue", mode: "inverno" });
+  assert.equal((await getRoom(pin)).mode, "inverno");
+});
+test("modo inválido não cria sala", async () => {
+  await assert.rejects(createRoom({ series: 1, color: "blue", mode: "inexistente" }), { code: "MODO_INVALIDO" });
+});

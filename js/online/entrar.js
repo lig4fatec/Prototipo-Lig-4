@@ -1,4 +1,5 @@
 import { joinRoom } from "../services/rooms.js";
+import { getEquipped } from "../services/store.js";
 import { getRoomErrorMessage, renderColorPicker, saveRoomSession } from "../room-ui.js";
 
 export function iniciarSecaoEntrar(mostrarSecao) {
@@ -35,7 +36,8 @@ export function iniciarSecaoEntrar(mostrarSecao) {
     submitButton.disabled = true;
 
     try {
-      const { pin, role } = await joinRoom({ pin: pinInput.value, color: selectedColor });
+      const { avatar } = await getEquipped();
+      const { pin, role } = await joinRoom({ pin: pinInput.value, color: selectedColor, avatar });
       saveRoomSession(pin, role);
       await mostrarSecao("lobby");
     } catch (error) {

@@ -1,3 +1,4 @@
+import { isValidGameMode } from "../game/modes.js";
 // MOCK DESCARTÁVEL. Persistência em localStorage apenas para desenvolvimento. Será removida quando o miolo for substituído pelo Firebase, mantendo as assinaturas.
 
 export const CORES_VALIDAS = Object.freeze([
@@ -102,6 +103,7 @@ function getRoomSnapshot(room) {
   return {
     pin: room.pin,
     series: room.series,
+    mode: room.mode || "classico",
     players: {
       owner: { ...room.players.owner },
       guest: room.players.guest ? { ...room.players.guest } : null,
@@ -116,7 +118,13 @@ function getRoomSnapshot(room) {
       : null,
     result: room.result ? { ...room.result } : null,
     rematchRequested: [...(room.rematchRequested || [])],
+    ...(room.lastEmote ? { lastEmote: { ...room.lastEmote } } : {}),
   };
+}
+
+// Avatar é opcional e só cosmético: o id é validado pela UI contra o catálogo da loja.
+function avatarField(avatar) {
+  return typeof avatar === "string" && /^avatar-[a-z0-9-]{1,32}$/.test(avatar) ? { avatar } : {};
 }
 
 function notifyRoom(pin) {
@@ -211,6 +219,8 @@ export async function createRoom(options = {}) {
   await yieldMock();
   const series = options?.series === undefined ? 1 : options.series;
   const color = options?.color;
+  const mode = options?.mode ?? "classico";
+  if (!isValidGameMode(mode)) throw roomError("MODO_INVALIDO");
 
   if (![1, 3, 5].includes(series)) throw roomError("SERIE_INVALIDA");
   validateColor(color);
@@ -221,7 +231,8 @@ export async function createRoom(options = {}) {
   rooms.set(pin, {
     pin,
     series,
-    players: { owner: { color }, guest: null },
+    mode,
+    players: { owner: { color, ...avatarField(options?.avatar) }, guest: null },
     phase: "waiting",
     game: null,
     result: null,
@@ -250,7 +261,7 @@ export async function joinRoom(options = {}) {
   }
 
   saveSession(pin, "guest");
-  room.players.guest = { color };
+  room.players.guest = { color, ...avatarField(options?.avatar) };
   writeRooms(rooms);
   notifyRoom(pin);
   return { pin, role: "guest" };
@@ -413,6 +424,30 @@ export async function requestRematch({ pin, role } = {}) {
   writeRooms(rooms);
   notifyRoom(pin);
   return { pin, phase: room.phase };
+}
+
+export async function sendEmote({ pin, role, emoteId } = {}) {
+  await yieldMock();
+  validatePin(pin);
+  assertSession(pin, role);
+  if (typeof emoteId !== "string" || !/^emote-[a-z0-9-]{1,32}$/.test(emoteId)) {
+    throw roomError("EMOTE_INVALIDO");
+  }
+
+  const rooms = readRooms();
+  const room = rooms.get(pin);
+  if (!room) throw roomError("PIN_NAO_ENCONTRADO");
+  if (room.phase !== "playing" && room.phase !== "finished") throw roomError("FASE_INVALIDA");
+  if (!room.players[role]) throw roomError("SEM_PERMISSAO");
+
+  room.lastEmote = {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    role,
+    emoteId,
+  };
+  writeRooms(rooms);
+  notifyRoom(pin);
+  return { pin, id: room.lastEmote.id };
 }
 
 export async function leaveRoom(options = {}) {

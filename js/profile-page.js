@@ -1,6 +1,8 @@
 import { getCurrentUser } from "./services/auth.js";
 import { CORES_VALIDAS } from "./services/rooms.js";
 import { getProfile, getStats, updateProfile } from "./services/profile.js";
+import { getEquipped } from "./services/store.js";
+import { createAvatarImage } from "./player-style.js";
 
 const colorNames = {
   blue: "Azul",
@@ -145,6 +147,15 @@ form.addEventListener("submit", async event => {
 
 window.addEventListener("resize", syncMobilePanels);
 
+async function showEquippedAvatar() {
+  try {
+    const { avatar } = await getEquipped();
+    document.querySelector(".profile-avatar").replaceChildren(createAvatarImage(avatar, "profile-avatar__image"));
+  } catch {
+    // Mantém o ícone padrão se o avatar equipado não puder ser carregado.
+  }
+}
+
 async function initializeProfile() {
   try {
     const [profile, stats, user] = await Promise.all([getProfile(), getStats(), getCurrentUser()]);
@@ -159,6 +170,7 @@ async function initializeProfile() {
     updatePreview(profile);
     updateDirtyState();
     syncMobilePanels();
+    showEquippedAvatar();
   } catch {
     statusElement.textContent = "Não foi possível carregar o perfil.";
   }

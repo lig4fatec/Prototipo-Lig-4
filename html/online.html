@@ -51,6 +51,11 @@
               </div>
               <p class="form-field__error" data-room-error="series" aria-live="polite"></p>
             </fieldset>
+            <div class="form-field">
+              <label class="form-field__label" for="room-mode">Modo da sala</label>
+              <select id="room-mode" name="mode" required></select>
+              <p class="room-mode-help">O modo define o tabuleiro para os dois jogadores. As fichas serão personalizadas futuramente.</p>
+            </div>
             <fieldset class="room-field">
               <legend>Sua cor</legend>
               <div class="color-picker" data-room-colors></div>
@@ -89,7 +94,7 @@
           <h1 id="lobby-title">Sala de espera</h1>
           <div class="lobby-pin-block">
             <p>PIN da sala</p>
-            <strong data-lobby-pin>------</strong>
+            <strong data-lobby-pin>------</strong> <span class="room-mode-lobby">Modo: <strong data-lobby-mode>Clássico</strong></span>
           </div>
 
           <div class="lobby-players" data-lobby-players aria-label="Jogadores da sala">
@@ -144,10 +149,17 @@
             </div>
           </section>
 
+          <p class="room-mode-label">Modo da partida: <strong data-game-mode-name>Clássico</strong></p>
           <div class="online-game-board-wrap">
             <div class="online-game-columns" data-game-columns aria-label="Escolher coluna"></div>
             <div class="online-game-board" data-game-board role="grid" aria-label="Tabuleiro Connect-4, 6 linhas por 7 colunas"></div>
           </div>
+
+          <div class="online-game-emote-menu">
+            <button class="button online-game-emote-toggle" type="button" data-game-emote-toggle aria-expanded="false" aria-controls="game-owned-emotes">Meus emotes <span aria-hidden="true">▾</span></button>
+            <div class="online-game-emotes" id="game-owned-emotes" data-game-emotes role="group" aria-label="Emotes disponíveis para enviar" hidden></div>
+          </div>
+          <p class="online-game-emote-status" data-game-emote-status role="status" aria-live="polite"></p>
 
           <p class="online-game-status" data-game-status role="status" aria-live="polite"></p>
           <section class="online-game-result" data-game-result-panel aria-labelledby="game-result-title" hidden>

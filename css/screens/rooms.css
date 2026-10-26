@@ -663,3 +663,328 @@
     min-height: 36px;
   }
 }
+/* ---- Personalização da loja: avatares, emotes e tabuleiros temáticos ---- */
+.player-avatar {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border: 2px solid var(--color-primary);
+  border-radius: 50%;
+  background: var(--color-background);
+  object-fit: cover;
+  object-position: center top;
+}
+
+.lobby-player__avatar {
+  width: 72px;
+  height: 72px;
+}
+
+.online-game-player-score {
+  position: relative;
+}
+
+.online-game-player-score > span {
+  flex: 1;
+}
+
+.emote-bubble {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 10px;
+  z-index: 5;
+  width: 54px;
+  height: 54px;
+  padding: 6px;
+  border: 2px solid var(--color-primary);
+  border-radius: 50% 50% 50% 6px;
+  background: var(--color-button-dark);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+  animation: emote-pop 2.6s ease both;
+  pointer-events: none;
+}
+
+.emote-bubble img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes emote-pop {
+  0% { opacity: 0; transform: translateY(-10px) scale(0.5); }
+  12% { opacity: 1; transform: translateY(0) scale(1.12); }
+  20% { transform: scale(1); }
+  85% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(6px); }
+}
+
+.online-game-emotes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.online-game-emotes:empty {
+  display: none;
+}
+
+.online-game-emote {
+  width: 48px;
+  height: 48px;
+  padding: 5px;
+  border: 1px solid color-mix(in srgb, var(--color-text) 25%, transparent);
+  border-radius: 50%;
+  background: var(--color-button-dark);
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease;
+}
+
+.online-game-emote img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.online-game-emote:not(:disabled):hover {
+  border-color: var(--color-primary);
+  transform: translateY(-2px);
+}
+
+.online-game-emote:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.online-game-emote-status {
+  min-height: 1.25rem;
+  margin: 0;
+  color: color-mix(in srgb, var(--color-text) 75%, transparent);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+/* Tabuleiro temático: a moldura é uma imagem com furos transparentes por cima das peças;
+   as casas (e as peças) ficam posicionadas sob cada furo e a moldura não captura cliques. */
+.online-game-board-wrap[data-board-theme] {
+  position: relative;
+  width: min(100%, 820px, calc(76vh * var(--board-aspect, 1)));
+}
+
+.online-game-board-wrap[data-board-theme] .online-game-board {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: var(--board-aspect, 1);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.online-game-board-wrap[data-board-theme] .online-game-board::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: var(--board-frame) center / 100% 100% no-repeat;
+  pointer-events: none;
+}
+
+.online-game-board-wrap[data-board-theme] .online-game-cell {
+  position: absolute;
+  z-index: 1;
+  width: calc(var(--board-cell) * 100%);
+  height: auto;
+  left: calc((var(--board-x0) + var(--col) * var(--board-dx) - var(--board-cell) / 2) * 100%);
+  top: calc((var(--board-y0) + var(--row) * var(--board-dy) - var(--board-cell-y) / 2) * 100%);
+  border: 0;
+}
+
+.online-game-board-wrap[data-board-theme] .online-game-cell:not([data-color]) {
+  background: var(--board-empty, #000);
+}
+
+.online-game-board-wrap[data-board-theme] .online-game-cell[data-color] {
+  background-image:
+    radial-gradient(circle at 34% 30%, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 52%),
+    radial-gradient(circle, transparent 58%, rgba(0, 0, 0, 0.28) 100%);
+}
+
+.online-game-board-wrap[data-board-theme] .online-game-cell[data-falling="true"] {
+  outline: none;
+  filter: brightness(1.2);
+}
+
+.online-game-board-wrap[data-board-theme] .online-game-columns {
+  position: absolute;
+  z-index: 3;
+  left: calc((var(--board-x0) - var(--board-dx) / 2) * 100%);
+  top: calc((var(--board-y0) - var(--board-cell-y) / 2) * 100%);
+  width: calc(var(--board-dx) * 7 * 100%);
+  height: calc((var(--board-dy) * 5 + var(--board-cell-y)) * 100%);
+  margin: 0;
+  gap: 0;
+}
+
+.online-game-board-wrap[data-board-theme] .online-game-columns button {
+  display: flex;
+  min-height: 0;
+  height: 100%;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 2px 0 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: transparent;
+  font-size: 0.8125rem;
+  transform: none;
+}
+
+.online-game-board-wrap[data-board-theme] .online-game-columns button:not(:disabled):hover,
+.online-game-board-wrap[data-board-theme] .online-game-columns button:focus-visible {
+  background: rgba(255, 255, 255, 0.16);
+  color: var(--color-text);
+  transform: none;
+}
+
+.online-game-board-wrap[data-board-theme] .online-game-columns button:disabled {
+  opacity: 1;
+}
+
+/* ---- Seletor de tema do tabuleiro na partida ---- */
+.online-game-theme {
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+}
+
+.online-game-theme__panel {
+  display: grid;
+  width: min(100%, 680px);
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--color-text) 18%, transparent);
+  border-radius: 6px;
+  background: var(--color-button-dark);
+}
+
+.online-game-theme__panel[hidden] {
+  display: none;
+}
+
+.online-game-theme__option {
+  display: grid;
+  justify-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.25rem;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  background: var(--color-background);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.online-game-theme__option img {
+  width: 100%;
+  height: 64px;
+  object-fit: contain;
+}
+
+.online-game-theme__option:not(:disabled):hover {
+  border-color: color-mix(in srgb, var(--color-primary) 60%, transparent);
+}
+
+.online-game-theme__option[aria-checked="true"] {
+  border-color: var(--color-primary);
+}
+
+.online-game-theme__option:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.online-game-theme__option:disabled img {
+  filter: grayscale(1);
+}
+
+.online-game-theme__name {
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.online-game-theme__state {
+  color: color-mix(in srgb, var(--color-text) 70%, transparent);
+  font-size: 0.6875rem;
+}
+
+.online-game-theme__option[aria-checked="true"] .online-game-theme__state {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.online-game-theme__status {
+  min-height: 1.25rem;
+  margin: 0;
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.online-game-theme {
+  min-width: 0;
+}
+
+.online-game-theme__toggle {
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
+}
+
+.online-game-player-score > span {
+  min-width: 0;
+}
+
+@media (max-width: 700px) {
+  .online-game-player-score {
+    gap: 0.5rem;
+    padding-inline: 0.625rem;
+  }
+
+  .online-game-player-score .player-avatar {
+    width: 34px;
+    height: 34px;
+  }
+
+  .emote-bubble {
+    width: 46px;
+    height: 46px;
+  }
+}
+
+/* Modo selecionado pelo dono: a mesma moldura é usada por ambos os jogadores. */
+.room-mode-help, .room-mode-label, .room-mode-lobby { color: var(--color-text); }
+.room-mode-label { margin: .4rem 0; text-align: center; }
+.rooms-screen #room-mode {
+  width: 100%;
+  min-height: 44px;
+  padding: .65rem .8rem;
+  border: 1px solid var(--color-primary);
+  border-radius: 8px;
+  background: var(--color-button-dark);
+  color: var(--color-text);
+}
+.rooms-screen #room-mode:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+
+/* Menu de emotes individual: abre apenas no navegador do jogador. */
+.online-game-emote-menu { position: relative; display: grid; justify-items: center; margin: 0.75rem auto; max-width: 520px; }
+.online-game-emote-toggle { min-width: 165px; display: inline-flex; align-items: center; justify-content: center; gap: 0.75rem; cursor: pointer; }
+.online-game-emotes[hidden] { display: none !important; }
+.online-game-emote-menu .online-game-emotes:not([hidden]) {
+  position: absolute; z-index: 30; top: calc(100% + 6px);
+  width: min(90vw, 360px); max-height: 240px; overflow-y: auto;
+  padding: 12px; background: #18301D; border: 1px solid #F2B705;
+  border-radius: 12px; box-shadow: 0 10px 28px #0009;
+}

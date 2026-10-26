@@ -1,3 +1,4 @@
+import { getGameMode } from "../game/modes.js";
 import { getRoom, leaveRoom, setPlayerColor, startMatch, watchRoom } from "../services/rooms.js";
 import {
   clearRoomSession,
@@ -6,6 +7,7 @@ import {
   readRoomSession,
   renderColorPicker,
 } from "../room-ui.js";
+import { createAvatarImage } from "../player-style.js";
 
 const pinElement = document.querySelector("[data-lobby-pin]");
 const status = document.querySelector("[data-lobby-status]");
@@ -22,11 +24,26 @@ function stopWatching() {
   cancelRoomWatch = null;
 }
 
+function setPlayerAvatar(roleName, player) {
+  const card = document.querySelector(`[data-player-card="${roleName}"]`);
+  const avatarId = player ? player.avatar || "avatar-padrao" : null;
+  const current = card.querySelector(".player-avatar");
+  if (!avatarId) {
+    current?.remove();
+    return;
+  }
+  if (current?.dataset.avatar === avatarId) return;
+  const image = createAvatarImage(avatarId, "player-avatar lobby-player__avatar");
+  if (current) current.replaceWith(image);
+  else card.prepend(image);
+}
+
 function setPlayer(roleName, player) {
   const roleElement = document.querySelector(`[data-player-role="${roleName}"]`);
   const colorElement = document.querySelector(`[data-player-color="${roleName}"]`);
   const swatch = document.querySelector(`[data-player-swatch="${roleName}"]`);
   const preview = document.querySelector(`[data-player-swatch-preview="${roleName}"]`);
+  setPlayerAvatar(roleName, player);
 
   if (!player) {
     roleElement.textContent = "Aguardando jogador";
@@ -52,6 +69,7 @@ function updateLobby(nextRoom) {
 
   room = nextRoom;
   pinElement.textContent = room.pin;
+  document.querySelector("[data-lobby-mode]").textContent = getGameMode(room.mode).name;
   setPlayer("owner", room.players.owner);
   setPlayer("guest", room.players.guest);
 

@@ -4,7 +4,7 @@ import { equipItem, getCatalog, getEquipped } from "../js/services/store.js";
 
 test("equipItem rejeita item não possuído", async () => {
   await assert.rejects(
-    equipItem({ category: "avatar", itemId: "avatar-orbita" }),
+    equipItem({ category: "avatar", itemId: "avatar-samurai" }),
     { code: "ITEM_NAO_POSSUIDO" },
   );
 });
@@ -17,10 +17,10 @@ test("equipItem rejeita item inexistente", async () => {
 });
 
 test("equipItem aceita item possuído e atualiza equipamento", async () => {
-  await equipItem({ category: "avatar", itemId: "avatar-folhas" });
+  await equipItem({ category: "avatar", itemId: "avatar-padrao" });
 
-  assert.equal((await getEquipped()).avatar, "avatar-folhas");
+  assert.equal((await getEquipped()).avatar, "avatar-padrao");
   const catalog = await getCatalog();
-  assert.equal(catalog.categories.length, 3);
-  assert.equal(catalog.categories.every(category => category.items.length === 4), true);
+  assert.equal(catalog.categories.length, 2);
+  assert.deepEqual(catalog.categories.map(category => category.items.length), [6, 8]);
 });
