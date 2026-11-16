@@ -5,13 +5,22 @@
 - Tailwind, Bootstrap, ou outras ferramentas apenas via CDN, sem afetar a estrutura do projeto significativamente.
 
 ## Estrutura
-- `html/`: uma página por tela (`t01-boas-vindas.html`, `t02-login.html`, `t03-cadastro.html`), exceto páginas T06 a T09, que viverão em `online.html`.
-- `css/`: `variables.css` (tokens em `:root`), `base.css`, `components.css`, `screens/`.
-- `js/services/`: camada de dados. `auth.js`, `rooms.js` (mock descartável com persistência em `localStorage`), `store.js`, `profile.js`, `history.js`.- `js/`: validação de formulários e navegação.
-- `assets/images/logo/`: logo da Proposta B.
-- `assets/favicon/`: favicon derivado do logo.
-- `assets/icons/`: ícones de interface (olho da senha, seta de voltar, etc.).
-- `assets/game/`: peças e tabuleiro em SVG (também usados no padrão de fundo).
+```html/          páginas por tela; online.html contém T06 a T09
+css/           variables.css, base.css, components.css, theme.css, screens/
+js/
+  services/    auth, profile, history, store, rooms (mock)
+  game/        board, drop, modes, rules (regras puras)
+  online/      controller, criar, entrar, lobby, partida, aviso-t05
+  ui/          custom-select
+  (raiz)       auth-forms, global-nav, room-ui, profile-page, store-page, history-page, coin-shop, player-style
+assets/        game/, images/logo/, store/ (avatars, boards, emotes)
+docs/          game-rules.md, screens.md, legacy-analysis.md, legado/ (→ legacy/)
+tests/         testes de fluxo, modos, partida, perfil, loja, histórico e salas
+```
+
+- A criar se necessário: assets/favicon/ e assets/icons/, citados antes e ausentes na árvore.
+- A criar na integração: js/config.js.
+- Atualizar esta seção sempre que um arquivo for criado ou movido, no mesmo commit.
 
 ## Direção visual
 Proposta B: Tabuleiro Minimalista. Escolhida por praticidade de implementação.
@@ -65,17 +74,24 @@ Layout e hierarquia inspirados no chess.com. Cores, tipografia, logo e ilustraç
 
 ## Regras de jogo que afetam a UI
 - PIN: exatamente 6 dígitos.
-- Série: melhor de 1, 3 ou 5; escolhida pelo dono e bloqueada após a criação.
-- Cores dos jogadores: não podem repetir.
-- Sala de espera: sem chat; só o dono inicia, e apenas com dois jogadores.
-- Fluxo e conteúdo seguem os wireframes mestres.
+- Série: não há seletor. serie: 1 fixo.
+- Cores dos jogadores: únicas na sala. Cor preferida vem do perfil; se houver empate de preferência, o host tem prioridade.
+- Lobby: o dono inicia, com dois jogadores, cores diferentes e os dois “prontos”. Sem chat na sala de espera.
 
 ## Escopo atual
-T01 (boas-vindas), T02 (login), T03 (cadastro). As demais telas ficam fora deste ciclo.
+Ordem de implementação da interface, toda em mock:
+
+- T09 (partida: layout, relógios, desistência, empate, modal de resultado, emote).
+- T08 (lobby: cores, prévia de skin, pronto, condição de início).
+- T06 e T07 (criação e entrada, com cor do perfil).
+- T10, T11 e T12 (perfil, loja, histórico com Clássico e Caos).
+- T02 e T03 (validações de formulário).
 
 ## Autenticação (fase sem backend)
 - Todas as chamadas passam por `js/services/auth.js`, com interface assíncrona.
+- Mock em localStorage. Senha em texto puro. Apenas para desenvolvimento.
 - Erros são códigos padronizados (ex.: `EMAIL_JA_CADASTRADO`, `CREDENCIAIS_INVALIDAS`), não textos.
+- Senha: de 6 a 72 caracteres, validada no cadastro e na confirmação.
 - Implementação atual: mock em localStorage. Apenas para desenvolvimento (senha sem hash).
 - Ao integrar o backend, trocar a implementação do serviço, sem alterar as telas.
 
@@ -96,7 +112,7 @@ T01 (boas-vindas), T02 (login), T03 (cadastro). As demais telas ficam fora deste
 - Cada tela do fluxo vira um arquivo em `html/`, mesmo que venha da mesma página legada.
 - Estado que precisa sobreviver a trocas de tela fica em `js/services/`, não em variáveis globais.
 - Visual: sempre `variables.css` e `components.css`. Nada de estilo legado copiado.
-- Lógica de jogo: funções puras em `js/game/`, sem DOM nem Firebase.
+- Lógica de jogo: funções puras em `js/game/`, funções puras em js/game/, sem DOM e sem chamadas de rede. 
 
 ## Fluxo online (T05 a T09)
 - `online.html` é uma única página. T06 (criar), T07 (entrar), T08 (lobby) e T09 (partida) são seções que aparecem e somem via `js/online/controller.js`.
@@ -109,4 +125,14 @@ T01 (boas-vindas), T02 (login), T03 (cadastro). As demais telas ficam fora deste
 - Fora do escopo: modos Local e contra bot (decisão da liderança); poderes/habilidades; chat na sala de espera (implementação futura).
 - Série: "Melhor de 1" é o padrão. Opções 1, 3 e 5 na criação de sala. Semântica de vitória a confirmar com o time.
 - Cores: preferência da conta, editável em T10 (perfil). Prévia das duas cores no lobby (T08). Validação de cores diferentes feita no serviço, antes de gravar.
-- Estado: `sessionStorage` guarda só `{ pin, role }`. Dados de sala e partida vêm de `services/rooms.js`. Em reload, o mock perde a sala (escopo do mock); o aviso de sala perdida fica como pendência até o backend.
+- Estado: `sessionStorage` guarda só `{ pin, role }`, e identificadores de sessão. Dados de sala e partida vêm de `services/rooms.js` (mock nesta fase). Em reload, a sala é recuperada do mock em localStorage. Na integração, do GET /salas/{pin}.
+
+## Cores e skin (novo)
+- Cor preferida: definida no perfil (T10), pré-selecionada em T06 e T07. Editável em T06, T07 e T08.
+- Conflito de preferência igual: o host tem prioridade. O convidado recebe a primeira cor livre.
+- Skin: cada jogador escolhe a própria no perfil. Cada cliente renderiza a própria skin.
+- Tabuleiro e peças: iguais para os dois jogadores (uma partida, um estado).
+
+## Limitação da demo (novo)
+- Com o mock em localStorage, duas abas do mesmo navegador funcionam; duas máquinas não.
+- A demo com duas máquinas só existe depois da integração com API e WebSocket.
