@@ -6,6 +6,7 @@ import {
   joinRoom,
   leaveRoom,
   startMatch,
+  setPlayerReady,
 } from "../js/services/rooms.js";
 
 const session = new Map();
@@ -27,7 +28,7 @@ async function closeAsOwner(pin) {
 }
 
 test("cria sala e permite entrar usando o PIN retornado", async () => {
-  const { pin } = await createRoom({ series: 3, color: "blue" });
+  const { pin } = await createRoom({ color: "blue" });
   assert.match(pin, /^\d{6}$/);
   assert.deepEqual(await joinRoom({ pin, color: "red" }), { pin, role: "guest" });
   const room = await getRoom(pin);
@@ -47,6 +48,10 @@ test("startMatch exige convidado e depois inicia com cores diferentes", async ()
   await assert.rejects(startMatch({ pin }), { code: "SALA_NAO_PRONTA" });
 
   await joinRoom({ pin, color: "red" });
+  setRoomSession(pin, "owner");
+  await setPlayerReady({ pin, role: "owner", ready: true });
+  setRoomSession(pin, "guest");
+  await setPlayerReady({ pin, role: "guest", ready: true });
   setRoomSession(pin, "owner");
   await startMatch({ pin });
   assert.equal((await getRoom(pin)).phase, "playing");

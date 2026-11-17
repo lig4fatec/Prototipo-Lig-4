@@ -648,3 +648,4 @@
 .store-coin-packages button[aria-pressed="true"],.store-coin-packages button:hover { border-color:#f2b705; background:#28472b; }
 .store-coin-packages strong { color:#f2b705; }
 @media(max-width:760px) { .store-controls { grid-template-columns:1fr; } .store-coin-packages { grid-template-columns:1fr; } }
+\n.store-card__action--equip { background: var(--color-primary) !important; color: #172116 !important; border: 1px solid var(--color-primary) !important; }\n.store-card__action--equip:hover { filter: brightness(1.08); }\n

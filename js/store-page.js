@@ -226,7 +226,7 @@ function renderItem(category, item) {
     details.append(buyButton);
   } else if (category.id !== "emote" && equipped[category.id] !== item.id) {
     const equipButton = document.createElement("button");
-    equipButton.className = "button button-primary-dark store-card__action";
+    equipButton.className = "button button-primary-light store-card__action store-card__action--equip";
     equipButton.type = "button";
     equipButton.textContent = "Equipar";
     equipButton.addEventListener("click", async () => {
@@ -485,6 +485,6 @@ async function initializeStore() {
   }
 }
 
-initializeCoinShop({ getBalance });
+initializeCoinShop({ getBalance, onBalanceChange: nextCoins => { setBalance(nextCoins, { highlight: true }); renderCatalog(catalogData); } });
 initializeStore();
 for (const select of document.querySelectorAll("[data-store-filter], [data-store-sort]")) enhanceSelect(select);

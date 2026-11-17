@@ -1,11 +1,9 @@
 .auth-screen {
   min-height: 100vh;
   background-color: var(--color-background);
-  background-image:
-    url("../../assets/game/padrao-autenticacao.svg"),
-    linear-gradient(125deg, #18301D, #1D3923);
-  background-repeat: repeat, no-repeat;
-  background-size: 168px 168px, cover;
+  background-image: linear-gradient(125deg, #18301D, #1D3923);
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 
 .auth-header {

@@ -346,3 +346,9 @@
 .rooms-screen .online-game-result h2 {
   font-size: 1.6rem;
 }
+
+/* O tamanho dos tabuleiros especiais acompanha a largura do tabuleiro clássico. */
+.online-game-board-wrap[data-board-theme] {
+  width: min(100%, 680px);
+  max-width: 680px;
+}

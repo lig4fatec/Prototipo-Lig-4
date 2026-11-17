@@ -44,17 +44,14 @@
         </div>
         <label class="history-search">
           <span>Buscar partidas</span>
-          <input type="search" placeholder="Buscar" aria-label="Buscar partidas (visual, sem filtro)">
+          <input type="search" placeholder="Adversário, resultado ou data" aria-label="Buscar partidas" data-history-search autocomplete="off">
         </label>
       </header>
 
       <nav class="ui-tab-list history-filters" role="tablist" aria-label="Filtrar partidas">
-        <button class="ui-tab" type="button" role="tab" aria-selected="true" data-history-filter="todos">Todos</button>
-        <button class="ui-tab" type="button" role="tab" aria-selected="false" data-history-filter="online">Online</button>
-        <button class="ui-tab" type="button" role="tab" aria-selected="false" data-history-filter="diario">Diário</button>
-        <button class="ui-tab history-filter--soon" type="button" disabled title="Em breve" aria-describedby="history-soon-favorites">Favoritos <small id="history-soon-favorites">Em breve</small></button>
-        <button class="ui-tab history-filter--soon" type="button" disabled title="Em breve" aria-describedby="history-soon-live">Ao vivo <small id="history-soon-live">Em breve</small></button>
-        <button class="ui-tab history-filter--soon" type="button" disabled title="Em breve" aria-describedby="history-soon-bot">Bot <small id="history-soon-bot">Em breve</small></button>
+        <button class="ui-tab" type="button" role="tab" aria-selected="true" data-history-filter="todos">Todas</button>
+        <button class="ui-tab" type="button" role="tab" aria-selected="false" data-history-filter="classico">Clássico</button>
+        <button class="ui-tab" type="button" role="tab" aria-selected="false" data-history-filter="caos">Caos</button>
       </nav>
 
       <p class="history-status" data-history-status role="status" aria-live="polite"></p>

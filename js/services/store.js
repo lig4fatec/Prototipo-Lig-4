@@ -161,9 +161,9 @@ export function findItem(itemId) {
 export async function getCatalog() {
   const state = await readState();
   return {
-    categories: categories.filter(category => category.id !== "board").map(category => ({
+    categories: categories.map(category => ({
       ...category,
-      items: category.items.map(item => toPublicItem(category.id, item, state)),
+      items: category.items.filter(item => !(category.id === "board" && item.id === "board-classico")).map(item => toPublicItem(category.id, item, state)),
     })),
   };
 }
@@ -200,8 +200,16 @@ export async function getInventory() {
   };
 }
 
+export async function addDemoCoins(amount) {
+  const packages = [100, 500, 1000];
+  if (!packages.includes(amount)) throw storeError("PACOTE_INVALIDO");
+  return updateState(state => {
+    state.coins += amount;
+    return { coins: state.coins };
+  });
+}
+
 export async function purchaseItem({ category, itemId } = {}) {
-  if (category === "board") throw storeError("ITEM_INDISPONIVEL");
   const item = findCategoryItem(category, itemId);
   if (!item) throw storeError("ITEM_INEXISTENTE");
 
@@ -222,7 +230,6 @@ export async function purchaseItem({ category, itemId } = {}) {
 
 export async function equipItem({ category, itemId } = {}) {
   if (category === "emote") throw storeError("ITEM_NAO_EQUIPAVEL");
-  if (category === "board") throw storeError("ITEM_INDISPONIVEL");
   const item = findCategoryItem(category, itemId);
   if (!item) throw storeError("ITEM_INEXISTENTE");
 

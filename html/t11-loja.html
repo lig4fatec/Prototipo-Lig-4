@@ -63,6 +63,7 @@
       <div class="store-layout">
         <nav class="ui-tab-list store-category-tabs" role="tablist" aria-label="Categorias da loja">
           <button class="ui-tab" id="store-tab-avatar" type="button" role="tab" aria-selected="true" aria-controls="store-panel-avatar" tabindex="0" data-store-tab="avatar">Avatares</button>
+          <button class="ui-tab" id="store-tab-board" type="button" role="tab" aria-selected="false" aria-controls="store-panel-board" tabindex="-1" data-store-tab="board">Tabuleiros</button>
           <button class="ui-tab" id="store-tab-emote" type="button" role="tab" aria-selected="false" aria-controls="store-panel-emote" tabindex="-1" data-store-tab="emote">Emotes</button>
         </nav>
 
@@ -77,8 +78,8 @@
 
           <div class="store-controls" aria-label="Pesquisa e filtros da loja">
             <label class="store-control"><span>Pesquisar produtos</span><input type="search" data-store-search placeholder="Nome ou descrição do item" autocomplete="off"></label>
-            <div class="store-control"><span id="store-filter-label">Mostrar</span><select data-store-filter data-select-label="Mostrar"<option value="all">Todos</option><option value="owned">Adquiridos</option><option value="unowned">Não adquiridos</option><option value="affordable">Posso comprar</option></select></div>
-            <div class="store-control"><span id="store-sort-label">Ordenar</span><select data-store-sort data-select-label="Ordenar"<option value="default">Ordem original</option><option value="name">Nome (A–Z)</option><option value="price-asc">Menor preço</option><option value="price-desc">Maior preço</option></select></div>
+            <div class="store-control"><span id="store-filter-label">Mostrar</span><select data-store-filter data-select-label="Mostrar"><option value="all">Todos</option><option value="owned">Adquiridos</option><option value="unowned">Não adquiridos</option><option value="affordable">Posso comprar</option></select></div>
+            <div class="store-control"><span id="store-sort-label">Ordenar</span><select data-store-sort data-select-label="Ordenar"><option value="default">Ordem original</option><option value="name">Nome (A–Z)</option><option value="price-asc">Menor preço</option><option value="price-desc">Maior preço</option></select></div>
           </div>
           <div class="store-catalog" data-store-catalog>
             <section class="store-section" id="store-panel-avatar" role="tabpanel" aria-labelledby="store-tab-avatar" tabindex="0" data-store-section="avatar">
@@ -87,6 +88,14 @@
                 <p>Uma assinatura visual para o seu perfil.</p>
               </header>
               <ul class="store-grid" data-store-items="avatar" aria-label="Avatares disponíveis"></ul>
+            </section>
+
+            <section class="store-section" id="store-panel-board" role="tabpanel" aria-labelledby="store-tab-board" tabindex="0" data-store-section="board">
+              <header class="store-section__heading">
+                <h2>Tabuleiros</h2>
+                <p>Tabuleiros especiais que o criador da sala pode selecionar para os dois jogadores.</p>
+              </header>
+              <ul class="store-grid" data-store-items="board" aria-label="Tabuleiros especiais disponíveis"></ul>
             </section>
 
             <section class="store-section" id="store-panel-emote" role="tabpanel" aria-labelledby="store-tab-emote" tabindex="0" data-store-section="emote">
@@ -120,7 +129,7 @@
         <button type="button" data-store-coin-package="1000" aria-pressed="false"><strong>Grande</strong><span>1.000 moedas</span></button>
       </div>
       <p class="store-modal__muted" data-store-coins-selection aria-live="polite">Nenhum pacote selecionado.</p>
-      <button class="button button-primary-dark" type="button" disabled>Compra de moedas indisponível</button>
+      <button class="button button-primary-light" type="button" data-store-coins-buy disabled>Adicionar moedas (demonstração)</button>
     </dialog>
   </body>
 </html>

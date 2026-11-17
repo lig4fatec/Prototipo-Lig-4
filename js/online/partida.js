@@ -250,7 +250,7 @@ function renderRoom(nextRoom) {
   room = nextRoom;
   const mode = getGameMode(room.mode);
   modeLabel.textContent = mode.name;
-  applyBoardTheme(boardWrap, findItem(mode.boardId));
+  applyBoardTheme(boardWrap, findItem(room.boardId || "board-classico"));
   boardWrap.dataset.gameMode = mode.id;
   pinElement.textContent = room.pin;
   renderAvatars();

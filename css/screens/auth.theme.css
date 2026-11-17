@@ -216,3 +216,7 @@
     display: none;
   }
 }
+
+/* Fundo único: evita a sobreposição de texturas e formas decorativas. */
+.auth-screen .auth-main::before,
+.auth-screen .auth-main::after { display: none; }

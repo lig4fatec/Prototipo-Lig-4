@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { beforeEach, test } from "node:test";
+import { purchaseItem } from "../js/services/store.js";
 import {
   createRoom,
   getRoom,
@@ -8,6 +9,8 @@ import {
   publishState,
   requestRematch,
   startMatch,
+  setPlayerReady,
+  setRoomBoard,
 } from "../js/services/rooms.js";
 
 const localValues = new Map();
@@ -34,8 +37,12 @@ function setRole(pin, role) {
 }
 
 async function createPlayingRoom() {
-  const { pin } = await createRoom({ series: 3, color: "blue" });
+  const { pin } = await createRoom({ color: "blue" });
   await joinRoom({ pin, color: "red" });
+  setRole(pin, "owner");
+  await setPlayerReady({ pin, role: "owner", ready: true });
+  setRole(pin, "guest");
+  await setPlayerReady({ pin, role: "guest", ready: true });
   setRole(pin, "owner");
   await startMatch({ pin });
   return pin;
@@ -123,9 +130,23 @@ test("requestRematch só reinicia depois dos dois pedidos", async () => {
   });
 });
 test("o modo escolhido pelo dono fica registrado na sala", async () => {
-  const { pin } = await createRoom({ series: 1, color: "blue", mode: "inverno" });
-  assert.equal((await getRoom(pin)).mode, "inverno");
+  const { pin } = await createRoom({ color: "blue", mode: "caos" });
+  assert.equal((await getRoom(pin)).mode, "caos");
 });
 test("modo inválido não cria sala", async () => {
-  await assert.rejects(createRoom({ series: 1, color: "blue", mode: "inexistente" }), { code: "MODO_INVALIDO" });
+  await assert.rejects(createRoom({ color: "blue", mode: "inexistente" }), { code: "MODO_INVALIDO" });
+});
+
+test("somente o criador escolhe um tabuleiro que possui e a escolha é compartilhada", async () => {
+  const { pin } = await createRoom({ color: "blue", mode: "classico" });
+  await joinRoom({ pin, color: "red" });
+  await purchaseItem({ category: "board", itemId: "board-espacial" });
+  setRole(pin, "owner");
+  await setRoomBoard({ pin, role: "owner", boardId: "board-espacial" });
+  setRole(pin, "guest");
+  assert.equal((await getRoom(pin)).boardId, "board-espacial");
+  await assert.rejects(
+    setRoomBoard({ pin, role: "guest", boardId: "board-classico" }),
+    { code: "SEM_PERMISSAO" },
+  );
 });

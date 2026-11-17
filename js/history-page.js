@@ -3,12 +3,11 @@ import { listMatches } from "./services/history.js";
 const filters = [...document.querySelectorAll("[data-history-filter]")];
 const list = document.querySelector("[data-history-list]");
 const status = document.querySelector("[data-history-status]");
-const dateFormat = new Intl.DateTimeFormat("pt-BR", {
-  day: "2-digit",
-  month: "short",
-  year: "numeric",
-});
-const modeNames = { online: "Online", diario: "Diário" };
+const search = document.querySelector("[data-history-search]");
+const dateFormat = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
+const modeNames = { classico: "Clássico", caos: "Caos" };
+let activeFilter = "todos";
+let searchTimer = null;
 
 function makeCell(text, className = "") {
   const cell = document.createElement("td");
@@ -16,44 +15,35 @@ function makeCell(text, className = "") {
   if (className) cell.className = className;
   return cell;
 }
-
 function renderMatches(matches) {
   list.replaceChildren(...matches.map(match => {
     const row = document.createElement("tr");
     const resultCell = makeCell(match.result === "win" ? "Vitória" : "Derrota", "history-result");
     resultCell.dataset.result = match.result;
-    row.append(
-      makeCell(dateFormat.format(new Date(match.date))),
-      makeCell(match.opponent),
-      resultCell,
-      makeCell(String(match.moves)),
-      makeCell(modeNames[match.mode] || match.mode),
-    );
+    row.append(makeCell(dateFormat.format(new Date(match.date))), makeCell(match.opponent), resultCell, makeCell(modeNames[match.mode] || match.mode));
     return row;
   }));
-  status.textContent = matches.length ? "" : "Nenhuma partida neste filtro.";
+  status.textContent = matches.length ? "" : "Nenhuma partida corresponde à busca ou ao filtro.";
 }
-
-async function loadMatches(filter) {
+async function loadMatches() {
   status.textContent = "Carregando partidas...";
   try {
-    const result = await listMatches({ filter });
+    const result = await listMatches({ filter: activeFilter, query: search.value });
     renderMatches(result.matches);
-  } catch (error) {
+  } catch {
     list.replaceChildren();
-    status.textContent = error.code === "FILTRO_INVALIDO"
-      ? "Filtro inválido."
-      : "Não foi possível carregar o histórico.";
+    status.textContent = "Não foi possível carregar o histórico.";
   }
 }
-
 for (const button of filters) {
   button.addEventListener("click", () => {
-    for (const filterButton of filters) {
-      filterButton.setAttribute("aria-selected", String(filterButton === button));
-    }
-    loadMatches(button.dataset.historyFilter);
+    activeFilter = button.dataset.historyFilter;
+    filters.forEach(item => item.setAttribute("aria-selected", String(item === button)));
+    loadMatches();
   });
 }
-
-loadMatches("todos");
+search.addEventListener("input", () => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(loadMatches, 180);
+});
+loadMatches();

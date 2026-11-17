@@ -8,6 +8,7 @@ import {
   leaveRoom,
   setPlayerColor,
   startMatch,
+  setPlayerReady,
   watchRoom,
 } from "../js/services/rooms.js";
 
@@ -35,12 +36,12 @@ async function createWaitingRoom() {
   return pin;
 }
 
-test("cria sala com série padrão 1", async () => {
+test("cria sala sem configuração de série", async () => {
   const pin = await createWaitingRoom();
   const room = await getRoom(pin);
 
   assert.match(pin, /^\d{6}$/);
-  assert.equal(room.series, 1);
+  assert.equal("series" in room, false);
   assert.equal(room.phase, "waiting");
   assert.equal(room.players.owner.color, "blue");
   assert.equal(room.players.guest, null);
@@ -73,6 +74,11 @@ test("somente o dono inicia e sala pronta muda para playing", async () => {
   await joinRoom({ pin, color: "red" });
 
   await assert.rejects(startMatch({ pin }), { code: "SEM_PERMISSAO" });
+  setSession(pin, "owner");
+  await assert.rejects(startMatch({ pin }), { code: "SALA_NAO_PRONTA" });
+  await setPlayerReady({ pin, role: "owner", ready: true });
+  setSession(pin, "guest");
+  await setPlayerReady({ pin, role: "guest", ready: true });
   setSession(pin, "owner");
   await startMatch({ pin });
   assert.equal((await getRoom(pin)).phase, "playing");

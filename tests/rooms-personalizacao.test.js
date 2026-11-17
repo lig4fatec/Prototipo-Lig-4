@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { beforeEach, test } from "node:test";
-import { createRoom, getRoom, joinRoom, sendEmote, startMatch } from "../js/services/rooms.js";
+import { createRoom, getRoom, joinRoom, sendEmote, startMatch, setPlayerReady } from "../js/services/rooms.js";
 
 const localValues = new Map();
 const sessionValues = new Map();
@@ -31,7 +31,7 @@ beforeEach(() => {
 });
 
 test("a sala guarda o avatar equipado de cada jogador e ignora valores inválidos", async () => {
-  const { pin } = await createRoom({ series: 1, color: "blue", avatar: "avatar-samurai" });
+  const { pin } = await createRoom({ color: "blue", avatar: "avatar-samurai" });
   await joinRoom({ pin, color: "red", avatar: "<script>" });
 
   const room = await getRoom(pin);
@@ -40,13 +40,17 @@ test("a sala guarda o avatar equipado de cada jogador e ignora valores inválido
 });
 
 test("sala sem avatar mantém o formato anterior dos jogadores", async () => {
-  const { pin } = await createRoom({ series: 1, color: "blue" });
+  const { pin } = await createRoom({ color: "blue" });
   assert.deepEqual((await getRoom(pin)).players, { owner: { color: "blue" }, guest: null });
 });
 
 test("sendEmote publica o emote do jogador para a sala", async () => {
-  const { pin } = await createRoom({ series: 1, color: "blue" });
+  const { pin } = await createRoom({ color: "blue" });
   await joinRoom({ pin, color: "red" });
+  setRole(pin, "owner");
+  await setPlayerReady({ pin, role: "owner", ready: true });
+  setRole(pin, "guest");
+  await setPlayerReady({ pin, role: "guest", ready: true });
   setRole(pin, "owner");
   await startMatch({ pin });
 
@@ -61,11 +65,15 @@ test("sendEmote publica o emote do jogador para a sala", async () => {
 });
 
 test("sendEmote valida emote, sessão e fase da sala", async () => {
-  const { pin } = await createRoom({ series: 1, color: "blue" });
+  const { pin } = await createRoom({ color: "blue" });
   await joinRoom({ pin, color: "red" });
   setRole(pin, "owner");
 
   await assert.rejects(sendEmote({ pin, role: "owner", emoteId: "emote-aplauso" }), { code: "FASE_INVALIDA" });
+  await setPlayerReady({ pin, role: "owner", ready: true });
+  setRole(pin, "guest");
+  await setPlayerReady({ pin, role: "guest", ready: true });
+  setRole(pin, "owner");
   await startMatch({ pin });
   await assert.rejects(sendEmote({ pin, role: "owner", emoteId: "x; drop" }), { code: "EMOTE_INVALIDO" });
   await assert.rejects(sendEmote({ pin, role: "guest", emoteId: "emote-cool" }), { code: "SEM_PERMISSAO" });

@@ -988,3 +988,70 @@
   padding: 12px; background: #18301D; border: 1px solid #F2B705;
   border-radius: 12px; box-shadow: 0 10px 28px #0009;
 }
+
+/* Todos os tabuleiros temáticos usam a mesma área útil do tabuleiro clássico. */
+.online-game-board-wrap { width: min(100%, 680px); max-width: 680px; }
+
+.lobby-board-section {
+  display: grid;
+  gap: .65rem;
+  margin: 1.5rem 0;
+  padding: 1rem;
+  border: 1px solid color-mix(in srgb, var(--color-text) 18%, transparent);
+  border-radius: 8px;
+}
+.lobby-board-section h2 { margin: 0; font-size: 1.125rem; }
+.lobby-board-section p { margin: 0; }
+.lobby-board-section select { min-height: 42px; padding: .5rem .75rem; }
+.lobby-ready-status { margin: .5rem 0 1rem; font-weight: 650; }
+
+/* Seleção visual de tabuleiros no lobby: miniaturas clicáveis em vez de select. */
+.lobby-board-choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+  gap: .8rem;
+  margin-top: .35rem;
+}
+.lobby-board-choice {
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  gap: .55rem;
+  min-width: 0;
+  padding: .65rem;
+  color: inherit;
+  font: inherit;
+  text-align: center;
+  background: color-mix(in srgb, var(--color-text) 5%, transparent);
+  border: 2px solid color-mix(in srgb, var(--color-text) 18%, transparent);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: border-color .18s ease, background-color .18s ease, transform .18s ease, box-shadow .18s ease;
+}
+.lobby-board-choice img {
+  display: block;
+  width: 100%;
+  height: 112px;
+  object-fit: contain;
+  border-radius: 7px;
+}
+.lobby-board-choice span { font-weight: 650; }
+.lobby-board-choice[aria-pressed="true"] {
+  border-color: var(--color-accent, #f2b705);
+  background: color-mix(in srgb, var(--color-accent, #f2b705) 13%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent, #f2b705) 18%, transparent);
+}
+.lobby-board-choice:not(:disabled):hover {
+  transform: translateY(-3px);
+  border-color: var(--color-accent, #f2b705);
+}
+.lobby-board-choice:focus-visible {
+  outline: 3px solid var(--color-accent, #f2b705);
+  outline-offset: 3px;
+}
+.lobby-board-choice:disabled { cursor: default; opacity: .82; }
+.lobby-board-choices[data-role="guest"] .lobby-board-choice { cursor: default; }
+@media (max-width: 520px) {
+  .lobby-board-choices { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lobby-board-choice img { height: 96px; }
+}
