@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createRoom, joinRoom, getRoom, setPlayerReady, startMatch, setPlayerColor, setPlayerBoard } from '../js/services/rooms.js';
+import { createRoom, joinRoom, getRoom, setPlayerReady, startMatch, setPlayerColor, setRoomBoard } from '../js/services/rooms.js';
 
 function storage() {
   const map = new Map();
@@ -21,13 +21,13 @@ test('prontidão obrigatória, cor indisponível e tabuleiro possuído', async (
   await setPlayerReady({ pin, role: 'guest', ready: true });
   globalThis.sessionStorage = ownerSession;
   await assert.rejects(startMatch({ pin }), error => error.code === 'SALA_NAO_PRONTA');
-  await setPlayerBoard({ pin, role: 'owner', boardId: 'board-classico' });
+  await setRoomBoard({ pin, role: 'owner', boardId: 'board-classico' });
   await setPlayerReady({ pin, role: 'owner', ready: true });
   globalThis.sessionStorage = guestSession;
   await setPlayerColor({ pin, role: 'guest', color: 'green' });
   room = await getRoom(pin);
-  assert.equal(room.players.owner.ready, false);
-  assert.equal(room.players.guest.ready, false);
+  assert.equal(room.ready.owner, false);
+  assert.equal(room.ready.guest, false);
   await setPlayerReady({ pin, role: 'guest', ready: true });
   globalThis.sessionStorage = ownerSession;
   await setPlayerReady({ pin, role: 'owner', ready: true });
