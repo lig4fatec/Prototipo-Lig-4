@@ -129,38 +129,69 @@
         </section>
 
         <section class="online-game-panel online-section" id="secao-partida" aria-labelledby="game-title" hidden>
-          <header class="online-game-heading">
-            <div>
-              <p class="rooms-kicker">Online</p>
-              <h1 id="game-title">Partida</h1>
-              <p class="online-game-pin">PIN <strong data-game-pin>------</strong></p>
+          <!-- Placar e temas mantidos para compatibilidade com o JS (não visíveis no layout novo) -->
+          <div hidden>
+            <div data-game-score="1">0</div>
+            <div data-game-score="2">0</div>
+            <div data-game-theme-panel>
+              <span data-game-theme-current></span>
+              <span data-game-theme-status></span>
             </div>
+          </div>
+
+          <!-- Topo central -->
+          <header class="online-game-heading">
+            <h1 id="game-title">Modo: <span data-game-mode-name>Clássico</span></h1>
+            <p class="online-game-pin">PIN <strong data-game-pin>------</strong></p>
             <p class="online-game-turn" data-game-turn role="status" aria-live="polite">Carregando turno...</p>
           </header>
 
-          <section class="online-game-score" aria-label="Placar da partida atual">
-            <div class="ui-card online-game-player-score" data-score-player="1">
-              <span>Jogador 1 · Dono</span>
-              <strong data-game-score="1">0</strong>
-            </div>
-            <div class="ui-card online-game-player-score" data-score-player="2">
-              <span>Jogador 2 · Convidado</span>
-              <strong data-game-score="2">0</strong>
-            </div>
-          </section>
+          <div class="online-game-layout">
+            <!-- Esquerda: Jogador 1 -->
+            <aside class="ui-card online-game-player-card" data-score-player="1">
+              <div class="player-info">
+                <span class="player-name">Jogador 1<span data-player-tag></span></span>
+                <span class="player-clock" data-game-clock="1">05:00</span>
+              </div>
+              <div class="player-powers" data-game-powers="1"></div>
+            </aside>
 
-          <p class="room-mode-label">Modo da partida: <strong data-game-mode-name>Clássico</strong></p>
-          <div class="online-game-board-wrap">
-            <div class="online-game-columns" data-game-columns aria-label="Escolher coluna"></div>
-            <div class="online-game-board" data-game-board role="grid" aria-label="Tabuleiro Connect-4, 6 linhas por 7 colunas"></div>
+            <!-- Centro: Tabuleiro -->
+            <div class="online-game-board-area">
+              <div class="online-game-board-wrap">
+                <div class="online-game-columns" data-game-columns aria-label="Escolher coluna"></div>
+                <div class="online-game-board" data-game-board role="grid" aria-label="Tabuleiro Connect-4, 6 linhas por 7 colunas"></div>
+              </div>
+
+              <!-- Abaixo do tabuleiro: Ações de jogo (Empate e Desistir) -->
+              <div class="online-game-actions">
+                <button class="button button-secondary" type="button" data-game-draw disabled aria-label="Propor empate">1/2</button>
+                <button class="button button-danger" type="button" data-game-resign aria-label="Desistir da partida">
+                  <span aria-hidden="true">🏳</span> Desistir
+                </button>
+              </div>
+            </div>
+
+            <!-- Direita: Jogador 2 -->
+            <aside class="ui-card online-game-player-card" data-score-player="2">
+              <div class="player-info">
+                <span class="player-name">Jogador 2<span data-player-tag></span></span>
+                <span class="player-clock" data-game-clock="2">05:00</span>
+              </div>
+              <div class="player-powers" data-game-powers="2"></div>
+            </aside>
           </div>
 
-          <div class="online-game-emote-menu">
-            <button class="button online-game-emote-toggle" type="button" data-game-emote-toggle aria-expanded="false" aria-controls="game-owned-emotes">Meus emotes <span aria-hidden="true">▾</span></button>
-            <div class="online-game-emotes" id="game-owned-emotes" data-game-emotes role="group" aria-label="Emotes disponíveis para enviar" hidden></div>
+          <!-- Abaixo do tabuleiro: Emotes (abaixo do painel esquerdo, na mesma linha dos poderes) -->
+          <div class="online-game-emotes-container">
+            <div class="online-game-emote-menu">
+              <button class="button online-game-emote-toggle" type="button" data-game-emote-toggle aria-expanded="false" aria-controls="game-owned-emotes">Meus emotes <span aria-hidden="true">▾</span></button>
+              <div class="online-game-emotes" id="game-owned-emotes" data-game-emotes role="group" aria-label="Emotes disponíveis para enviar" hidden></div>
+            </div>
+            <p class="online-game-emote-status" data-game-emote-status role="status" aria-live="polite"></p>
           </div>
-          <p class="online-game-emote-status" data-game-emote-status role="status" aria-live="polite"></p>
 
+          <!-- Status, Resultado e Sair da sala mantidos -->
           <p class="online-game-status" data-game-status role="status" aria-live="polite"></p>
           <section class="online-game-result" data-game-result-panel aria-labelledby="game-result-title" hidden>
             <h2 id="game-result-title">Resultado</h2>
