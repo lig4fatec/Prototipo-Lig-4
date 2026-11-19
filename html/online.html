@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#1a0b3d">
+    <title>Jogar Online | LIG-4 Online</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/base.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/screens/rooms.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="stylesheet" href="../css/screens/rooms.theme.css">
+    <link rel="stylesheet" href="../css/screens/online.theme.css">
+    <link rel="stylesheet" href="../css/screens/t05-jogar.css">
+    <script type="module" src="../js/online/controller.js"></script>
+    <script type="module" src="../js/global-nav.js"></script>
+    <script type="module" src="../js/button-click-sound.js"></script>
+    <script type="module" src="../js/background-music.js"></script>
+  </head>
+  <body class="rooms-screen" data-background-music="musica.mp3">
+    <aside class="app-sidebar app-sidebar--global" aria-label="Navegação principal">
+      <a class="app-sidebar__brand" href="./t04-home.html" aria-label="LIG-4 Online, início">
+        <img class="app-sidebar__logo" src="../assets/images/logo/lig4-mark.svg" alt="">
+        <span class="app-sidebar__wordmark">LIG-4</span>
+      </a>
+      <nav class="app-sidebar__nav" aria-label="Seções principais">
+        <a class="app-sidebar__link" href="./t04-home.html">Home</a>
+        <a class="app-sidebar__link" href="./t05-jogar.html" aria-current="page">Jogar</a>
+        <a class="app-sidebar__link" href="./t11-loja.html">Loja</a>
+        <a class="app-sidebar__link" href="./t12-historico.html">Histórico</a>
+        <a class="app-sidebar__link" href="./t10-perfil.html">Perfil</a>
+      </nav>
+      <div class="app-sidebar__footer">
+        <button class="app-sidebar__link" type="button" data-global-logout>Sair</button>
+      </div>
+    </aside>
+
+    <div class="home-bg" aria-hidden="true">
+      <span class="home-bg__disc home-bg__disc--1"></span>
+      <span class="home-bg__disc home-bg__disc--2"></span>
+      <span class="home-bg__disc home-bg__disc--3"></span>
+      <span class="home-bg__disc home-bg__disc--4"></span>
+    </div>
+
+    <main class="rooms-main">
+      <div class="rooms-online-shell">
+        <section class="rooms-form-panel online-section" id="secao-criar" aria-labelledby="create-room-title" hidden>
+          <p class="rooms-kicker">Online</p>
+          <h1 id="create-room-title">Criar sala</h1>
+          <form class="rooms-form" data-create-room-form novalidate>
+            <div class="form-field">
+              <label class="form-field__label" for="room-mode">Modo da sala</label>
+              <select id="room-mode" name="mode" required></select>
+              <p class="room-mode-help" data-room-mode-help>MODO CLÁSSICO: LIG-4 do jeito que você conhece. Forme 4 peças em sequência para ganhar.</p>
+            </div>
+            <p class="room-status" data-room-status role="status" aria-live="polite"></p>
+            <div class="rooms-form-actions">
+              <a class="button button-secondary" href="./t05-jogar.html">Voltar</a>
+              <button class="button button-primary-light" type="submit">Criar sala</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="rooms-form-panel online-section" id="secao-entrar" aria-labelledby="join-room-title" hidden>
+          <p class="rooms-kicker">Online</p>
+          <h1 id="join-room-title">Entrar em sala</h1>
+          <form class="rooms-form" data-join-room-form novalidate>
+            <div class="form-field">
+              <label class="form-field__label" for="room-pin">PIN da sala</label>
+              <div class="form-field__control"><input id="room-pin" name="pin" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" data-room-pin aria-describedby="room-pin-error" aria-invalid="false" required></div>
+              <p class="form-field__error" id="room-pin-error" data-room-error="pin" aria-live="polite"></p>
+            </div>
+            <p class="room-status" data-room-status role="status" aria-live="polite"></p>
+            <div class="rooms-form-actions">
+              <a class="button button-secondary" href="./t05-jogar.html">Voltar</a>
+              <button class="button button-primary-light" type="submit">Entrar</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="lobby-panel online-section" id="secao-lobby" aria-labelledby="lobby-title" hidden>
+          <p class="rooms-kicker">Online</p>
+          <h1 id="lobby-title">Sala de espera</h1>
+          <div class="lobby-pin-block">
+            <p>PIN da sala</p>
+            <strong data-lobby-pin>------</strong> <span class="room-mode-lobby">Modo: <strong data-lobby-mode>Clássico</strong></span>
+          </div>
+
+          <div class="lobby-players" data-lobby-players aria-label="Jogadores da sala">
+            <article class="ui-card lobby-player" data-player-card="owner">
+              <p data-player-role="owner">Dono</p>
+              <div class="lobby-player-color"><span class="color-picker__swatch" data-player-swatch="owner" data-color="blue" aria-hidden="true"></span><strong data-player-color="owner">—</strong></div>
+            </article>
+            <article class="ui-card lobby-player" data-player-card="guest">
+              <p data-player-role="guest">Aguardando jogador</p>
+              <div class="lobby-player-color"><span class="color-picker__swatch" data-player-swatch="guest" data-color="empty" aria-hidden="true"></span><strong data-player-color="guest">—</strong></div>
+            </article>
+          </div>
+
+          <section class="lobby-board-section" aria-labelledby="lobby-board-title">
+            <h2 id="lobby-board-title">Tabuleiro da partida</h2>
+            <p data-lobby-board-description>O criador da sala escolhe o tabuleiro que será exibido para ambos.</p>
+            <div class="lobby-board-choices" data-lobby-board-choices role="group" aria-label="Escolha o tabuleiro da partida"></div>
+            <p class="form-field__error" data-lobby-error="board" aria-live="polite"></p>
+          </section>
+
+          <section class="lobby-color-preview" aria-labelledby="lobby-colors-title">
+            <h2 id="lobby-colors-title">Cores dos jogadores</h2>
+            <div class="lobby-color-pair" aria-label="Prévia das duas cores">
+              <span class="color-picker__swatch" data-player-swatch-preview="owner" data-color="blue" aria-label="Cor do dono"></span>
+              <span class="color-picker__swatch" data-player-swatch-preview="guest" data-color="empty" aria-label="Cor do convidado"></span>
+            </div>
+          </section>
+
+          <fieldset class="room-field lobby-color-field">
+            <legend>Sua cor</legend>
+            <div class="color-picker" data-lobby-colors></div>
+            <p class="form-field__error" data-lobby-error="color" aria-live="polite"></p>
+          </fieldset>
+
+          <p class="lobby-ready-status" data-lobby-ready-status role="status" aria-live="polite">Aguardando confirmações de prontidão.</p>
+          <p class="room-status" data-lobby-status role="status" aria-live="polite"></p>
+          <div class="lobby-actions">
+            <button class="button button-primary-light" type="button" data-lobby-ready disabled>Estou pronto</button>
+            <button class="button button-primary-light" type="button" data-lobby-start disabled>Começar partida</button>
+            <button class="button button-secondary" type="button" data-lobby-leave>Sair da sala</button>
+          </div>
+        </section>
+
+        <section class="online-game-panel online-section" id="secao-partida" aria-labelledby="game-title" hidden>
+          <!-- Placar e temas mantidos para compatibilidade com o JS (não visíveis no layout novo) -->
+          <div hidden>
+            <div data-game-score="1">0</div>
+            <div data-game-score="2">0</div>
+            <div data-game-theme-panel>
+              <span data-game-theme-current></span>
+              <span data-game-theme-status></span>
+            </div>
+          </div>
+
+          <!-- Topo central -->
+          <header class="online-game-heading">
+            <h1 id="game-title">Modo: <span data-game-mode-name>Clássico</span></h1>
+            <p class="online-game-pin">PIN <strong data-game-pin>------</strong></p>
+            <p class="online-game-turn" data-game-turn role="status" aria-live="polite">Carregando turno...</p>
+          </header>
+
+          <div class="online-game-layout">
+            <!-- Esquerda: Jogador 1 -->
+            <aside class="ui-card online-game-player-card" data-score-player="1">
+              <div class="player-info">
+                <span class="player-name">Jogador 1<span data-player-tag></span></span>
+                <span class="player-clock" data-game-clock="1">05:00</span>
+              </div>
+              <div class="player-powers" data-game-powers="1"></div>
+            </aside>
+
+            <!-- Centro: Tabuleiro -->
+            <div class="online-game-board-area">
+              <div class="online-game-board-wrap">
+                <div class="online-game-columns" data-game-columns aria-label="Escolher coluna"></div>
+                <div class="online-game-board" data-game-board role="grid" aria-label="Tabuleiro Connect-4, 6 linhas por 7 colunas"></div>
+              </div>
+
+              <!-- Abaixo do tabuleiro: Ações de jogo (Empate e Desistir) -->
+              <div class="online-game-actions">
+                <button class="button button-secondary" type="button" data-game-draw disabled aria-label="Propor empate">1/2</button>
+                <button class="button button-danger" type="button" data-game-resign aria-label="Desistir da partida">
+                  <span aria-hidden="true">🏳</span> Desistir
+                </button>
+              </div>
+            </div>
+
+            <!-- Direita: Jogador 2 -->
+            <aside class="ui-card online-game-player-card" data-score-player="2">
+              <div class="player-info">
+                <span class="player-name">Jogador 2<span data-player-tag></span></span>
+                <span class="player-clock" data-game-clock="2">05:00</span>
+              </div>
+              <div class="player-powers" data-game-powers="2"></div>
+            </aside>
+          </div>
+
+          <!-- Abaixo do tabuleiro: Emotes (abaixo do painel esquerdo, na mesma linha dos poderes) -->
+          <div class="online-game-emotes-container">
+            <div class="online-game-emote-menu">
+              <button class="button online-game-emote-toggle" type="button" data-game-emote-toggle aria-expanded="false" aria-controls="game-owned-emotes">Meus emotes <span aria-hidden="true">▾</span></button>
+              <div class="online-game-emotes" id="game-owned-emotes" data-game-emotes role="group" aria-label="Emotes disponíveis para enviar" hidden></div>
+            </div>
+            <p class="online-game-emote-status" data-game-emote-status role="status" aria-live="polite"></p>
+          </div>
+
+          <!-- Status, Resultado e Sair da sala mantidos -->
+          <p class="online-game-status" data-game-status role="status" aria-live="polite"></p>
+          <section class="online-game-result" data-game-result-panel aria-labelledby="game-result-title" hidden>
+            <h2 id="game-result-title">Resultado</h2>
+            <p data-game-result></p>
+            <p data-game-rematch-status role="status" aria-live="polite"></p>
+            <button class="button button-primary-dark" type="button" data-game-rematch disabled>Revanche</button>
+          </section>
+          <button class="button button-secondary online-game-leave" type="button" data-game-leave>Sair da sala</button>
+        </section>
+      </div>
+    </main>
+
+  </body>
+</html>

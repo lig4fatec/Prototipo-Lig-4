@@ -1,0 +1,61 @@
+## 1. Arquitetura de navegação
+- É uma SPA: todas as telas estão em um `index.html`; `hideAllMenuScreens()` e os handlers alteram `style.display`, enquanto o jogo alterna `game-container` diretamente (`index.html:26-913`; `script.js:1035-1070,1226-1298,3606-3660`).
+- Telas identificadas: `#intro-screen` (`index.html:26`), `#mode-screen` (`:117`), `#singleplayer-screen` (`:159`), `#online-screen` (`:224`), `#setup-screen` (`:253`) e `#game-container` (`:544`).
+- Subvistas/overlays: `#online-workspace` recebe HTML dinâmico; `#confetti-container`, `#danger-warning` e `#result-overlay` são efeitos/resultado, não rotas (`index.html:243,466-502`; `online.js:129-132,655-668`). O CSS inicia modo/singleplayer/online ocultos; JS inicializa a abertura visível (`style.css:3306-3315`; `script.js:4315-4355`).
+
+## 2. Fluxo de telas
+- Correspondência T01–T03: nenhuma exata. A abertura legada é um splash do jogo, não a boas-vindas com acesso a login/cadastro; login e cadastro não aparecem (`index.html:26-114`; `DESIGN.md:45-58,75`). `docs/screens.md` não foi encontrado, então o mapeamento T04–T12 fica não verificado.
+- `intro-screen` → `mode-screen`: clique na abertura ou tecla enquanto ela está visível (`script.js:1072,3762-3785`).
+- `mode-screen` → `setup-screen`, `singleplayer-screen` ou `online-screen`: ações Jogo Local, Singleplayer ou Online (`script.js:1076-1088`). Voltar no modo retorna à abertura; voltar das duas configurações retorna ao modo (`script.js:1090-1101`).
+- `setup-screen` → `game-container`: iniciar série local após validar cores; `singleplayer-screen` → `game-container`: iniciar partida contra o bot (`script.js:1173-1217,1226-1298`).
+- `online-screen` permanece a mesma tela: criar/entrar substitui `online-workspace` por formulários e lobby (`online.js:129-132,160-221,224-310`). Lobby → countdown → jogo → resultado/série concluída conforme `phase` recebido do Firebase (`online.js:502-577,618-713`).
+- Jogo → próxima partida/série pelo botão de replay; sair/voltar retorna ao modo (`script.js:3530-3591,3594-3660,3743-3752`; `online.js:812-950`). As telas de seleção de modo, configurações, lobby e jogo não têm correspondência T verificável no documento de fluxo ausente.
+
+## 3. Regras de jogo
+- **Vitória** — (a) quatro peças consecutivas na horizontal, vertical ou diagonal; retorna as quatro posições da linha; (b) `findWinningLine` e chamada após a jogada; (c) lê `boardState` global, sem DOM/Firebase, portanto não é pura por assinatura; (d) não conflita com o alinhamento quatro (`script.js:1942-1970,2114-2238`).
+- **Empate** — (a) ocorre quando todas as células são diferentes de zero; (b) `checkDraw`; (c) lê estado global, sem DOM/Firebase; (d) não conflita com o tabuleiro cheio (`script.js:2372-2382`; `DESIGN.md:68-71`).
+- **Validade da jogada** — (a) exige partida ativa, nenhuma peça caindo, turno permitido no online/bot, coluna não congelada e espaço livre; (b) `dropPiece`/`getAvailableRow`; (c) acoplada a estado global, elementos DOM e, online, ao bridge Firebase; (d) nenhuma regra correspondente especificada no `DESIGN.md` (`script.js:1841-1912,2001-2053`).
+- **Queda da peça** — (a) escolhe a primeira célula livre de baixo para cima; aguarda `DROP_TIME = 350` ms e então atualiza a matriz; mesmo com tabuleiro invertido, a nova peça cai ao fundo visual; (b) `getAvailableRow`/`dropPiece`; (c) acoplada a globals, geometria DOM e timer; (d) não verificado como conflito, pois o guia não define animação/gravidade (`script.js:7,1878-1992,2001-2042`).
+- **PIN** — (a) sala usa código numérico de seis dígitos; a entrada limita a seis e remove caracteres não numéricos; (b) regex, geração e validação de entrada; (c) regex é pura; geração/consulta dependem de Firebase e input DOM; (d) corresponde ao PIN de seis dígitos (`online.js:96-112,204-220,272-283`; `DESIGN.md:68`).
+- **Série** — (a) opções 1, 3 e 5; dono define ao criar sala e a escolha vai para `totalMatches`; (b) controles e inicialização da partida/sala; (c) acoplada a DOM, estado global e Firebase online; (d) valores e escolha do dono correspondem, mas o legado só avança enquanto `currentMatch < totalMatches`, sem encerrar quando alguém alcança a maioria; a semântica de “melhor de” não está implementada claramente (`index.html:206-208,422-432`; `script.js:986,1226-1279,3549-3579`; `online.js:160-182,239-253,762-775`; `DESIGN.md:69`).
+- **Cores** — (a) oferece sete cores; local impede selecionar/iniciar com cores iguais; online rejeita cor igual ao entrar e bloqueia início se o lobby tiver cores iguais; (b) handlers locais, `joinRoom` e `renderLobby`/`startSeriesOnline`; (c) acoplada a DOM, globals e Firebase; (d) o início respeita a regra, mas no lobby ainda permite gravar temporariamente cores repetidas (`script.js:838-895,1226-1257`; `online.js:283-304,357-380,618-632`; `DESIGN.md:70`).
+- **Sala de espera** — (a) fase `waiting`, só dono inicia e só com segundo jogador e cores diferentes; há chat na sala; (b) criação, condição do botão e início; (c) acoplada a Firebase/DOM; (d) dono + dois jogadores correspondem, mas o chat conflita explicitamente com “sem chat” (`online.js:239-255,375-420,618-632`; `DESIGN.md:71`).
+
+## 4. Dependências Firebase
+- O HTML carrega Firebase App e Realtime Database Compat; `online.js` define configuração e wrappers de `get`, `set`, `update`, `onValue`, `onDisconnect`, `push` e timestamp (`index.html:911-913`; `online.js:8-53`). Não há uso de Firebase Authentication nesses arquivos (`index.html:911-913`; `online.js:27-36`).
+- Geração de PIN lê `rooms/{candidato}`; criação grava o objeto completo em `rooms/{PIN}` e configura remoção da sala ao desconectar o dono (`online.js:92-112,239-255`).
+- Entrada lê `rooms/{PIN}`, atualiza `rooms/{PIN}/player2` e agenda `player2 = null` no disconnect (`online.js:264-304`).
+- Troca de cor grava `rooms/{PIN}/player1/color` ou `player2/color` (`online.js:357-362`).
+- Listener de sala observa `rooms/{PIN}`; chat grava e observa `rooms/{PIN}/chat`, removendo listener ao sair (`online.js:14-18,445-495,502-523,953-957`).
+- Início e countdown leem/atualizam `rooms/{PIN}`; o objeto inclui `phase`, `game`, `score`, `currentMatch`, jogadores e timestamps (`online.js:618-713`).
+- Sincronização grava `game`, `score`, `currentMatch` e `updatedAt`; resultado grava também `phase`, `result` e estado final (`online.js:745-776`).
+- Replay usa transações em `rooms/{PIN}` para sinalizar aceite e atualizar fase/placar; saída lê a sala e remove a sala inteira ou limpa `player2` (`online.js:812-950`).
+- Não existe serviço equivalente em `js/services/` no projeto atual além de auth; as operações observadas corresponderiam conceitualmente a `createRoom`, `joinRoom`, `updatePlayerColor`, `watchRoom`, `sendMessage`, `watchChat`, `startMatch`, `publishState`, `publishResult`, `requestRematch` e `leaveRoom` (`online.js:224-950`; `js/services/` contém apenas `auth.js`).
+
+## 5. Estado
+- Tabuleiro/turno: `boardState`, `currentPlayer`, `currentColumn`, `gameActive`, `pieceFalling`, `frozenColumns` e `boardFlipped` são globals; são reinicializados em `initGame`, alterados por jogadas/habilidades e importados do estado remoto (`script.js:14-32,1384-1409,1942,2055-2088,4400-4410`). Em múltiplos HTMLs, o estado de uma partida ativa teria de sobreviver à navegação ou ser recuperável do serviço.
+- Configuração/série: `playerSettings`, `totalMatches`, `currentMatch`, `score` e `powers` são criados como globals, preenchidos ao iniciar e alterados por resultados/replay (`script.js:248-308,1183-1200,1259-1282,2474-2608,3530-3579`). Nomes, cores, série, placar e habilidades restantes são estado de jogo/configuração.
+- Seleção e bot: `selectedColors`, `selectedMatches`, `gameMode`, `botDifficulty`, `singleSelectedColor`, `singleSelectedMatches` e flags/timers do bot vivem em globals (`script.js:543-562,986,1050-1204,3957-4008`). Seleções precisam persistir se a navegação ocorrer durante configuração; timers são transitórios.
+- Online: `clientId` é guardado em `sessionStorage`; `role`, `roomCode`, `roomData`, listeners, countdown e escolhas online são globals e são limpos ao sair (`online.js:63-84,239-240,298-304,911-957`). Para trocar página durante uma sala, PIN/role e dados ou meios de reassinar listeners precisam ser recuperáveis; o estado remoto fica em `rooms/{PIN}` (`online.js:502-523,745-776`).
+- Referências a elementos DOM e ponte entre scripts não são estado serializável; `Lig4Game`/`__lig4StateProvider` fazem a integração atual entre os dois scripts (`script.js:383-535,4358-4444`; `online.js:731-755,987-988`). O guia determina guardar estado de navegação em `js/services/`, não em globals (`DESIGN.md:98`).
+
+## 6. Reutilizável
+- `findWinningLine` pode receber explicitamente matriz, posição e jogador: `findWinningLine(board, row, col, player, rows, cols) -> positions | null`; hoje lê `boardState` global (`script.js:2114-2236`).
+- `checkDraw` pode ser `isBoardFull(board) -> boolean`; hoje só percorre a matriz global (`script.js:2372-2382`).
+- `getAvailableRow` pode ser `findLandingRow(board, column, frozenColumns) -> row | -1`; hoje lê matriz, dimensões e colunas congeladas globais (`script.js:2001-2053`).
+- A lógica do bot oferece candidatos para `getValidColumns(board, frozenColumns)`, `simulateDrop(board, column, player) -> { board, row }` e `hasFour(board, row, col, player)`; funções atuais usam dimensões/estado globais (`script.js:4016-4076`).
+- Avaliação e busca do bot podem ser funções sem DOM, passando explicitamente jogadores, dimensões e colunas bloqueadas: `scorePosition(board, player, opponent)` e `chooseMove(board, depth, ...)`; hoje a heurística/minimax usa constantes e estado global (`script.js:4092-4232`).
+
+## 7. Descartável
+- A identidade CSS “Chaos” usa fundo azul-marinho/preto, cores neon, glows e Arial, incompatíveis com a direção minimalista verde/amarelo/vermelho; o guia diz para não copiar estilo legado (`style.css:11-58`; `DESIGN.md:24-38,99`).
+- Splash com partículas, bolas flutuantes, brilho e animações são visuais (`index.html:26-114`; `style.css:67-175,295-310,466-490`).
+- Emojis de poderes/modos, confetes, animações de vitória, aviso de perigo e countdown são apresentação/efeitos do Chaos (`index.html:44-82,124-147,466-499,706-853`; `script.js:39-2390,2252-2388,2705-2918`; `online.js:655-680`; `style.css:123-159,3019-3070`).
+- Habilidades bomba/inversão/gelo/elétrica, modo bot e paleta de sete cores são regras/experiências específicas do Chaos, fora do escopo T01–T03 do novo projeto (`index.html:159-216,706-853`; `script.js:2914-3458,3957-4300`; `DESIGN.md:75`).
+
+## 8. Riscos e dúvidas
+- Os caminhos literais pedidos (`docs/legado/Game lig4 FInal/...`) não existem; os quatro arquivos foram encontrados em `assets/docs/legado/Game lig-4 Final/`. `docs/screens.md` também não foi encontrado, então T04–T12 não podem ser mapeadas com segurança.
+- `joinRoom` faz leitura de vaga e depois `update` de `player2`, sem transação; duas entradas concorrentes podem ambas observar vaga livre (`online.js:283-302`).
+- `clientId` é criado no cliente com timestamp/aleatoriedade e usado como identidade de sala; os arquivos não mostram autenticação Firebase nem regras do Realtime Database, portanto autorização/segurança não verificadas (`online.js:27-36,63-68,228-255,298-304`; `index.html:911-913`).
+- A série local/online parece terminar por número de partidas, não por maioria de vitórias; confirmar com o time se “melhor de 3/5” é intenção literal ou limite de partidas (`script.js:2491,3549-3579`; `online.js:762-775`; `DESIGN.md:69`).
+- Código aparentemente morto: wrapper `push` definido mas não usado (chat chama `db.ref(...).push` diretamente); `gameSnapshot()` não é chamado e busca `__lig4ReadState`, enquanto a publicação usa `__lig4GetState`; `now` é declarado sem uso; `beforeunload` não executa limpeza (`online.js:20,241,731-733,748,764,991-993`).
+- O listener `beforeunload` apenas contém comentário; confirmar se remoção de sala/limpeza por desconexão está coberta só por `onDisconnect` (`online.js:255,304,991-993`).

@@ -1,0 +1,17 @@
+:root {
+  --color-background: #18301D;
+  --color-primary: #F2B705;
+  --color-highlight: #E52B2B;
+  --color-text: #FFFFFF;
+  --color-button-dark: #011205;
+  --color-secondary: #0460D9;
+  --color-primary-text: #000000;
+  --game-color-blue: #0460D9;
+  --game-color-red: #E52B2B;
+  --game-color-yellow: #FFD400;
+  --game-color-purple: #a77bff;
+  --game-color-green: #4fd17a;
+  --game-color-orange: #ff9f43;
+  --game-color-brown: #a9714b;
+  --color-win: color-mix(in srgb, var(--color-background) 35%, var(--color-text));
+}

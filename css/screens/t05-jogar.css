@@ -1,0 +1,778 @@
+/* ===== Paleta (mesma da Home) ===== */
+.rooms-screen {
+  --h-bg-1: #12062e;
+  --h-bg-2: #1b0f5c;
+  --h-bg-3: #0b2a7a;
+  --h-yellow: #ffd400;
+  --h-yellow-2: #ff9d00;
+  --h-cyan: #3de8ff;
+  --h-purple: #8b3dff;
+  --h-pink: #ff3d9a;
+  --h-text: #ffffff;
+
+  position: relative;
+  min-height: 100vh;
+  color: var(--h-text);
+  background:
+    radial-gradient(circle at 15% 20%, rgba(139, 61, 255, 0.55), transparent 45%),
+    radial-gradient(circle at 85% 80%, rgba(61, 232, 255, 0.35), transparent 45%),
+    linear-gradient(135deg, var(--h-bg-1), var(--h-bg-2) 55%, var(--h-bg-3));
+  overflow-x: hidden;
+}
+
+.rooms-screen::before {
+  content: "";
+  position: fixed;
+  inset: -50%;
+  z-index: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(255, 255, 255, 0.035) 0 28px,
+    transparent 28px 64px
+  );
+  animation: rooms-stripes 18s linear infinite;
+}
+
+/* ===== Discos decorativos ===== */
+.rooms-screen .home-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.rooms-screen .home-bg__disc {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.85;
+  box-shadow: inset -8px -8px 0 rgba(0, 0, 0, 0.25), 0 0 40px currentColor;
+  animation: rooms-float 7s ease-in-out infinite;
+}
+
+.rooms-screen .home-bg__disc--1 { width: 90px;  height: 90px;  top: 12%; left: 22%;  color: var(--h-yellow); background: var(--h-yellow); }
+.rooms-screen .home-bg__disc--2 { width: 64px;  height: 64px;  top: 68%; left: 16%;  color: var(--h-pink);   background: var(--h-pink);   animation-delay: -2s; }
+.rooms-screen .home-bg__disc--3 { width: 110px; height: 110px; top: 18%; right: 8%;  color: var(--h-cyan);   background: var(--h-cyan);   animation-delay: -4s; }
+.rooms-screen .home-bg__disc--4 { width: 72px;  height: 72px;  top: 75%; right: 14%; color: var(--h-yellow); background: var(--h-yellow); animation-delay: -1s; }
+
+/* ===== Barra lateral ===== */
+.rooms-screen .app-sidebar {
+  z-index: 2;
+  background: linear-gradient(180deg, #1a0b3d, #0b1a4a);
+  border-right: 4px solid var(--h-yellow);
+  box-shadow: 6px 0 30px rgba(139, 61, 255, 0.45);
+}
+
+.rooms-screen .app-sidebar__wordmark {
+  font-family: "Lilita One", Impact, sans-serif;
+  font-style: italic;
+  letter-spacing: 0.04em;
+  color: var(--h-yellow);
+  text-shadow: 2px 2px 0 #000;
+}
+
+.rooms-screen .app-sidebar__link {
+  color: #fff;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.rooms-screen .app-sidebar__link:hover {
+  transform: translateX(4px) skewX(-6deg);
+  background: rgba(255, 212, 0, 0.18);
+  color: var(--h-yellow);
+}
+
+.rooms-screen .app-sidebar__link[aria-current="page"] {
+  background: linear-gradient(90deg, var(--h-yellow), var(--h-yellow-2));
+  color: #1a0b3d;
+  transform: skewX(-6deg);
+  box-shadow: 0 0 18px rgba(255, 212, 0, 0.6);
+}
+
+/* ===== Layout principal ===== */
+.rooms-screen .rooms-main {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  margin-left: 248px;
+  padding: 3rem;
+}
+
+.rooms-screen .rooms-online-shell {
+  width: min(100%, 720px);
+}
+
+.rooms-screen .online-section[hidden] {
+  display: none;
+}
+
+/* ===== Painéis (cartões) ===== */
+.rooms-screen .rooms-form-panel,
+.rooms-screen .lobby-panel,
+.rooms-screen .online-game-panel {
+  display: grid;
+  gap: 1.25rem;
+  padding: 2rem;
+  background: linear-gradient(160deg, rgba(26, 11, 61, 0.92), rgba(11, 26, 74, 0.92));
+  border: 4px solid #000;
+  border-radius: 6px;
+  box-shadow: 8px 8px 0 #000, 0 0 40px rgba(139, 61, 255, 0.35);
+  color: var(--h-text);
+}
+
+.rooms-screen .online-game-panel {
+  width: min(100%, 860px);
+  margin-inline: auto;
+}
+
+.rooms-screen .rooms-kicker {
+  justify-self: start;
+  margin: 0;
+  padding: 0.35rem 1.1rem;
+  background: var(--h-pink);
+  color: #fff;
+  font-family: "Lilita One", Impact, sans-serif;
+  font-size: 0.95rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transform: skewX(-12deg) rotate(-2deg);
+  box-shadow: 4px 4px 0 #000;
+}
+
+.rooms-screen h1 {
+  margin: 0;
+  font-family: "Lilita One", Impact, sans-serif;
+  font-size: 2.25rem;
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1.15;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 3px 3px 0 var(--h-purple), 6px 6px 0 rgba(0, 0, 0, 0.55);
+}
+
+.rooms-screen h2 {
+  margin: 0;
+  font-family: "Lilita One", Impact, sans-serif;
+  font-size: 1.35rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--h-yellow);
+  text-shadow: 2px 2px 0 #000;
+}
+
+.rooms-screen .rooms-form {
+  display: grid;
+  gap: 1.25rem;
+}
+
+
+/* ===== Campos de formulário ===== */
+
+.rooms-screen .form-field {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.rooms-screen .form-field__label,
+.rooms-screen .room-field legend {
+  font-family: "Lilita One", Impact, sans-serif;
+  font-size: 1.1rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--h-cyan);
+  text-shadow: 2px 2px 0 #000;
+}
+
+.rooms-screen .room-field {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+/* Campos sem fundo branco ou sombras internas */
+.rooms-screen select,
+.rooms-screen input[type="text"] {
+  width: 100%;
+  min-height: 52px;
+  padding: 0.65rem 1rem;
+
+  background: transparent !important;
+  background-color: transparent !important;
+
+  color: #fff;
+  border: 3px solid #090514;
+  border-radius: 6px;
+
+  box-shadow: none !important;
+
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+/* Texto digitado */
+.rooms-screen input[type="text"] {
+  color: #fff;
+  caret-color: var(--h-yellow);
+}
+
+/* Opções do seletor */
+.rooms-screen select option {
+  background: #1b0f5c;
+  color: #fff;
+}
+
+/* Placeholder */
+.rooms-screen input::placeholder {
+  color: rgba(255,255,255,.55);
+  opacity: 1;
+}
+
+/* Campo de PIN */
+.rooms-screen input[data-room-pin] {
+  font-family: "Lilita One", Impact, sans-serif;
+  font-size: 1.75rem;
+  font-weight: 400;
+  letter-spacing: 0.5em;
+  text-align: center;
+}
+
+/* Foco: sem caixa azul ou brilho */
+.rooms-screen select:focus,
+.rooms-screen select:focus-visible,
+.rooms-screen input:focus,
+.rooms-screen input:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: #090514 !important;
+}
+
+/* Erro */
+.rooms-screen input[aria-invalid="true"] {
+  border-color: var(--h-pink);
+}
+
+/* Ajuda e mensagens */
+.rooms-screen .room-mode-help,
+.rooms-screen .room-mode-label,
+.rooms-screen .lobby-ready-status,
+.rooms-screen .lobby-board-section > p {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  opacity: 0.9;
+}
+
+.rooms-screen .room-mode-label strong,
+.rooms-screen .room-mode-lobby strong {
+  color: var(--h-yellow);
+}
+
+.rooms-screen .form-field__error {
+  min-height: 0;
+  margin: 0;
+  color: #ff7aa8;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.rooms-screen .form-field__error:empty {
+  display: none;
+}
+
+/* ===== Botões ===== */
+.rooms-screen .rooms-form-actions,
+.rooms-screen .lobby-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.rooms-screen .button {
+  position: relative;
+  display: inline-flex;
+  min-height: 56px;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  border: 4px solid #000;
+  border-radius: 6px;
+  font-family: "Lilita One", Impact, sans-serif;
+  font-size: 1.15rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  text-transform: uppercase;
+  cursor: pointer;
+  transform: skewX(-6deg);
+  box-shadow: 6px 6px 0 #000;
+  overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+.rooms-screen .button::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  transform: skewX(-20deg);
+  transition: left 0.55s ease;
+  pointer-events: none;
+}
+
+.rooms-screen .button:hover:not(:disabled)::after {
+  left: 130%;
+}
+
+.rooms-screen .button:hover:not(:disabled),
+.rooms-screen .button:focus-visible {
+  transform: skewX(-6deg) translate(-3px, -3px) scale(1.02);
+  box-shadow: 9px 9px 0 #000;
+  filter: brightness(1.08);
+}
+
+.rooms-screen .button:active:not(:disabled) {
+  transform: skewX(-6deg) translate(3px, 3px);
+  box-shadow: 2px 2px 0 #000;
+}
+
+.rooms-screen .button:focus-visible {
+  outline: 4px solid var(--h-cyan);
+  outline-offset: 4px;
+}
+
+.rooms-screen .button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  filter: grayscale(0.6);
+  box-shadow: 3px 3px 0 #000;
+}
+
+.rooms-screen .button-primary-light {
+  background: linear-gradient(135deg, var(--h-yellow), var(--h-yellow-2));
+  color: #1a0b3d;
+}
+
+.rooms-screen .button-primary-dark {
+  background: linear-gradient(135deg, var(--h-purple), #4a1fd1);
+  color: #fff;
+}
+
+.rooms-screen .button-secondary {
+  background: #fff;
+  color: #1a0b3d;
+}
+
+/* ===== Sala de espera ===== */
+.rooms-screen .lobby-pin-block {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  padding: 1rem 1.25rem;
+  background: rgba(0, 0, 0, 0.35);
+  border: 3px solid #000;
+  border-radius: 6px;
+}
+
+.rooms-screen .lobby-pin-block p {
+  flex-basis: 100%;
+  margin: 0;
+  font-family: "Lilita One", Impact, sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--h-cyan);
+}
+
+.rooms-screen [data-lobby-pin],
+.rooms-screen [data-game-pin] {
+  font-family: "Lilita One", Impact, sans-serif;
+  font-size: 2.5rem;
+  font-weight: 400;
+  letter-spacing: 0.25em;
+  color: var(--h-yellow);
+  text-shadow: 3px 3px 0 #000, 0 0 24px rgba(255, 212, 0, 0.5);
+}
+
+.rooms-screen [data-game-pin] {
+  font-size: 1.4rem;
+  letter-spacing: 0.15em;
+}
+
+.rooms-screen .lobby-players {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.rooms-screen .ui-card {
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, rgba(139, 61, 255, 0.35), rgba(74, 31, 209, 0.35));
+  border: 3px solid #000;
+  border-radius: 6px;
+  box-shadow: 5px 5px 0 #000;
+  color: #fff;
+}
+
+.rooms-screen .lobby-player p {
+  margin: 0 0 0.5rem;
+  font-family: "Lilita One", Impact, sans-serif;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.rooms-screen .lobby-player-color {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 800;
+}
+
+.rooms-screen .lobby-board-section,
+.rooms-screen .lobby-color-preview {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.rooms-screen .lobby-color-pair {
+  display: flex;
+  gap: 1rem;
+}
+
+/* ===== Cores (peças) ===== */
+.rooms-screen .color-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+:where(.rooms-screen .color-picker > *) {
+  cursor: pointer;
+}
+
+.rooms-screen .color-picker > [aria-pressed="true"],
+.rooms-screen .color-picker > [aria-checked="true"],
+.rooms-screen .color-picker > .is-selected,
+.rooms-screen .color-picker > .is-active,
+.rooms-screen .color-picker > :has(input:checked) {
+  outline: 4px solid var(--h-cyan);
+  outline-offset: 3px;
+  border-radius: 50%;
+}
+
+.rooms-screen .color-picker__swatch {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  border: 3px solid #000;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow: inset -5px -5px 0 rgba(0, 0, 0, 0.25), 3px 3px 0 #000;
+}
+
+.rooms-screen .color-picker__swatch[data-color="blue"]   { background: var(--game-color-blue); }
+.rooms-screen .color-picker__swatch[data-color="red"]    { background: var(--game-color-red); }
+.rooms-screen .color-picker__swatch[data-color="yellow"] { background: var(--game-color-yellow); }
+.rooms-screen .color-picker__swatch[data-color="green"]  { background: var(--game-color-green); }
+.rooms-screen .color-picker__swatch[data-color="purple"] { background: var(--game-color-purple); }
+.rooms-screen .color-picker__swatch[data-color="orange"] { background: var(--game-color-orange); }
+.rooms-screen .color-picker__swatch[data-color="brown"]  { background: var(--game-color-brown); }
+.rooms-screen .color-picker__swatch[data-color="empty"]  { background: transparent; border-style: dashed; box-shadow: none; }
+
+/* ===== Escolha de tabuleiro ===== */
+.rooms-screen .lobby-board-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+:where(.rooms-screen .lobby-board-choices > *) {
+  min-height: 48px;
+  padding: 0.5rem 1rem;
+  background: #fff;
+  color: #1a0b3d;
+  border: 3px solid #000;
+  border-radius: 6px;
+  box-shadow: 4px 4px 0 #000;
+  font-family: "Lilita One", Impact, sans-serif;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.rooms-screen .lobby-board-choices > [aria-pressed="true"],
+.rooms-screen .lobby-board-choices > [aria-checked="true"],
+.rooms-screen .lobby-board-choices > .is-selected,
+.rooms-screen .lobby-board-choices > .is-active {
+  background: linear-gradient(135deg, var(--h-yellow), var(--h-yellow-2));
+  outline: 4px solid var(--h-cyan);
+  outline-offset: 3px;
+}
+
+/* ===== Partida ===== */
+.rooms-screen .online-game-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.rooms-screen .online-game-heading > div {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.rooms-screen .online-game-pin {
+  margin: 0;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.rooms-screen .online-game-turn {
+  margin: 0;
+  padding: 0.5rem 1.1rem;
+  background: var(--h-yellow);
+  color: #1a0b3d;
+  border: 3px solid #000;
+  border-radius: 6px;
+  box-shadow: 4px 4px 0 #000;
+  font-family: "Lilita One", Impact, sans-serif;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transform: skewX(-8deg);
+}
+
+.rooms-screen .online-game-score {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.rooms-screen .online-game-player-score {
+  display: grid;
+  gap: 0.25rem;
+  text-align: center;
+}
+
+.rooms-screen .online-game-player-score span {
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.rooms-screen .online-game-player-score strong {
+  font-family: "Lilita One", Impact, sans-serif;
+  font-size: 2.25rem;
+  font-weight: 400;
+  color: var(--h-yellow);
+  text-shadow: 3px 3px 0 #000;
+}
+
+.rooms-screen .online-game-board-wrap {
+  display: grid;
+  gap: 0.5rem;
+  width: min(100%, 640px);
+  margin-inline: auto;
+}
+
+.rooms-screen .online-game-columns,
+.rooms-screen .online-game-board {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.rooms-screen .online-game-columns {
+  padding-inline: 1rem;
+}
+
+:where(.rooms-screen .online-game-columns > *) {
+  min-height: 36px;
+  background: var(--h-yellow);
+  color: #1a0b3d;
+  border: 3px solid #000;
+  border-radius: 6px;
+  box-shadow: 3px 3px 0 #000;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.rooms-screen .online-game-columns > :hover:not(:disabled) {
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+}
+
+.rooms-screen .online-game-columns > :disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.rooms-screen .online-game-board {
+  padding: 1rem;
+  background: linear-gradient(135deg, var(--h-bg-2), var(--h-bg-3));
+  border: 4px solid #000;
+  border-radius: 12px;
+  box-shadow: 8px 8px 0 #000, 0 0 30px rgba(61, 232, 255, 0.3);
+}
+
+/* células: especificidade zero para não atrapalhar as cores das peças */
+:where(.rooms-screen .online-game-board > *) {
+  aspect-ratio: 1;
+  border: 3px solid #000;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+  box-shadow: inset 3px 3px 0 rgba(0, 0, 0, 0.35);
+}
+
+/* ===== Emotes ===== */
+.rooms-screen .online-game-emote-menu {
+  display: grid;
+  justify-items: start;
+  gap: 0.75rem;
+}
+
+.rooms-screen .online-game-emote-toggle {
+  background: linear-gradient(135deg, var(--h-purple), #4a1fd1);
+  color: #fff;
+}
+
+.rooms-screen .online-game-emotes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.35);
+  border: 3px solid #000;
+  border-radius: 6px;
+}
+
+.rooms-screen .online-game-emotes[hidden] {
+  display: none;
+}
+
+:where(.rooms-screen .online-game-emotes > *) {
+  min-width: 48px;
+  min-height: 48px;
+  padding: 0.25rem 0.6rem;
+  background: #fff;
+  border: 3px solid #000;
+  border-radius: 6px;
+  box-shadow: 3px 3px 0 #000;
+  font-size: 1.4rem;
+  cursor: pointer;
+}
+
+/* ===== Resultado ===== */
+.rooms-screen .online-game-result {
+  display: grid;
+  gap: 0.75rem;
+  justify-items: start;
+  padding: 1.25rem 1.5rem;
+  background: linear-gradient(135deg, rgba(255, 212, 0, 0.18), rgba(255, 157, 0, 0.12));
+  border: 4px solid #000;
+  border-radius: 6px;
+  box-shadow: 6px 6px 0 #000;
+}
+
+.rooms-screen .online-game-result[hidden] {
+  display: none;
+}
+
+.rooms-screen .online-game-result p {
+  margin: 0;
+  font-weight: 800;
+}
+
+.rooms-screen .online-game-leave {
+  justify-self: start;
+}
+
+/* ===== Animações ===== */
+@keyframes rooms-stripes {
+  to { transform: translate(64px, 64px); }
+}
+
+@keyframes rooms-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-24px) rotate(8deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rooms-screen::before,
+  .rooms-screen .home-bg__disc {
+    animation: none;
+  }
+
+  .rooms-screen .button,
+  .rooms-screen .button::after {
+    transition: none;
+  }
+}
+
+/* ===== Celular ===== */
+@media (max-width: 700px) {
+  .rooms-screen .rooms-main {
+    min-height: calc(100vh - 132px);
+    margin-left: 0;
+    padding: 2rem 1.25rem;
+  }
+
+  .rooms-screen h1 {
+    font-size: 1.6rem;
+  }
+
+  .rooms-screen .rooms-form-panel,
+  .rooms-screen .lobby-panel,
+  .rooms-screen .online-game-panel {
+    padding: 1.25rem;
+    box-shadow: 5px 5px 0 #000;
+  }
+
+  .rooms-screen .lobby-players,
+  .rooms-screen .online-game-score {
+    grid-template-columns: 1fr;
+  }
+
+  .rooms-screen [data-lobby-pin] {
+    font-size: 1.9rem;
+  }
+
+  .rooms-screen .button {
+    min-height: 50px;
+    font-size: 1rem;
+    box-shadow: 4px 4px 0 #000;
+  }
+
+  .rooms-screen .rooms-form-actions .button,
+  .rooms-screen .lobby-actions .button {
+    flex: 1 1 100%;
+  }
+
+  .rooms-screen .rooms-screen .home-bg__disc--1,
+  .rooms-screen .home-bg__disc--3 {
+    width: 60px;
+    height: 60px;
+  }
+}
+.rooms-screen input[aria-invalid="true"],
+.rooms-screen select[aria-invalid="true"] {
+  border-color: #090514 !important;
+  outline: none !important;
+  box-shadow: none !important;
+}

@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Lig 4 - Chaos</title>
+
+    <link rel="stylesheet"
+          href="style.css">
+
+    <link rel="icon"
+          type="image/png"
+          href="img.png">
+</head>
+
+<body>
+
+<!-- ==================================================
+     TELA DE ABERTURA
+================================================== -->
+
+<div id="intro-screen" class="intro-screen">
+
+    <div class="intro-particles">
+
+        <span class="intro-ball ball-blue"></span>
+        <span class="intro-ball ball-red"></span>
+        <span class="intro-ball ball-purple"></span>
+        <span class="intro-ball ball-green"></span>
+        <span class="intro-ball ball-orange"></span>
+        <span class="intro-ball ball-yellow"></span>
+        <span class="intro-ball ball-brown"></span>
+
+        <span class="intro-ball ball-blue"></span>
+        <span class="intro-ball ball-red"></span>
+        <span class="intro-ball ball-purple"></span>
+        <span class="intro-ball ball-green"></span>
+        <span class="intro-ball ball-orange"></span>
+        <span class="intro-ball ball-yellow"></span>
+        <span class="intro-ball ball-blue"></span>
+        <span class="intro-ball ball-red"></span>
+        <span class="intro-ball ball-green"></span>
+        <span class="intro-ball ball-purple"></span>
+        <span class="intro-ball ball-orange"></span>
+        <span class="intro-ball ball-yellow"></span>
+
+    </div>
+
+    <div class="intro-power intro-bomb">
+        💣
+    </div>
+
+    <div class="intro-power intro-ice">
+        🧊
+    </div>
+
+    <div class="intro-power intro-flip">
+        🔄
+    </div>
+
+    <div class="intro-power intro-electric">
+        ⚡
+    </div>
+
+    <div class="intro-power intro-bomb intro-bomb-2">
+        💣
+    </div>
+
+    <div class="intro-power intro-ice intro-ice-2">
+        🧊
+    </div>
+
+    <div class="intro-power intro-flip intro-flip-2">
+        🔄
+    </div>
+
+    <div class="intro-power intro-electric intro-electric-2">
+        ⚡
+    </div>
+
+    <div class="intro-content">
+
+        <div class="intro-title">
+
+            <span id="intro-lig">
+                <i>L</i><i>I</i><i>G</i><i class="space">4</i>
+            </span>
+
+            <span id="intro-chaos">
+                <i>C</i><i>H</i><i>A</i><i>O</i><i>S</i>
+            </span>
+
+        </div>
+
+        <div class="intro-line"></div>
+
+        <div class="intro-start">
+            Aperte qualquer botão para iniciar
+        </div>
+
+        <div class="intro-keys">
+            PRESS ANY KEY
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ==================================================
+     TELA DE ESCOLHA DO MODO
+================================================== -->
+<div id="mode-screen" class="mode-screen">
+    <div class="mode-box">
+        <div class="mode-title">LIG 4</div>
+        <div class="mode-subtitle">CHAOS</div>
+        <div class="mode-description">Escolha como você quer jogar</div>
+
+        <div class="mode-options">
+            <button id="local-game-btn" class="mode-card" type="button">
+                <span class="mode-icon">🎮</span>
+                <span class="mode-card-content">
+                    <strong>JOGO LOCAL</strong>
+                    <small>2 jogadores no mesmo dispositivo</small>
+                </span>
+                <span class="mode-card-arrow">→</span>
+            </button>
+
+            <button id="singleplayer-mode-btn" class="mode-card" type="button">
+                <span class="mode-icon">🤖</span>
+                <span class="mode-card-content">
+                    <strong>JOGO SINGLEPLAYER</strong>
+                    <small>Enfrente o Bot em diferentes dificuldades</small>
+                </span>
+                <span class="mode-card-arrow">→</span>
+            </button>
+
+            <button id="online-mode-btn" class="mode-card" type="button">
+                <span class="mode-icon">🌐</span>
+                <span class="mode-card-content">
+                    <strong>JOGO ONLINE</strong>
+                    <small>Jogue com outra pessoa pela internet</small>
+                </span>
+                <span class="mode-card-arrow">→</span>
+            </button>
+        </div>
+
+        <button id="mode-back-btn" class="secondary-screen-btn" type="button">← VOLTAR</button>
+    </div>
+</div>
+
+<!-- ==================================================
+     TELA DE CONFIGURAÇÃO SINGLEPLAYER
+================================================== -->
+<div id="singleplayer-screen" class="singleplayer-screen">
+    <div class="single-box">
+        <div class="setup-title">LIG 4</div>
+        <div class="setup-subtitle">CHAOS</div>
+        <div class="setup-description">Configure sua partida contra o Bot</div>
+
+        <div class="single-layout">
+            <div class="single-card single-player-card">
+                <div class="setup-player-title">VOCÊ 👤</div>
+
+                <input id="single-player-name" class="name-input" type="text" maxlength="15" placeholder="Seu nome" autocomplete="off">
+
+                <div class="color-title">Escolha sua cor</div>
+                <div class="color-options single-color-options" id="single-player-colors">
+                    <button class="color-option blue" data-color="blue" title="Azul" type="button"></button>
+                    <button class="color-option red" data-color="red" title="Vermelho" type="button"></button>
+                    <button class="color-option purple" data-color="purple" title="Roxo" type="button"></button>
+                    <button class="color-option green" data-color="green" title="Verde" type="button"></button>
+                    <button class="color-option orange" data-color="orange" title="Laranja" type="button"></button>
+                    <button class="color-option yellow" data-color="yellow" title="Amarelo" type="button"></button>
+                    <button class="color-option brown" data-color="brown" title="Marrom" type="button"></button>
+                </div>
+                <div class="selected-color-text" id="single-player-color-text">Azul</div>
+            </div>
+
+            <div class="single-card bot-card">
+                <div class="setup-player-title">🤖 BOT</div>
+                <div class="bot-preview-name">Seu adversário controlado pelo jogo</div>
+
+                <div class="bot-difficulty-title">DIFICULDADE</div>
+                <div class="difficulty-options">
+                    <button class="difficulty-option selected" data-difficulty="beginner" type="button">
+                        <strong>INICIANTE</strong><span>Jogadas mais simples</span>
+                    </button>
+                    <button class="difficulty-option" data-difficulty="intermediate" type="button">
+                        <strong>INTERMEDIÁRIO</strong><span>Ataca e bloqueia</span>
+                    </button>
+                    <button class="difficulty-option" data-difficulty="advanced" type="button">
+                        <strong>MUITO DIFÍCIL</strong><span>Estratégia mais forte</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="matches-section">
+            <div class="matches-title">FORMATO DA COMPETIÇÃO</div>
+            <div class="matches-options single-match-options">
+                <button class="single-match-option match-option selected" data-matches="1" type="button">Melhor de 1</button>
+                <button class="single-match-option match-option" data-matches="3" type="button">Melhor de 3</button>
+                <button class="single-match-option match-option" data-matches="5" type="button">Melhor de 5</button>
+            </div>
+        </div>
+
+        <div id="single-error" class="setup-error"></div>
+
+        <div class="screen-actions">
+            <button id="single-back-btn" class="secondary-screen-btn" type="button">← VOLTAR</button>
+            <button id="start-single-btn" class="start-game-btn" type="button">COMEÇAR JOGO</button>
+        </div>
+    </div>
+</div>
+
+<!-- ==================================================
+     TELA DE JOGO ONLINE
+================================================== -->
+<div id="online-screen" class="online-screen">
+    <div class="online-box">
+        <div class="setup-title">LIG 4</div>
+        <div class="setup-subtitle">ONLINE</div>
+        <div class="setup-description">Escolha uma opção para jogar online</div>
+
+        <div class="online-options">
+            <button id="create-room-btn" class="online-option" type="button">
+                <span class="online-icon">➕</span>
+                <span><strong>CRIAR SALA</strong><small>Crie uma sala para outra pessoa entrar</small></span>
+            </button>
+            <button id="join-room-btn" class="online-option" type="button">
+                <span class="online-icon">🚪</span>
+                <span><strong>ENTRAR EM UMA SALA</strong><small>Entre em uma sala existente</small></span>
+            </button>
+        </div>
+
+        <div id="online-message" class="online-message"></div>
+
+        <div id="online-workspace" class="online-workspace" style="display:none;"></div>
+
+        <button id="online-back-btn" class="secondary-screen-btn" type="button">← VOLTAR</button>
+    </div>
+</div>
+
+<!-- ==================================================
+     TELA DE CONFIGURAÇÃO
+================================================== -->
+
+<div id="setup-screen" class="setup-screen">
+
+    <div class="setup-box">
+
+        <div class="setup-title">
+            LIG 4
+        </div>
+
+        <div class="setup-subtitle">
+            CHAOS
+        </div>
+
+        <div class="setup-description">
+            Configure os jogadores antes de começar
+        </div>
+
+        <div class="players-setup">
+
+            <!-- JOGADOR 1 -->
+
+            <div class="player-setup-card player1-card">
+
+                <div class="setup-player-title">
+                    JOGADOR 1
+                </div>
+
+                <input
+                    id="player1-name"
+                    class="name-input"
+                    type="text"
+                    maxlength="15"
+                    placeholder="Nome do jogador 1"
+                    autocomplete="off"
+                >
+
+                <div class="color-title">
+                    Escolha sua cor
+                </div>
+
+                <div class="color-options"
+                     id="player1-colors">
+
+                    <button class="color-option blue"
+                            data-color="blue"
+                            title="Azul">
+                    </button>
+
+                    <button class="color-option red"
+                            data-color="red"
+                            title="Vermelho">
+                    </button>
+
+                    <button class="color-option purple"
+                            data-color="purple"
+                            title="Roxo">
+                    </button>
+
+                    <button class="color-option green"
+                            data-color="green"
+                            title="Verde">
+                    </button>
+
+                    <button class="color-option orange"
+                            data-color="orange"
+                            title="Laranja">
+                    </button>
+
+                    <button class="color-option yellow"
+                            data-color="yellow"
+                            title="Amarelo">
+                    </button>
+
+                    <button class="color-option brown"
+                            data-color="brown"
+                            title="Marrom">
+                    </button>
+
+                </div>
+
+                <div class="selected-color-text"
+                     id="player1-color-text">
+                    Azul
+                </div>
+
+            </div>
+
+
+            <!-- JOGADOR 2 -->
+
+            <div class="player-setup-card player2-card">
+
+                <div class="setup-player-title">
+                    JOGADOR 2
+                </div>
+
+                <input
+                    id="player2-name"
+                    class="name-input"
+                    type="text"
+                    maxlength="15"
+                    placeholder="Nome do jogador 2"
+                    autocomplete="off"
+                >
+
+                <div class="color-title">
+                    Escolha sua cor
+                </div>
+
+                <div class="color-options"
+                     id="player2-colors">
+
+                    <button class="color-option blue"
+                            data-color="blue"
+                            title="Azul">
+                    </button>
+
+                    <button class="color-option red"
+                            data-color="red"
+                            title="Vermelho">
+                    </button>
+
+                    <button class="color-option purple"
+                            data-color="purple"
+                            title="Roxo">
+                    </button>
+
+                    <button class="color-option green"
+                            data-color="green"
+                            title="Verde">
+                    </button>
+
+                    <button class="color-option orange"
+                            data-color="orange"
+                            title="Laranja">
+                    </button>
+
+                    <button class="color-option yellow"
+                            data-color="yellow"
+                            title="Amarelo">
+                    </button>
+
+                    <button class="color-option brown"
+                            data-color="brown"
+                            title="Marrom">
+                    </button>
+
+                </div>
+
+                <div class="selected-color-text"
+                     id="player2-color-text">
+                    Vermelho
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- PARTIDAS -->
+
+        <div class="matches-section">
+
+            <div class="matches-title">
+                FORMATO DA COMPETIÇÃO
+            </div>
+
+            <div class="matches-options">
+
+                <button class="match-option"
+                        data-matches="1">
+                    Melhor de 1
+                </button>
+
+                <button class="match-option"
+                        data-matches="3">
+                    Melhor de 3
+                </button>
+
+                <button class="match-option"
+                        data-matches="5">
+                    Melhor de 5
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div id="setup-error"
+             class="setup-error">
+        </div>
+
+
+        <button id="start-game-btn"
+                class="start-game-btn">
+            COMEÇAR JOGO
+        </button>
+
+        <button id="setup-back-btn"
+                class="secondary-screen-btn"
+                type="button">
+            ← VOLTAR
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- ==================================================
+     CONFETES
+================================================== -->
+
+<div id="confetti-container"
+     class="confetti-container">
+</div>
+
+
+<!-- ==================================================
+     AVISO DE PERIGO
+================================================== -->
+
+<div id="danger-warning"
+     class="danger-warning">
+
+    <div class="danger-icon">
+        ⚠️
+    </div>
+
+    <div class="danger-title">
+        ÚLTIMA CHANCE!
+    </div>
+
+    <div id="danger-text">
+        O adversário pode vencer na próxima jogada!
+    </div>
+
+    <div class="danger-timer">
+        <div id="danger-timer-bar"></div>
+    </div>
+
+</div>
+
+
+<!-- ==================================================
+     RESULTADO
+================================================== -->
+
+<div id="result-overlay"
+     class="result-overlay">
+
+    <div id="result-box"
+         class="result-box">
+
+        <div id="result-icon"
+             class="result-icon">
+            🏆
+        </div>
+
+        <div id="result-message"
+             class="result-message">
+            Jogador 1 venceu!
+        </div>
+
+        <div id="result-description"
+             class="result-description">
+        </div>
+
+        <div class="result-buttons">
+
+            <button id="popup-reset-btn"
+                    class="popup-reset-btn">
+                Jogar Novamente
+            </button>
+
+            <button id="popup-home-btn"
+                    class="popup-home-btn">
+                Voltar à Tela Inicial
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ==================================================
+     JOGO
+================================================== -->
+
+<main id="game-container"
+      class="game-container">
+
+    <h1>
+
+        <span>
+            Lig 4
+        </span>
+
+        <small>
+            CHAOS
+        </small>
+
+    </h1>
+
+
+    <!-- STATUS -->
+
+    <div id="status"
+         class="status-turn player1-turn">
+
+        <span>
+            Vez de
+        </span>
+
+        <span id="player-num">
+            Jogador 1
+        </span>
+
+    </div>
+
+
+    <!-- PARTIDAS -->
+
+    <div class="match-counter">
+
+        PARTIDA
+
+        <span id="current-match">
+            1
+        </span>
+
+        /
+
+        <span id="total-matches">
+            1
+        </span>
+
+    </div>
+
+
+    <!-- ÁREA PRINCIPAL -->
+
+    <div class="game-area">
+
+        <!-- PLACAR -->
+
+        <aside class="score-panel">
+
+            <div class="score-trophy">
+
+                <div class="trophy-glow">
+                    🏆
+                </div>
+
+            </div>
+
+            <div class="score-title">
+                PLACAR
+            </div>
+
+
+            <!-- JOGADOR 1 -->
+
+            <div id="player1-score"
+                 class="score-player score-player-1">
+
+                <div id="player1-score-ball"
+                     class="score-ball blue">
+                </div>
+
+                <div class="score-player-name"
+                     id="score-player1-name">
+                    Jogador 1
+                </div>
+
+                <div class="score-wins"
+                     id="player1-wins">
+                    0 VITÓRIAS
+                </div>
+
+            </div>
+
+
+            <!-- JOGADOR 2 -->
+
+            <div id="player2-score"
+                 class="score-player score-player-2">
+
+                <div id="player2-score-ball"
+                     class="score-ball red">
+                </div>
+
+                <div class="score-player-name"
+                     id="score-player2-name">
+                    Jogador 2
+                </div>
+
+                <div class="score-wins"
+                     id="player2-wins">
+                    0 VITÓRIAS
+                </div>
+
+            </div>
+
+
+            <!-- EMPATES -->
+
+            <div class="draw-score">
+
+                <div class="score-icon">
+                    🤝
+                </div>
+
+                <div class="score-player-name">
+                    EMPATES
+                </div>
+
+                <div class="score-wins"
+                     id="draw-wins">
+                    0
+                </div>
+
+            </div>
+
+        </aside>
+
+
+        <!-- TABULEIRO -->
+
+        <div class="board-wrapper">
+
+            <div class="board-area">
+
+                <div id="floating-piece"
+                     class="floating-piece player1-piece">
+                </div>
+
+                <div id="column-indicator"
+                     class="column-indicator">
+                    ▼
+                </div>
+
+                <div id="board"
+                     class="board turn-player1">
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- HABILIDADES -->
+
+        <aside class="skills-panel">
+
+            <div class="powers-title">
+                ⚡ HABILIDADES
+            </div>
+
+            <div class="powers">
+
+                <!-- BOMBA -->
+
+                <button id="power-bomb"
+                        class="power-btn bomb"
+                        data-power="bomb">
+
+                    <div class="power-main">
+
+                        <span class="power-key">
+                            Q
+                        </span>
+
+                        <span class="power-icon">
+                            💣
+                        </span>
+
+                        <span class="power-name">
+                            Bomba
+                        </span>
+
+                    </div>
+
+                    <div class="power-description">
+                        Explode 1 peça do adversário.
+                    </div>
+
+                    <span class="power-count">
+                        1
+                    </span>
+
+                </button>
+
+
+                <!-- INVERSÃO -->
+
+                <button id="power-flip"
+                        class="power-btn flip"
+                        data-power="flip">
+
+                    <div class="power-main">
+
+                        <span class="power-key">
+                            W
+                        </span>
+
+                        <span class="power-icon">
+                            🔄
+                        </span>
+
+                        <span class="power-name">
+                            Inversão
+                        </span>
+
+                    </div>
+
+                    <div class="power-description">
+                        Deixa o tabuleiro de ponta cabeça.
+                    </div>
+
+                    <span class="power-count">
+                        1
+                    </span>
+
+                </button>
+
+
+                <!-- GELO -->
+
+                <button id="power-ice"
+                        class="power-btn ice"
+                        data-power="ice">
+
+                    <div class="power-main">
+
+                        <span class="power-key">
+                            E
+                        </span>
+
+                        <span class="power-icon">
+                            🧊
+                        </span>
+
+                        <span class="power-name">
+                            Gelo
+                        </span>
+
+                    </div>
+
+                    <div class="power-description">
+                        Congela uma coluna por 1 turno.
+                    </div>
+
+                    <span class="power-count">
+                        1
+                    </span>
+
+                </button>
+
+
+                <!-- ELÉTRICA -->
+
+                <button id="power-electric"
+                        class="power-btn electric"
+                        data-power="electric">
+
+                    <div class="power-main">
+
+                        <span class="power-key">
+                            R
+                        </span>
+
+                        <span class="power-icon">
+                            ⚡
+                        </span>
+
+                        <span class="power-name">
+                            Elétrica
+                        </span>
+
+                    </div>
+
+                    <div class="power-description">
+                        Rouba 1 peça do adversário.
+                    </div>
+
+                    <span class="power-count">
+                        1
+                    </span>
+
+                </button>
+
+            </div>
+
+
+            <div id="power-help"
+                 class="power-help">
+
+                Q W E R usam habilidades • ESPAÇO solta a peça
+
+            </div>
+
+        </aside>
+
+    </div>
+
+
+    <!-- CONTROLES -->
+
+    <div class="bottom-controls">
+
+        <div class="bottom-action-buttons">
+
+            <button id="reset-btn"
+                    class="reset-btn">
+                Reiniciar Jogo
+            </button>
+
+            <button id="exit-match-btn"
+                    class="exit-match-btn"
+                    type="button">
+                Sair da Partida
+            </button>
+
+        </div>
+
+        <div class="keyboard-hint">
+
+            <strong>← →</strong>
+            ou
+            <strong>A D</strong>
+            movimentar
+
+            <span>•</span>
+
+            <strong>ESPAÇO</strong>
+            soltar
+
+            <span>•</span>
+
+            <strong>Q W E R</strong>
+            habilidades
+
+            <span>•</span>
+
+            <strong>ENTER</strong>
+            reiniciar
+
+        </div>
+
+    </div>
+
+</main>
+
+
+<script src="script.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+<script src="online.js"></script>
+
+</body>
+</html>
