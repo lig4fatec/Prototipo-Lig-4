@@ -1,0 +1,791 @@
+
+/* ===== Paleta estilo Battle Royale ===== */
+.profile-screen {
+  --h-bg-1: #12062e;
+  --h-bg-2: #1b0f5c;
+  --h-bg-3: #0b2a7a;
+  --h-yellow: #ffd400;
+  --h-yellow-2: #ff9d00;
+  --h-cyan: #3de8ff;
+  --h-purple: #8b3dff;
+  --h-pink: #ff3d9a;
+  --h-text: #ffffff;
+
+  position: relative;
+  min-height: 100vh;
+  color: var(--h-text);
+  background:
+    radial-gradient(circle at 15% 20%, rgba(139, 61, 255, 0.55), transparent 45%),
+    radial-gradient(circle at 85% 80%, rgba(61, 232, 255, 0.35), transparent 45%),
+    linear-gradient(135deg, var(--h-bg-1), var(--h-bg-2) 55%, var(--h-bg-3));
+  overflow-x: hidden;
+}
+
+.profile-screen::before {
+  content: "";
+  position: fixed;
+  inset: -50%;
+  z-index: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(255, 255, 255, 0.035) 0 28px,
+    transparent 28px 64px
+  );
+  animation: profile-stripes 18s linear infinite;
+}
+
+/* ===== Discos decorativos ===== */
+.profile-screen .home-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.profile-screen .home-bg__disc {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.85;
+  box-shadow: inset -8px -8px 0 rgba(0, 0, 0, 0.25), 0 0 40px currentColor;
+  animation: profile-float 7s ease-in-out infinite;
+}
+
+.profile-screen .home-bg__disc--1 {
+  width: 90px;
+  height: 90px;
+  top: 12%;
+  left: 22%;
+  color: var(--h-yellow);
+  background: var(--h-yellow);
+}
+
+.profile-screen .home-bg__disc--2 {
+  width: 64px;
+  height: 64px;
+  top: 68%;
+  left: 16%;
+  color: var(--h-pink);
+  background: var(--h-pink);
+  animation-delay: -2s;
+}
+
+.profile-screen .home-bg__disc--3 {
+  width: 110px;
+  height: 110px;
+  top: 18%;
+  right: 8%;
+  color: var(--h-cyan);
+  background: var(--h-cyan);
+  animation-delay: -4s;
+}
+
+.profile-screen .home-bg__disc--4 {
+  width: 72px;
+  height: 72px;
+  top: 75%;
+  right: 14%;
+  color: var(--h-yellow);
+  background: var(--h-yellow);
+  animation-delay: -1s;
+}
+
+/* ===== Barra lateral ===== */
+.profile-screen .app-sidebar {
+  z-index: 2;
+  background: linear-gradient(180deg, #1a0b3d, #0b1a4a);
+  border-right: 4px solid var(--h-yellow);
+  box-shadow: 6px 0 30px rgba(139, 61, 255, 0.45);
+}
+
+.profile-screen .app-sidebar__wordmark {
+  font-family: "Lilita One", Impact, sans-serif;
+  font-style: italic;
+  letter-spacing: 0.04em;
+  color: var(--h-yellow);
+  text-shadow: 2px 2px 0 #000;
+}
+
+.profile-screen .app-sidebar__link {
+  color: #fff;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.profile-screen .app-sidebar__link:hover {
+  transform: translateX(4px) skewX(-6deg);
+  background: rgba(255, 212, 0, 0.18);
+  color: var(--h-yellow);
+}
+
+.profile-screen .app-sidebar__link[aria-current="page"] {
+  background: linear-gradient(90deg, var(--h-yellow), var(--h-yellow-2));
+  color: #1a0b3d;
+  transform: skewX(-6deg);
+  box-shadow: 0 0 18px rgba(255, 212, 0, 0.6);
+}
+
+/* ===== Layout principal ===== */
+.profile-screen .profile-main {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 1.5rem;
+  align-content: start;
+  width: calc(100% - 248px);
+  max-width: 1450px;
+  margin-left: 248px;
+  padding: 3rem;
+  box-sizing: border-box;
+}
+
+.profile-screen .screen-heading {
+  display: grid;
+  justify-items: start;
+  gap: 0.75rem;
+}
+
+.profile-screen .profile-kicker {
+  display: inline-block;
+  margin: 0;
+  padding: 0.35rem 1.1rem;
+  background: var(--h-pink);
+  color: #fff;
+  font-family: "Lilita One", Impact, sans-serif;
+  font-size: 0.95rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transform: skewX(-12deg) rotate(-2deg);
+  box-shadow: 4px 4px 0 #000;
+}
+
+.profile-screen h1 {
+  margin: 0;
+  font-family: "Lilita One", Impact, sans-serif;
+  font-size: 2.25rem;
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1.15;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 3px 3px 0 var(--h-purple), 6px 6px 0 rgba(0, 0, 0, 0.55);
+}
+
+.profile-screen h2 {
+  margin: 0;
+  font-family: "Lilita One", Impact, sans-serif;
+  font-size: 1.35rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--h-yellow);
+  text-shadow: 2px 2px 0 #000;
+}
+
+.profile-screen h3 {
+  margin: 0 0 0.25rem;
+  font-family: "Lilita One", Impact, sans-serif;
+  font-size: 1.05rem;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--h-cyan);
+  text-shadow: 2px 2px 0 #000;
+}
+
+/* ===== Abas ===== */
+.profile-screen .profile-view-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.profile-screen .ui-tab {
+  min-height: 48px;
+  padding: 0.5rem 1.5rem;
+  background: #fff;
+  color: #1a0b3d;
+  border: 3px solid #000;
+  border-radius: 6px;
+  box-shadow: 4px 4px 0 #000;
+  font-family: "Lilita One", Impact, sans-serif;
+  font-size: 1.05rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transform: skewX(-6deg);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+.profile-screen .ui-tab:hover {
+  transform: skewX(-6deg) translate(-2px, -2px);
+  box-shadow: 6px 6px 0 #000;
+  filter: brightness(1.05);
+}
+
+.profile-screen .ui-tab[aria-selected="true"] {
+  background: linear-gradient(135deg, var(--h-yellow), var(--h-yellow-2));
+  box-shadow: 4px 4px 0 #000, 0 0 18px rgba(255, 212, 0, 0.5);
+}
+
+.profile-screen .ui-tab:focus-visible {
+  outline: 4px solid var(--h-cyan);
+  outline-offset: 4px;
+}
+
+/* ===== Layout dos painéis: informações à esquerda e avatar à direita ===== */
+.profile-screen .profile-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.8fr);
+  align-items: start;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.profile-screen .profile-panel {
+  display: grid;
+  gap: 1.5rem;
+  align-content: start;
+  min-width: 0;
+}
+
+.profile-screen .profile-panel:focus-visible {
+  outline: 4px solid var(--h-cyan);
+  outline-offset: 4px;
+}
+
+/* O painel de dados fica na coluna esquerda */
+.profile-screen .profile-data {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+/* A prévia fica na coluna direita */
+.profile-screen .profile-preview-panel {
+  grid-column: 2;
+  grid-row: 1;
+  align-content: start;
+  position: sticky;
+  top: 2rem;
+}
+
+/* ===== Seções e cartões ===== */
+.profile-screen .profile-section,
+.profile-screen .ui-card {
+  display: grid;
+  gap: 1.25rem;
+  padding: 2rem;
+  background: linear-gradient(160deg, rgba(26, 11, 61, 0.92), rgba(11, 26, 74, 0.92));
+  border: 4px solid #000;
+  border-radius: 6px;
+  box-shadow: 8px 8px 0 #000, 0 0 40px rgba(139, 61, 255, 0.35);
+  color: var(--h-text);
+  min-width: 0;
+}
+
+.profile-screen .profile-form {
+  display: grid;
+  gap: 1.25rem;
+}
+
+/* ===== Campos de formulário ===== */
+.profile-screen .form-field {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.profile-screen .form-field__label,
+.profile-screen .profile-color-field legend {
+  font-family: "Lilita One", Impact, sans-serif;
+  font-size: 1.1rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--h-cyan);
+  text-shadow: 2px 2px 0 #000;
+}
+
+.profile-screen .profile-color-field {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+/* ===== Entradas de texto ===== */
+.profile-screen input[type="text"],
+.profile-screen textarea {
+  display: block;
+  width: 100%;
+  min-height: 52px;
+  padding: 0.65rem 1rem;
+  box-sizing: border-box;
+
+  background: rgba(0, 0, 0, 0.25);
+  color: #ffffff;
+
+  border: 3px solid #000;
+  border-radius: 6px;
+
+  box-shadow: none;
+  outline: none;
+
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 800;
+
+  transition: background 0.15s ease;
+}
+
+.profile-screen textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+/* Foco: sem segundo contorno */
+.profile-screen input[type="text"]:focus,
+.profile-screen textarea:focus,
+.profile-screen input[type="text"]:focus-visible,
+.profile-screen textarea:focus-visible {
+  background: rgba(0, 0, 0, 0.35);
+  border: 3px solid #000;
+  outline: none;
+  box-shadow: none;
+}
+
+/* Campo inválido */
+.profile-screen input[aria-invalid="true"],
+.profile-screen textarea[aria-invalid="true"] {
+  border: 3px solid var(--h-pink);
+  outline: none;
+  box-shadow: none;
+}
+
+.profile-screen .form-field__error {
+  min-height: 0;
+  margin: 0;
+  color: #ff7aa8;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.profile-screen .form-field__error:empty {
+  display: none;
+}
+
+.profile-screen .profile-form-status {
+  margin: 0;
+  font-weight: 800;
+  color: var(--h-cyan);
+}
+
+.profile-screen .profile-form-status:empty {
+  display: none;
+}
+
+/* ===== Botões ===== */
+.profile-screen .button {
+  position: relative;
+  display: inline-flex;
+  min-height: 56px;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  border: 4px solid #000;
+  border-radius: 6px;
+  font-family: "Lilita One", Impact, sans-serif;
+  font-size: 1.15rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  text-transform: uppercase;
+  cursor: pointer;
+  transform: skewX(-6deg);
+  box-shadow: 6px 6px 0 #000;
+  overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+.profile-screen .button::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  transform: skewX(-20deg);
+  transition: left 0.55s ease;
+  pointer-events: none;
+}
+
+.profile-screen .button:hover:not(:disabled)::after {
+  left: 130%;
+}
+
+.profile-screen .button:hover:not(:disabled),
+.profile-screen .button:focus-visible {
+  transform: skewX(-6deg) translate(-3px, -3px) scale(1.02);
+  box-shadow: 9px 9px 0 #000;
+  filter: brightness(1.08);
+}
+
+.profile-screen .button:active:not(:disabled) {
+  transform: skewX(-6deg) translate(3px, 3px);
+  box-shadow: 2px 2px 0 #000;
+}
+
+.profile-screen .button:focus-visible {
+  outline: 4px solid var(--h-cyan);
+  outline-offset: 4px;
+}
+
+.profile-screen .button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  filter: grayscale(0.6);
+  box-shadow: 3px 3px 0 #000;
+}
+
+.profile-screen .button-primary-light {
+  background: linear-gradient(135deg, var(--h-yellow), var(--h-yellow-2));
+  color: #1a0b3d;
+}
+
+.profile-screen .button-primary-dark {
+  background: linear-gradient(135deg, var(--h-purple), #4a1fd1);
+  color: #fff;
+}
+
+.profile-screen .profile-save {
+  justify-self: start;
+}
+
+/* ===== Segurança ===== */
+.profile-screen .profile-security-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: rgba(0, 0, 0, 0.35);
+  border: 3px solid #000;
+  border-radius: 6px;
+}
+
+.profile-screen .profile-security-row p {
+  margin: 0;
+  font-weight: 700;
+  opacity: 0.9;
+  overflow-wrap: anywhere;
+}
+
+.profile-screen .profile-security-row > span {
+  padding: 0.25rem 0.75rem;
+  background: var(--h-pink);
+  color: #fff;
+  border: 2px solid #000;
+  box-shadow: 3px 3px 0 #000;
+  font-family: "Lilita One", Impact, sans-serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transform: skewX(-10deg);
+}
+
+/* ===== Cores das peças ===== */
+.profile-screen .color-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+:where(.profile-screen .color-picker > *) {
+  cursor: pointer;
+}
+
+.profile-screen .color-picker > [aria-pressed="true"],
+.profile-screen .color-picker > [aria-checked="true"],
+.profile-screen .color-picker > .is-selected,
+.profile-screen .color-picker > .is-active,
+.profile-screen .color-picker > :has(input:checked) {
+  outline: 4px solid var(--h-cyan);
+  outline-offset: 3px;
+  border-radius: 50%;
+}
+
+.profile-screen .color-picker__swatch {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  border: 3px solid #000;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow: inset -5px -5px 0 rgba(0, 0, 0, 0.25), 3px 3px 0 #000;
+}
+
+.profile-screen .color-picker__swatch[data-color="blue"] {
+  background: #2f7bff;
+}
+
+.profile-screen .color-picker__swatch[data-color="red"] {
+  background: #ff3b3b;
+}
+
+.profile-screen .color-picker__swatch[data-color="yellow"] {
+  background: var(--h-yellow);
+}
+
+.profile-screen .color-picker__swatch[data-color="green"] {
+  background: #2fd45a;
+}
+
+.profile-screen .color-picker__swatch[data-color="purple"] {
+  background: var(--h-purple);
+}
+
+.profile-screen .color-picker__swatch[data-color="pink"] {
+  background: var(--h-pink);
+}
+
+.profile-screen .color-picker__swatch[data-color="orange"] {
+  background: var(--h-yellow-2);
+}
+
+.profile-screen .color-picker__swatch[data-color="cyan"] {
+  background: var(--h-cyan);
+}
+
+.profile-screen .color-picker__swatch[data-color="empty"] {
+  background: transparent;
+  border-style: dashed;
+  box-shadow: none;
+}
+
+/* ===== Prévia do perfil / Avatar ===== */
+.profile-screen .profile-preview {
+  justify-items: center;
+  align-content: start;
+  text-align: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.profile-screen .profile-avatar {
+  display: grid;
+  width: 120px;
+  height: 120px;
+  place-items: center;
+  background: linear-gradient(135deg, var(--h-yellow), var(--h-yellow-2));
+  color: #1a0b3d;
+  border: 4px solid #000;
+  border-radius: 50%;
+  box-shadow: 5px 5px 0 #000, 0 0 24px rgba(255, 212, 0, 0.5);
+}
+
+.profile-screen .profile-avatar svg {
+  width: 72px;
+  height: 72px;
+}
+
+.profile-screen .profile-preview h2 {
+  font-size: 1.9rem;
+  overflow-wrap: anywhere;
+}
+
+.profile-screen .profile-preview-name {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.profile-screen .profile-preview-bio {
+  max-width: 48ch;
+  margin: 0;
+  font-weight: 700;
+  opacity: 0.9;
+  overflow-wrap: anywhere;
+}
+
+.profile-screen .profile-preview-name:empty,
+.profile-screen .profile-preview-bio:empty {
+  display: none;
+}
+
+.profile-screen .profile-preview-color {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  font-weight: 800;
+  flex-wrap: wrap;
+}
+
+.profile-screen .profile-preview-color strong {
+  color: var(--h-yellow);
+}
+
+/* ===== Estatísticas ===== */
+.profile-screen .profile-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  width: 100%;
+  margin: 0;
+}
+
+.profile-screen .profile-stats > div {
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.35);
+  border: 3px solid #000;
+  border-radius: 6px;
+  box-shadow: 4px 4px 0 #000;
+  min-width: 0;
+}
+
+.profile-screen .profile-stats dt {
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.profile-screen .profile-stats dd {
+  margin: 0.25rem 0 0;
+  font-family: "Lilita One", Impact, sans-serif;
+  font-size: 2.25rem;
+  color: var(--h-yellow);
+  text-shadow: 3px 3px 0 #000;
+}
+
+/* ===== Atalhos ===== */
+.profile-screen .profile-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.profile-screen .profile-shortcuts .button {
+  flex: 1 1 auto;
+}
+
+/* ===== Animações ===== */
+@keyframes profile-stripes {
+  to {
+    transform: translate(64px, 64px);
+  }
+}
+
+@keyframes profile-float {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+
+  50% {
+    transform: translateY(-24px) rotate(8deg);
+  }
+}
+
+/* ===== Acessibilidade ===== */
+@media (prefers-reduced-motion: reduce) {
+  .profile-screen::before,
+  .profile-screen .home-bg__disc {
+    animation: none;
+  }
+
+  .profile-screen .button,
+  .profile-screen .button::after,
+  .profile-screen .ui-tab {
+    transition: none;
+  }
+}
+
+/* ===== Telas intermediárias ===== */
+@media (max-width: 1050px) {
+  .profile-screen .profile-main {
+    padding: 2rem;
+  }
+
+  .profile-screen .profile-layout {
+    grid-template-columns: minmax(0, 1.2fr) minmax(250px, 0.8fr);
+    gap: 1.25rem;
+  }
+
+  .profile-screen .profile-section,
+  .profile-screen .ui-card {
+    padding: 1.5rem;
+  }
+
+  .profile-screen .profile-security-row {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .profile-screen .profile-security-row > span {
+    justify-self: start;
+  }
+}
+
+/* ===== Celular ===== */
+@media (max-width: 700px) {
+  .profile-screen .profile-main {
+    width: 100%;
+    margin-left: 0;
+    padding: 2rem 1.25rem;
+  }
+
+  .profile-screen h1 {
+    font-size: 1.6rem;
+  }
+
+  .profile-screen .profile-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .profile-screen .profile-data {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .profile-screen .profile-preview-panel {
+    grid-column: 1;
+    grid-row: 2;
+    position: static;
+  }
+
+  .profile-screen .profile-section,
+  .profile-screen .ui-card {
+    padding: 1.25rem;
+    box-shadow: 5px 5px 0 #000;
+  }
+
+  .profile-screen .profile-security-row {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-screen .profile-security-row > span {
+    justify-self: start;
+  }
+
+  .profile-screen .button {
+    min-height: 50px;
+    font-size: 1rem;
+    box-shadow: 4px 4px 0 #000;
+  }
+
+  .profile-screen .profile-save,
+  .profile-screen .profile-shortcuts .button {
+    width: 100%;
+    flex: 1 1 100%;
+  }
+
+  .profile-screen .home-bg__disc--1,
+  .profile-screen .home-bg__disc--3 {
+    width: 60px;
+    height: 60px;
+  }
+}

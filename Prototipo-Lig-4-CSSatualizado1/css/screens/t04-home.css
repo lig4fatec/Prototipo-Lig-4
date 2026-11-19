@@ -1,0 +1,353 @@
+/* ===== Paleta estilo "battle royale" ===== */
+.home-screen {
+  --h-bg-1: #12062e;
+  --h-bg-2: #1b0f5c;
+  --h-bg-3: #0b2a7a;
+  --h-yellow: #ffd400;
+  --h-yellow-2: #ff9d00;
+  --h-cyan: #3de8ff;
+  --h-purple: #8b3dff;
+  --h-pink: #ff3d9a;
+  --h-text: #ffffff;
+
+  position: relative;
+  min-height: 100vh;
+  color: var(--h-text);
+  background:
+    radial-gradient(circle at 15% 20%, rgba(139, 61, 255, 0.55), transparent 45%),
+    radial-gradient(circle at 85% 80%, rgba(61, 232, 255, 0.35), transparent 45%),
+    linear-gradient(135deg, var(--h-bg-1), var(--h-bg-2) 55%, var(--h-bg-3));
+  overflow-x: hidden;
+}
+
+/* listras diagonais animadas */
+.home-screen::before {
+  content: "";
+  position: fixed;
+  inset: -50%;
+  z-index: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(255, 255, 255, 0.035) 0 28px,
+    transparent 28px 64px
+  );
+  animation: home-stripes 18s linear infinite;
+}
+
+/* ===== Discos decorativos (peças do LIG-4) ===== */
+.home-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.home-bg__disc {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.85;
+  box-shadow: inset -8px -8px 0 rgba(0, 0, 0, 0.25), 0 0 40px currentColor;
+  animation: home-float 7s ease-in-out infinite;
+}
+
+.home-bg__disc--1 { width: 90px;  height: 90px;  top: 12%; left: 22%;  color: var(--h-yellow); background: var(--h-yellow); }
+.home-bg__disc--2 { width: 64px;  height: 64px;  top: 68%; left: 16%;  color: var(--h-pink);   background: var(--h-pink);   animation-delay: -2s; }
+.home-bg__disc--3 { width: 110px; height: 110px; top: 18%; right: 8%;  color: var(--h-cyan);   background: var(--h-cyan);   animation-delay: -4s; }
+.home-bg__disc--4 { width: 72px;  height: 72px;  top: 75%; right: 14%; color: var(--h-yellow); background: var(--h-yellow); animation-delay: -1s; }
+
+/* ===== Barra lateral ===== */
+.home-screen .app-sidebar {
+  z-index: 2;
+  background: linear-gradient(180deg, #1a0b3d, #0b1a4a);
+  border-right: 4px solid var(--h-yellow);
+  box-shadow: 6px 0 30px rgba(139, 61, 255, 0.45);
+}
+
+.home-screen .app-sidebar__wordmark {
+  font-family: "Lilita One", Impact, sans-serif;
+  font-style: italic;
+  letter-spacing: 0.04em;
+  color: var(--h-yellow);
+  text-shadow: 2px 2px 0 #000;
+}
+
+.home-screen .app-sidebar__link {
+  color: #fff;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.home-screen .app-sidebar__link:hover {
+  transform: translateX(4px) skewX(-6deg);
+  background: rgba(255, 212, 0, 0.18);
+  color: var(--h-yellow);
+}
+
+.home-screen .app-sidebar__link[aria-current="page"] {
+  background: linear-gradient(90deg, var(--h-yellow), var(--h-yellow-2));
+  color: #1a0b3d;
+  transform: skewX(-6deg);
+  box-shadow: 0 0 18px rgba(255, 212, 0, 0.6);
+}
+
+/* ===== Conteúdo ===== */
+.home-main {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  margin-left: 248px;
+  padding: 3rem;
+}
+
+.home-content {
+  width: min(100%, 720px);
+  text-align: center;
+}
+
+.home-brand {
+  display: grid;
+  justify-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  color: var(--h-yellow);
+  font-family: "Lilita One", Impact, sans-serif;
+  font-size: 3rem;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  text-shadow: 4px 4px 0 #000, 0 0 30px rgba(255, 212, 0, 0.55);
+}
+
+.home-brand img {
+  width: 96px;
+  height: 96px;
+  filter: drop-shadow(0 0 18px rgba(61, 232, 255, 0.8));
+  animation: home-bob 3.2s ease-in-out infinite;
+}
+
+.home-kicker {
+  display: inline-block;
+  margin: 0 0 0.75rem;
+  padding: 0.35rem 1.1rem;
+  background: var(--h-pink);
+  color: #fff;
+  font-family: "Lilita One", Impact, sans-serif;
+  font-size: 0.95rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transform: skewX(-12deg) rotate(-2deg);
+  box-shadow: 4px 4px 0 #000;
+}
+
+.home-content h1 {
+  margin: 0;
+  font-family: "Lilita One", Impact, sans-serif;
+  font-size: 2.25rem;
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1.15;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 3px 3px 0 var(--h-purple), 6px 6px 0 rgba(0, 0, 0, 0.55);
+}
+
+/* ===== Botões de ação ===== */
+.home-actions {
+  display: grid;
+  gap: 1.25rem;
+  margin-top: 2rem;
+}
+
+.home-screen .home-action {
+  position: relative;
+  display: flex;
+  min-height: 96px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.75rem;
+  border: 4px solid #000;
+  border-radius: 6px;
+  text-align: left;
+  text-decoration: none;
+  white-space: normal;
+  transform: skewX(-6deg);
+  box-shadow: 8px 8px 0 #000;
+  overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+/* brilho que passa ao passar o mouse */
+.home-screen .home-action::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  transform: skewX(-20deg);
+  transition: left 0.55s ease;
+}
+
+.home-screen .home-action:hover::after {
+  left: 130%;
+}
+
+.home-screen .home-action:hover,
+.home-screen .home-action:focus-visible {
+  transform: skewX(-6deg) translate(-4px, -4px) scale(1.02);
+  box-shadow: 12px 12px 0 #000;
+  filter: brightness(1.08);
+}
+
+.home-screen .home-action:active {
+  transform: skewX(-6deg) translate(4px, 4px);
+  box-shadow: 3px 3px 0 #000;
+}
+
+.home-screen .home-action:focus-visible {
+  outline: 4px solid var(--h-cyan);
+  outline-offset: 4px;
+}
+
+.home-screen .home-action--play {
+  background: linear-gradient(135deg, var(--h-yellow), var(--h-yellow-2));
+  color: #1a0b3d;
+}
+
+.home-screen .home-action--profile {
+  background: linear-gradient(135deg, var(--h-purple), #4a1fd1);
+  color: #fff;
+  border-color: #000;
+}
+
+/* desfaz a inclinação do texto para continuar legível */
+.home-action__copy {
+  display: grid;
+  gap: 0.375rem;
+  transform: skewX(6deg);
+}
+
+.home-action__copy strong {
+  font-family: "Lilita One", Impact, sans-serif;
+  font-size: 1.5rem;
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.home-action__copy small {
+  font-size: 0.9rem;
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+.home-action__arrow {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 3px solid #000;
+  border-radius: 50%;
+  background: #fff;
+  color: #1a0b3d;
+  font-size: 1.6rem;
+  font-weight: 900;
+  transform: skewX(6deg);
+  transition: transform 0.15s ease;
+}
+
+.home-screen .home-action:hover .home-action__arrow {
+  transform: skewX(6deg) translateX(6px);
+}
+
+.home-action__arrow svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* ===== Animações ===== */
+@keyframes home-stripes {
+  to { transform: translate(64px, 64px); }
+}
+
+@keyframes home-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-24px) rotate(8deg); }
+}
+
+@keyframes home-bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-8px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-screen::before,
+  .home-bg__disc,
+  .home-brand img {
+    animation: none;
+  }
+
+  .home-screen .home-action,
+  .home-screen .home-action::after {
+    transition: none;
+  }
+}
+
+/* ===== Celular ===== */
+@media (max-width: 700px) {
+  .home-screen .home-main {
+    margin-left: 0;
+  }
+
+  .home-main {
+    min-height: calc(100vh - 132px);
+    margin-left: 0;
+    padding: 2rem 1.25rem;
+  }
+
+  .home-content {
+    width: min(100%, 560px);
+  }
+
+  .home-brand {
+    margin-bottom: 1.25rem;
+    font-size: 2.25rem;
+  }
+
+  .home-brand img {
+    width: 80px;
+    height: 80px;
+  }
+
+  .home-content h1 {
+    font-size: 1.6rem;
+  }
+
+  .home-screen .home-action {
+    min-height: 84px;
+    padding: 1rem 1.25rem;
+    box-shadow: 5px 5px 0 #000;
+  }
+
+  .home-action__copy strong {
+    font-size: 1.2rem;
+  }
+
+  .home-action__arrow {
+    width: 40px;
+    height: 40px;
+  }
+
+  .home-bg__disc--1,
+  .home-bg__disc--3 {
+    width: 60px;
+    height: 60px;
+  }
+}
