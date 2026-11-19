@@ -528,35 +528,31 @@
 }
 
 .profile-screen .color-picker__swatch[data-color="blue"] {
-  background: #2f7bff;
+  background: var(--game-color-blue);
 }
 
 .profile-screen .color-picker__swatch[data-color="red"] {
-  background: #ff3b3b;
+  background: var(--game-color-red);
 }
 
 .profile-screen .color-picker__swatch[data-color="yellow"] {
-  background: var(--h-yellow);
+  background: var(--game-color-yellow);
 }
 
 .profile-screen .color-picker__swatch[data-color="green"] {
-  background: #2fd45a;
+  background: var(--game-color-green);
 }
 
 .profile-screen .color-picker__swatch[data-color="purple"] {
-  background: var(--h-purple);
-}
-
-.profile-screen .color-picker__swatch[data-color="pink"] {
-  background: var(--h-pink);
+  background: var(--game-color-purple);
 }
 
 .profile-screen .color-picker__swatch[data-color="orange"] {
-  background: var(--h-yellow-2);
+  background: var(--game-color-orange);
 }
 
-.profile-screen .color-picker__swatch[data-color="cyan"] {
-  background: var(--h-cyan);
+.profile-screen .color-picker__swatch[data-color="brown"] {
+  background: var(--game-color-brown);
 }
 
 .profile-screen .color-picker__swatch[data-color="empty"] {

@@ -483,14 +483,13 @@
   box-shadow: inset -5px -5px 0 rgba(0, 0, 0, 0.25), 3px 3px 0 #000;
 }
 
-.rooms-screen .color-picker__swatch[data-color="blue"]   { background: #2f7bff; }
-.rooms-screen .color-picker__swatch[data-color="red"]    { background: #ff3b3b; }
-.rooms-screen .color-picker__swatch[data-color="yellow"] { background: var(--h-yellow); }
-.rooms-screen .color-picker__swatch[data-color="green"]  { background: #2fd45a; }
-.rooms-screen .color-picker__swatch[data-color="purple"] { background: var(--h-purple); }
-.rooms-screen .color-picker__swatch[data-color="pink"]   { background: var(--h-pink); }
-.rooms-screen .color-picker__swatch[data-color="orange"] { background: var(--h-yellow-2); }
-.rooms-screen .color-picker__swatch[data-color="cyan"]   { background: var(--h-cyan); }
+.rooms-screen .color-picker__swatch[data-color="blue"]   { background: var(--game-color-blue); }
+.rooms-screen .color-picker__swatch[data-color="red"]    { background: var(--game-color-red); }
+.rooms-screen .color-picker__swatch[data-color="yellow"] { background: var(--game-color-yellow); }
+.rooms-screen .color-picker__swatch[data-color="green"]  { background: var(--game-color-green); }
+.rooms-screen .color-picker__swatch[data-color="purple"] { background: var(--game-color-purple); }
+.rooms-screen .color-picker__swatch[data-color="orange"] { background: var(--game-color-orange); }
+.rooms-screen .color-picker__swatch[data-color="brown"]  { background: var(--game-color-brown); }
 .rooms-screen .color-picker__swatch[data-color="empty"]  { background: transparent; border-style: dashed; box-shadow: none; }
 
 /* ===== Escolha de tabuleiro ===== */
