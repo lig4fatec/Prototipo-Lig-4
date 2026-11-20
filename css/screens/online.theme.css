@@ -345,3 +345,38 @@
   width: min(100%, 680px);
   max-width: 680px;
 }
+
+/* Regras de tema e botões escopadas a #secao-partida */
+#secao-partida .button-danger {
+  background: var(--game-color-red);
+  color: var(--color-text);
+  border: 2px solid transparent;
+  font-family: var(--lig-font-display, "Fredoka", "DM Sans", sans-serif);
+}
+
+#secao-partida .button-danger:hover {
+  background: color-mix(in srgb, var(--game-color-red) 85%, #ffffff);
+  transform: translateY(-1px);
+}
+
+#secao-partida .button-danger:active {
+  transform: translateY(0);
+}
+
+#secao-partida .button-danger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+#secao-partida .button-secondary {
+  border: 2px solid transparent;
+  font-family: var(--lig-font-display, "Fredoka", "DM Sans", sans-serif);
+}
+
+#secao-partida .button-secondary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+

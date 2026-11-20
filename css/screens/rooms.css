@@ -247,15 +247,16 @@
 }
 
 .online-game-panel {
-  display: grid;
-  width: min(100%, 900px);
-  gap: 1rem;
+  width: min(100%, 1060px);
+  gap: 1.5rem;
   margin-inline: auto;
 }
 
+#secao-partida[hidden],
 .online-game-panel[hidden],
-.online-game-result[hidden] {
-  display: none;
+.online-game-result[hidden],
+#secao-partida [hidden] {
+  display: none !important;
 }
 
 .rooms-screen[data-current-section="partida"] .app-sidebar {
@@ -269,25 +270,30 @@
 
 .online-game-heading {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  justify-content: center;
+  text-align: center;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
 }
 
 .online-game-heading h1 {
   margin: 0;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--lig-font-display, Georgia, "Times New Roman", serif);
   font-size: 2rem;
+  text-align: center;
 }
 
 .online-game-pin,
 .online-game-turn {
-  margin: 0.25rem 0 0;
+  margin: 0.15rem 0 0;
   color: color-mix(in srgb, var(--color-text) 78%, transparent);
+  text-align: center;
 }
 
 .online-game-pin {
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
 }
 
 .online-game-pin strong {
@@ -298,7 +304,131 @@
 
 .online-game-turn {
   font-weight: 700;
-  text-align: right;
+  text-align: center;
+}
+
+/* Leiaute 3 colunas da partida */
+.online-game-layout {
+  display: grid;
+  grid-template-columns: minmax(180px, 220px) minmax(0, 1fr) minmax(180px, 220px);
+  gap: 1.25rem;
+  align-items: stretch;
+}
+
+/* Painéis laterais de jogador */
+.online-game-player-card {
+  --player-color: var(--game-color-blue);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 1rem;
+  border: 2px solid color-mix(in srgb, var(--color-text) 16%, transparent);
+  border-radius: 8px;
+  background: var(--color-button-dark);
+  color: var(--color-text);
+  opacity: 0.45;
+  transition: opacity 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.online-game-player-card[data-score-player="1"] {
+  --player-color: var(--game-color-blue);
+}
+
+.online-game-player-card[data-score-player="2"] {
+  --player-color: var(--game-color-red);
+}
+
+.online-game-player-card.is-active {
+  opacity: 1;
+  border-color: var(--player-color);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--player-color) 40%, transparent);
+}
+
+.online-game-player-card .player-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: center;
+}
+
+.online-game-player-card .player-name {
+  font-weight: 700;
+  font-size: 1.125rem;
+  color: var(--color-text);
+  word-break: break-word;
+}
+
+.online-game-player-card .player-clock {
+  font-family: var(--lig-font-display, "DM Sans", monospace);
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--player-color);
+}
+
+.online-game-player-card .player-powers {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+}
+
+.online-game-player-card .player-powers .is-used {
+  opacity: 0.35;
+  filter: grayscale(1);
+  text-decoration: line-through;
+  pointer-events: none;
+}
+
+/* Área central do tabuleiro e ações */
+.online-game-board-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.online-game-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.online-game-actions .button {
+  font-family: var(--lig-font-display, "DM Sans", sans-serif);
+}
+
+/* Container de Emotes centralizado e alinhamento do botão */
+.online-game-emotes-container {
+  display: grid;
+  grid-template-columns: minmax(180px, 220px) minmax(0, 1fr) minmax(180px, 220px);
+  gap: 1.25rem;
+  align-items: center;
+  width: 100%;
+}
+
+.online-game-emotes-container .online-game-emote-menu {
+  grid-column: 1;
+  justify-self: start;
+  margin: 0;
+  max-width: 100%;
+}
+
+.online-game-emotes-container .online-game-emote-toggle {
+  font-family: var(--lig-font-display, "DM Sans", sans-serif);
+}
+
+.online-game-emotes-container .online-game-emote-status {
+  grid-column: 2;
+  margin: 0;
+  text-align: center;
 }
 
 .online-game-score {
@@ -422,6 +552,40 @@
 .online-game-panel[data-current-player="1"] .online-game-player-score[data-score-player="1"],
 .online-game-panel[data-current-player="2"] .online-game-player-score[data-score-player="2"] {
   border-color: var(--color-primary);
+}
+
+@media (max-width: 900px) {
+  .online-game-layout {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .online-game-player-card[data-score-player="1"] {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .online-game-player-card[data-score-player="2"] {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .online-game-board-area {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+  }
+
+  .online-game-emotes-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .online-game-emotes-container .online-game-emote-menu {
+    justify-self: center;
+  }
 }
 
 @media (max-width: 1000px) {
