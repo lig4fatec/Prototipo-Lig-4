@@ -50,8 +50,10 @@ Prévia no lobby: mostra a cor e a skin do próprio jogador. O tabuleiro da part
 ## 6. Desistência
 
 - Qualquer jogador, em qualquer modo, pode desistir a qualquer momento da partida.
-- Interface: botão que abre modal de confirmação.
-- Efeito: partida encerra como derrota para quem desistiu.
+- Interface: botão Desistir abre modal de confirmação (Confirmar / Cancelar).
+- Efeito: quem desistiu perde; a fase vira `finished` e o resultado é exibido.
+- Não dá moedas (conforme a API: partida abandonada não conta e não gera moedas).
+- O resultado é exibido no painel `[data-game-result-panel]` já existente no markup.
 
 ## 7. Proposta de empate
 
