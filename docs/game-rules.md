@@ -87,9 +87,14 @@ Poderes:
 - Gravidade desligada: a casa removida fica vazia e as peças acima permanecem suspensas. A coluna continua jogável pela casa vazia mais baixa.
 - Vitória é avaliada apenas pela matriz do tabuleiro, então sequências formadas com peças suspensas contam normalmente.
 
-**Peça Extra (1000 moedas)** (antigo "Jogar 2x")
-- Permite jogar duas peças seguidas antes do adversário.
-- Não pode ser usado quando há apenas 1 espaço livre no tabuleiro.
+**Peça Extra (1000 moedas)**
+- Disponível apenas no modo Caos, uma vez por jogador por partida e somente na vez do próprio jogador.
+- Permite jogar uma segunda peça na mesma vez, antes de passar a vez.
+- Não pode ser usado se restar apenas 1 espaço livre no tabuleiro.
+- Se a primeira peça encerrar a partida (vitória ou empate), não há segunda jogada.
+- Se não houver coluna válida para a segunda peça (cheia ou congelada para o jogador), o turno termina normalmente, sem penalidade; o poder já foi gasto.
+- Não consome lances de bloqueio do Congelar Coluna, exceto quando a segunda peça é impedida por ele.
+- Na segunda peça, nenhum poder pode ser usado.
 
 ## 9. Moedas
 
