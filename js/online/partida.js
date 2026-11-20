@@ -6,7 +6,8 @@ import {
   publishState,
   requestRematch,
   sendEmote,
-  usarCongelarColuna,
+  usarCongelarColuna,  
+  usarQueimarPeca,
   watchRoom,
 } from "../services/rooms.js";
 import {
@@ -105,6 +106,7 @@ const gameErrorMessages = {
   PARTIDA_ENCERRADA: "Esta partida já terminou.",
   PODER_JA_USADO: "Você já usou este poder nesta partida.",
   PODER_INDISPONIVEL: "Este poder só está disponível no modo Caos.",
+  SEM_PECA_ADVERSARIA: "Não há peça do adversário nesta coluna.",
 };
 
 function playerNumberForRole(playerRole) {
@@ -375,6 +377,11 @@ function updateEmoteButtons() {
 }
 
 function renderPowerButtons() {
+  const powers = [
+    { id: "congelar-coluna", label: "Congelar coluna" },
+    { id: "queimar-peca", label: "Queimar peça" },
+  ];
+
   for (const [index, container] of powerElements.entries()) {
     if (!container) continue;
     if (room?.mode !== "caos") {
@@ -383,26 +390,28 @@ function renderPowerButtons() {
     }
 
     const playerNumber = index + 1;
-    const powerId = "congelar-coluna";
-    const used = (room.game?.poderesUsados?.[playerNumber] || []).includes(powerId);
     const isLocalPlayer = playerNumberForRole(role) === playerNumber;
     const isTurn = room.phase === "playing" && room.game?.turn === playerNumber;
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "button button-secondary";
-    button.textContent = "Congelar coluna";
-    button.disabled = used || !isLocalPlayer || !isTurn || moveInProgress;
-    button.setAttribute("aria-pressed", String(pendingPower === powerId && isLocalPlayer));
-    if (used) button.classList.add("is-used");
-    button.addEventListener("click", () => {
-      if (!room || room.phase !== "playing" || moveInProgress) return;
-      pendingPower = pendingPower === powerId ? null : powerId;
-      statusElement.textContent = pendingPower
-        ? "Clique em uma coluna para congelá-la."
-        : "";
-      renderPowerButtons();
+    const buttons = powers.map(power => {
+      const used = (room.game?.poderesUsados?.[playerNumber] || []).includes(power.id);
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "button button-secondary";
+      button.textContent = power.label;
+      button.disabled = used || !isLocalPlayer || !isTurn || moveInProgress;
+      button.setAttribute("aria-pressed", String(pendingPower === power.id && isLocalPlayer));
+      if (used) button.classList.add("is-used");
+      button.addEventListener("click", () => {
+        if (!room || room.phase !== "playing" || moveInProgress) return;
+        pendingPower = pendingPower === power.id ? null : power.id;
+        statusElement.textContent = pendingPower
+          ? "Clique em uma coluna para usar o poder."
+          : "";
+        renderPowerButtons();
+      });
+      return button;
     });
-    container.replaceChildren(button);
+    container.replaceChildren(...buttons);
   }
 }
 
@@ -548,6 +557,18 @@ async function dropInColumn(column) {
       await usarCongelarColuna({ pin: room.pin, role, coluna: column });
       pendingPower = null;
       statusElement.textContent = "Coluna congelada para o adversário.";
+    } catch (error) {
+      statusElement.textContent = gameErrorMessages[error.code] || getRoomErrorMessage(error.code);
+    }
+    renderPowerButtons();
+    return;
+  }
+
+  if (pendingPower === "queimar-peca") {
+    try {
+      await usarQueimarPeca({ pin: room.pin, role, coluna: column });
+      pendingPower = null;
+      statusElement.textContent = "Peça adversária removida.";
     } catch (error) {
       statusElement.textContent = gameErrorMessages[error.code] || getRoomErrorMessage(error.code);
     }
