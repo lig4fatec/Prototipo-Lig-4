@@ -302,6 +302,12 @@ function renderBoard() {
       cell.dataset.row = String(row);
       cell.dataset.column = String(column);
       cell.dataset.player = String(player);
+
+      const bloqueiosAtivos = room?.game?.bloqueios || [];
+      const frozen = room?.phase === "playing"
+        && colunaBloqueada(bloqueiosAtivos, column, room?.game?.turn);
+      cell.dataset.frozen = frozen && player === 0 ? "true" : "false";
+      
       // Futuras imagens de fichas serão escolhidas pelo modo e pelo papel.
       if (player !== 0) cell.dataset.discRole = player === 1 ? "owner" : "guest";
       cell.style.setProperty("--row", String(row));
@@ -316,6 +322,14 @@ function renderBoard() {
   const mayMove = room?.phase === "playing"
     && playerNumber === room.game?.turn
     && !moveInProgress;
+  const bloqueiosAtivos = room?.game?.bloqueios || [];
+  const playerNumberAtual = room?.game?.turn;
+  columnsElement.querySelectorAll("button").forEach(button => {
+    const coluna = Number(button.dataset.column);
+    const congelada = room?.phase === "playing"
+      && colunaBloqueada(bloqueiosAtivos, coluna, playerNumberAtual);
+    button.dataset.frozen = congelada ? "true" : "false";
+  });
   columnsElement.querySelectorAll("button").forEach(button => {
     button.disabled = !mayMove;
   });
