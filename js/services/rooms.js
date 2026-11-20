@@ -1,6 +1,6 @@
 import { isValidGameMode } from "../game/modes.js";
 import { linhaDeQueda } from "../game/board.js";
-import { aplicarCongelar, consumirBloqueio, passarVezSeBloqueado } from "../game/rules.js";
+import { aplicarCongelar, consumirBloqueio, passarVezSeBloqueado, removerPecaAdversaria } from "../game/rules.js";
 import { getInventory } from "./store.js";
 // MOCK DESCARTÁVEL. Persistência em localStorage apenas para desenvolvimento. Será removida quando o miolo for substituído pelo Firebase, mantendo as assinaturas.
 
@@ -468,6 +468,42 @@ export async function usarCongelarColuna({ pin, role, coluna } = {}) {
     [jogador]: [...(poderesUsados[jogador] || []), "congelar-coluna"],
   };
   room.game = nextGame;
+  writeRooms(rooms);
+  notifyRoom(pin);
+  return { pin, coluna, jogador };
+}
+
+export async function usarQueimarPeca({ pin, role, coluna } = {}) {
+  await yieldMock();
+  validatePin(pin);
+  const rooms = readRooms();
+  const room = rooms.get(pin);
+  if (!room) throw roomError("PIN_NAO_ENCONTRADO");
+  if (room.phase !== "playing") throw roomError("FASE_INVALIDA");
+  if (room.mode !== "caos") throw roomError("PODER_INDISPONIVEL");
+
+  assertSession(pin, role);
+  const jogador = role === "owner" ? 1 : role === "guest" ? 2 : null;
+  if (!jogador || !room.players[role]) throw roomError("SEM_PERMISSAO");
+  if (room.game?.turn !== jogador) throw roomError("NAO_EH_SEU_TURNO");
+
+  const poderesUsados = room.game.poderesUsados || { 1: [], 2: [] };
+  if ((poderesUsados[jogador] || []).includes("queimar-peca")) {
+    throw roomError("PODER_JA_USADO");
+  }
+
+  const result = removerPecaAdversaria(room.game.board, coluna, jogador);
+  if (!result.ok) throw roomError(result.code);
+
+  room.game = {
+    ...room.game,
+    board: result.board,
+    poderesUsados: {
+      1: [...(poderesUsados[1] || [])],
+      2: [...(poderesUsados[2] || [])],
+      [jogador]: [...(poderesUsados[jogador] || []), "queimar-peca"],
+    },
+  };
   writeRooms(rooms);
   notifyRoom(pin);
   return { pin, coluna, jogador };

@@ -138,3 +138,24 @@ export function passarVezSeBloqueado(estado) {
 
   return nextState;
 }
+
+export function removerPecaAdversaria(board, coluna, jogador) {
+  if (!Number.isInteger(coluna) || coluna < 0 || coluna >= COLUMNS) {
+    return { ok: false, code: "COLUNA_INVALIDA" };
+  }
+  if (jogador !== 1 && jogador !== 2) {
+    return { ok: false, code: "JOGADOR_INVALIDO" };
+  }
+
+  const adversario = proximoTurno(jogador);
+  const novoTabuleiro = copiarTabuleiro(board);
+
+  for (let row = 0; row < ROWS; row++) {
+    if (novoTabuleiro[row][coluna] === adversario) {
+      novoTabuleiro[row][coluna] = 0;
+      return { ok: true, board: novoTabuleiro };
+    }
+  }
+
+  return { ok: false, code: "SEM_PECA_ADVERSARIA" };
+}
