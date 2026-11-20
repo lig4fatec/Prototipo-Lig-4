@@ -79,9 +79,13 @@ Poderes:
 - O mock guarda os bloqueios e valida o poder; a integração com o back-end fica para depois.
 
 **Queimar Peça (850 moedas)**
-- Remove uma peça colocada pelo adversário.
-- Não pode ser usado no primeiro lance da partida (sem peças do adversário).
-- Gravidade de Queimar Peça: desligada. As peças acima não caem.
+- Disponível apenas no modo Caos, uma vez por jogador por partida e somente na vez do próprio jogador.
+- Remove a peça mais alta do adversário em uma coluna escolhida.
+- Exige que exista peça do adversário na coluna; caso contrário, retorna `SEM_PECA_ADVERSARIA`.
+- Não passa a vez: após usar, o mesmo jogador faz sua jogada normal.
+- Não consome lances de bloqueio do Congelar Coluna.
+- Gravidade desligada: a casa removida fica vazia e as peças acima permanecem suspensas. A coluna continua jogável pela casa vazia mais baixa.
+- Vitória é avaliada apenas pela matriz do tabuleiro, então sequências formadas com peças suspensas contam normalmente.
 
 **Peça Extra (1000 moedas)** (antigo "Jogar 2x")
 - Permite jogar duas peças seguidas antes do adversário.
