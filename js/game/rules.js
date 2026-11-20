@@ -139,6 +139,25 @@ export function passarVezSeBloqueado(estado) {
   return nextState;
 }
 
+export function contarEspacosLivres(board) {
+  let count = 0;
+  for (let row = 0; row < ROWS; row++) {
+    for (let col = 0; col < COLUMNS; col++) {
+      if (board[row][col] === 0) count++;
+    }
+  }
+  return count;
+}
+
+export function temColunaJogavel(board, bloqueios, jogador) {
+  for (let col = 0; col < COLUMNS; col++) {
+    if (linhaDeQueda(board, col) !== -1 && !colunaBloqueada(bloqueios, col, jogador)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export function removerPecaAdversaria(board, coluna, jogador) {
   if (!Number.isInteger(coluna) || coluna < 0 || coluna >= COLUMNS) {
     return { ok: false, code: "COLUNA_INVALIDA" };

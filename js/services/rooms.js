@@ -1,6 +1,6 @@
 import { isValidGameMode } from "../game/modes.js";
 import { linhaDeQueda } from "../game/board.js";
-import { aplicarCongelar, consumirBloqueio, passarVezSeBloqueado, removerPecaAdversaria } from "../game/rules.js";
+import { aplicarCongelar, consumirBloqueio, contarEspacosLivres, passarVezSeBloqueado, removerPecaAdversaria, temColunaJogavel } from "../game/rules.js";
 import { getInventory } from "./store.js";
 // MOCK DESCARTÁVEL. Persistência em localStorage apenas para desenvolvimento. Será removida quando o miolo for substituído pelo Firebase, mantendo as assinaturas.
 
@@ -79,6 +79,7 @@ function emptyGameState() {
     moveCount: 0,
     bloqueios: [],
     poderesUsados: { 1: [], 2: [] },
+    pecaExtra: null,
   };
 }
 
@@ -126,6 +127,7 @@ function getRoomSnapshot(room) {
             1: [...(room.game.poderesUsados?.[1] || [])],
             2: [...(room.game.poderesUsados?.[2] || [])],
           },
+          pecaExtra: room.game.pecaExtra ? { ...room.game.pecaExtra } : null,
         } : {}),
       }
       : null,
@@ -420,19 +422,32 @@ export async function publishState({ pin, role, board, turn, moveCount } = {}) {
 
   // O turno salvo autoriza a jogada; o turno recebido é o próximo a agir.
   // Vitória e legalidade da queda pertencem a js/game/, não a este serviço.
+  const pecaExtra = room.game.pecaExtra;
+  const isFirstExtra = room.mode === "caos"
+    && pecaExtra?.etapa === 1
+    && pecaExtra.jogador === room.game.turn;
+  const isSecondExtra = room.mode === "caos"
+    && pecaExtra?.etapa === 2
+    && pecaExtra.jogador === room.game.turn;
+
   const nextGame = {
     board: board.map(row => row.slice()),
-    turn,
+    turn: isFirstExtra ? room.game.turn : turn,
     moveCount,
     bloqueios: room.mode === "caos"
-      ? consumirBloqueio(room.game.bloqueios || [], room.game.turn)
+      ? (isFirstExtra ? (room.game.bloqueios || []).map(b => ({ ...b })) : consumirBloqueio(room.game.bloqueios || [], room.game.turn))
       : [],
     poderesUsados: {
       1: [...(room.game.poderesUsados?.[1] || [])],
       2: [...(room.game.poderesUsados?.[2] || [])],
     },
+    pecaExtra: isFirstExtra ? { jogador: pecaExtra.jogador, etapa: 2 } : null,
   };
-  room.game = room.mode === "caos" ? passarVezSeBloqueado(nextGame) : nextGame;
+  if (isFirstExtra) {
+    room.game = nextGame;
+  } else {
+    room.game = room.mode === "caos" ? passarVezSeBloqueado(nextGame) : nextGame;
+  }
   writeRooms(rooms);
   notifyRoom(pin);
   return { pin, turn: room.game.turn, moveCount };
@@ -507,6 +522,43 @@ export async function usarQueimarPeca({ pin, role, coluna } = {}) {
   writeRooms(rooms);
   notifyRoom(pin);
   return { pin, coluna, jogador };
+}
+
+export async function usarPecaExtra({ pin, role } = {}) {
+  await yieldMock();
+  validatePin(pin);
+  const rooms = readRooms();
+  const room = rooms.get(pin);
+  if (!room) throw roomError("PIN_NAO_ENCONTRADO");
+  if (room.phase !== "playing") throw roomError("FASE_INVALIDA");
+  if (room.mode !== "caos") throw roomError("PODER_INDISPONIVEL");
+
+  assertSession(pin, role);
+  const jogador = role === "owner" ? 1 : role === "guest" ? 2 : null;
+  if (!jogador || !room.players[role]) throw roomError("SEM_PERMISSAO");
+  if (room.game?.turn !== jogador) throw roomError("NAO_EH_SEU_TURNO");
+
+  const poderesUsados = room.game.poderesUsados || { 1: [], 2: [] };
+  if ((poderesUsados[jogador] || []).includes("peca-extra")) {
+    throw roomError("PODER_JA_USADO");
+  }
+
+  if (contarEspacosLivres(room.game.board) < 2) {
+    throw roomError("SEM_ESPACO_SUFICIENTE");
+  }
+
+  room.game = {
+    ...room.game,
+    poderesUsados: {
+      1: [...(poderesUsados[1] || [])],
+      2: [...(poderesUsados[2] || [])],
+      [jogador]: [...(poderesUsados[jogador] || []), "peca-extra"],
+    },
+    pecaExtra: { jogador, etapa: 1 },
+  };
+  writeRooms(rooms);
+  notifyRoom(pin);
+  return { pin, jogador };
 }
 
 export async function publishResult({ pin, role, result } = {}) {
