@@ -42,7 +42,7 @@
       var(--history-bg-3)
     );
 
-  font-family: "Lilita One", Impact, sans-serif;
+  font-family: "DM Sans", "Segoe UI", system-ui, sans-serif;
   overflow-x: hidden;
 }
 
@@ -229,7 +229,7 @@
 
   color: var(--history-muted);
 
-  font-family: Arial, sans-serif;
+  font-family: "DM Sans", "Segoe UI", system-ui, sans-serif;
   font-size: 0.95rem;
   font-weight: 700;
 }
@@ -265,7 +265,7 @@
   background: rgba(0, 0, 0, 0.3);
   color: #fff;
 
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "DM Sans", "Segoe UI", system-ui, sans-serif;
   font-size: 0.9rem;
   font-weight: 600;
 
@@ -373,7 +373,7 @@
 
   color: var(--history-cyan);
 
-  font-family: Arial, sans-serif;
+  font-family: "DM Sans", "Segoe UI", system-ui, sans-serif;
   font-size: 0.9rem;
   font-weight: 700;
 }
@@ -418,7 +418,7 @@
 
   color: #fff;
 
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "DM Sans", "Segoe UI", system-ui, sans-serif;
   font-size: 0.92rem;
 }
 
@@ -462,7 +462,7 @@
 
   color: #e8e5ff;
 
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "DM Sans", "Segoe UI", system-ui, sans-serif;
   font-size: 0.9rem;
   font-weight: 600;
   line-height: 1.5;
@@ -548,6 +548,57 @@
 
 /* ===== Tablet e celular ===== */
 @media (max-width: 700px) {
+  .history-screen .app-sidebar {
+    position: sticky;
+    inset: auto;
+    top: 0;
+    display: grid;
+    width: 100%;
+    min-height: 0;
+    height: auto;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "brand footer"
+      "nav nav";
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-right: 0;
+    border-bottom: 4px solid var(--history-yellow);
+  }
+
+  .history-screen .app-sidebar--global .app-sidebar__brand {
+    grid-area: brand;
+    padding: 0;
+  }
+
+  .history-screen .app-sidebar--global .app-sidebar__nav {
+    grid-area: nav;
+    display: flex;
+    min-width: 0;
+    gap: 0.375rem;
+    margin: 0;
+    padding: 0;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+
+  .history-screen .app-sidebar--global .app-sidebar__link {
+    flex: 0 0 auto;
+    min-height: 40px;
+    padding: 0.4rem 0.25rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.03em;
+  }
+
+  .history-screen .app-sidebar--global .app-sidebar__footer {
+    grid-area: footer;
+    align-self: center;
+    justify-self: end;
+    margin: 0;
+    padding: 0;
+  }
+
   .history-main {
     min-height: auto;
     margin-left: 0;
@@ -602,6 +653,7 @@
 /* ===== Telas pequenas ===== */
 @media (max-width: 480px) {
   .history-main {
+    min-width: 0;
     padding-inline: 1rem;
   }
 

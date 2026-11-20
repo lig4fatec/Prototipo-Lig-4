@@ -15,8 +15,10 @@
     <link rel="stylesheet" href="../css/screens/t10-perfil.css">
     <script type="module" src="../js/global-nav.js"></script>
     <script type="module" src="../js/profile-page.js"></script>
+    <script type="module" src="../js/button-click-sound.js"></script>
+    <script type="module" src="../js/background-music.js"></script>
   </head>
-  <body class="profile-screen">
+  <body class="profile-screen" data-background-music="musica.mp3">
     <aside class="app-sidebar app-sidebar--global" aria-label="Navegação principal">
       <a class="app-sidebar__brand" href="./t04-home.html" aria-label="LIG-4 Online, início">
         <img class="app-sidebar__logo" src="../assets/images/logo/lig4-mark.svg" alt="">
@@ -140,45 +142,5 @@
       </div>
     </main>
 
-    <script>
-      const somClick = new Audio('./audios/click.mp3');
-      somClick.preload = 'auto';
-
-      function tocarClick() {
-        const s = somClick.cloneNode();
-        s.volume = 1;
-        return s.play();
-      }
-
-      document.addEventListener('click', (evento) => {
-        const alvo = evento.target.closest('a[href], button, .button, [role="button"]');
-        if (!alvo) return;
-
-        const href = alvo.getAttribute('href');
-        const ehNavegacao =
-          alvo.tagName === 'A' &&
-          href &&
-          !href.startsWith('#') &&
-          !href.startsWith('javascript:') &&
-          alvo.target !== '_blank' &&
-          !evento.ctrlKey && !evento.metaKey && !evento.shiftKey;
-
-        if (ehNavegacao) {
-          evento.preventDefault();
-          let foi = false;
-          const ir = () => {
-            if (foi) return;
-            foi = true;
-            window.location.href = alvo.href;
-          };
-          tocarClick().catch(ir);
-          setTimeout(ir, 250);
-          return;
-        }
-
-        if (alvo.disabled) return;
-        tocarClick().catch(() => {});
-      });
-    </script>
   </body>
 </html>
