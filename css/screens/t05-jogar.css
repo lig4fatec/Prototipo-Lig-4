@@ -104,7 +104,7 @@
 }
 
 .rooms-screen .rooms-online-shell {
-  width: min(100%, 720px);
+  width: min(100%, 1400px);
 }
 
 .rooms-screen .online-section[hidden] {
@@ -117,7 +117,7 @@
 .rooms-screen .online-game-panel {
   display: grid;
   gap: 1.25rem;
-  padding: 2rem;
+  padding: 0; /* Removido para dar mais espaço para o tabuleiro em leiautes desktop */
   background: linear-gradient(160deg, rgba(26, 11, 61, 0.92), rgba(11, 26, 74, 0.92));
   border: 4px solid #000;
   border-radius: 6px;
@@ -125,9 +125,14 @@
   color: var(--h-text);
 }
 
-.rooms-screen .online-game-panel {
-  width: min(100%, 860px);
-  margin-inline: auto;
+.rooms-screen #secao-partida.online-game-panel {
+  background: none;
+  border: none;
+  box-shadow: none;
+}
+
+.rooms-screen #secao-partida.online-game-panel {
+  width: min(100%); /* removido "1200px", pois quebra leiaute, e limita crescimento do tabuleiro */
 }
 
 .rooms-screen .rooms-kicker {
@@ -536,6 +541,20 @@
   gap: 0.5rem;
 }
 
+.rooms-screen .online-game-heading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.rooms-screen .online-game-heading > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 .rooms-screen .online-game-pin {
   margin: 0;
   font-weight: 800;
@@ -587,7 +606,7 @@
 .rooms-screen .online-game-board-wrap {
   display: grid;
   gap: 0.5rem;
-  width: min(100%, 640px);
+  width: min(100%, 1000px);
   margin-inline: auto;
 }
 

@@ -650,7 +650,7 @@
   display: grid;
   width: min(100%, 780px);
   gap: 1rem;
-  margin-inline: auto;
+  margin-inline: 0;
 }
 
 .online-game-panel[hidden] {
@@ -715,7 +715,7 @@
 
 .online-game-board-wrap {
   width: min(100%, 680px);
-  margin-inline: auto;
+  margin-inline: 0;
 }
 
 .online-game-columns,
