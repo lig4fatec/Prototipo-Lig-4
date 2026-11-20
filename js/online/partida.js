@@ -18,7 +18,7 @@ import {
 } from "../services/store.js";
 import { applyBoardTheme, createAvatarImage, createEmoteImage } from "../player-style.js";
 import { criarTabuleiro } from "../game/board.js";
-import { colunaBloqueada, jogar, proximoTurno } from "../game/rules.js";
+import { colunaBloqueada, jogar, proximoTurno, contarEspacosLivres } from "../game/rules.js";
 import { planejarQueda } from "../game/drop.js";
 import {
   clearRoomSession,
@@ -119,7 +119,7 @@ function readClockState() {
   if (!clockStorageKey) return null;
   const serialized = localStorage.getItem(clockStorageKey);
   if (!serialized) return null;
-
+  
   try {
     const state = JSON.parse(serialized);
     if (
@@ -128,7 +128,7 @@ function readClockState() {
       || ![1, 2].includes(state.vez)
       || !(state.inicioVez === null || Number.isFinite(state.inicioVez))
     ) return null;
-
+    
     return {
       restante1: state.restante1,
       restante2: state.restante2,
@@ -142,10 +142,10 @@ function readClockState() {
 
 function sameClockState(left, right) {
   return Boolean(left && right)
-    && left.restante1 === right.restante1
-    && left.restante2 === right.restante2
-    && left.vez === right.vez
-    && left.inicioVez === right.inicioVez;
+  && left.restante1 === right.restante1
+  && left.restante2 === right.restante2
+  && left.vez === right.vez
+  && left.inicioVez === right.inicioVez;
 }
 
 function storeClockState(nextState, expectedState = null) {
@@ -155,7 +155,7 @@ function storeClockState(nextState, expectedState = null) {
     return currentState;
   }
   if (sameClockState(currentState, nextState)) return currentState;
-
+  
   localStorage.setItem(clockStorageKey, JSON.stringify(nextState));
   return nextState;
 }
@@ -177,7 +177,7 @@ function formatClock(milliseconds) {
 function redrawClocks({ stopAtZero = true } = {}) {
   let state = readClockState();
   if (!state) return;
-
+  
   if (stopAtZero && state.inicioVez !== null && remainingClockTime(state, state.vez) === 0) {
     const stoppedState = storeClockState({
       ...state,
@@ -186,7 +186,7 @@ function redrawClocks({ stopAtZero = true } = {}) {
     }, state);
     state = stoppedState || readClockState();
   }
-
+  
   if (!state) return;
   const now = Date.now();
   for (let index = 0; index < clockElements.length; index++) {
@@ -198,7 +198,7 @@ function redrawClocks({ stopAtZero = true } = {}) {
 function reconcileClock(nextRoom) {
   const turn = nextRoom.game?.turn;
   if (![1, 2].includes(turn)) return;
-
+  
   const playing = nextRoom.phase === "playing";
   const now = Date.now();
   const currentState = readClockState();
@@ -211,7 +211,7 @@ function reconcileClock(nextRoom) {
     });
     return;
   }
-
+  
   const nextState = { ...currentState };
   if (currentState.vez !== turn) {
     if (currentState.inicioVez !== null) {
@@ -225,7 +225,7 @@ function reconcileClock(nextRoom) {
     nextState[`restante${turn}`] = remainingClockTime(currentState, turn, now);
     nextState.inicioVez = null;
   }
-
+  
   if (!sameClockState(currentState, nextState)) storeClockState(nextState, currentState);
 }
 
@@ -233,7 +233,7 @@ function renderPlayerColors(nextRoom) {
   for (const [index, playerRole] of ["owner", "guest"].entries()) {
     const card = playerCards[index];
     if (!card) continue;
-
+    
     const color = nextRoom.players?.[playerRole]?.color;
     const variable = color ? `--game-color-${color}` : "";
     const value = variable ? getComputedStyle(card).getPropertyValue(variable).trim() : "";
@@ -290,7 +290,7 @@ function renderBoard() {
   const ownerColor = room?.players.owner.color || "blue";
   const guestColor = room?.players.guest?.color || "red";
   const cells = [];
-
+  
   for (let row = 0; row < ROWS; row++) {
     for (let column = 0; column < COLUMNS; column++) {
       const cell = document.createElement("div");
@@ -300,16 +300,16 @@ function renderBoard() {
       cell.setAttribute(
         "aria-label",
         player === 0
-          ? `Linha ${row + 1}, coluna ${column + 1}, vazia`
-          : `Linha ${row + 1}, coluna ${column + 1}, ${player === 1 ? "Jogador 1" : "Jogador 2"}`,
+        ? `Linha ${row + 1}, coluna ${column + 1}, vazia`
+        : `Linha ${row + 1}, coluna ${column + 1}, ${player === 1 ? "Jogador 1" : "Jogador 2"}`,
       );
       cell.dataset.row = String(row);
       cell.dataset.column = String(column);
       cell.dataset.player = String(player);
-
+      
       const bloqueiosAtivos = room?.game?.bloqueios || [];
       const frozen = room?.phase === "playing"
-        && colunaBloqueada(bloqueiosAtivos, column, room?.game?.turn);
+      && colunaBloqueada(bloqueiosAtivos, column, room?.game?.turn);
       cell.dataset.frozen = frozen && player === 0 ? "true" : "false";
       
       // Futuras imagens de fichas serão escolhidas pelo modo e pelo papel.
@@ -321,17 +321,17 @@ function renderBoard() {
     }
   }
   boardElement.replaceChildren(...cells);
-
+  
   const playerNumber = playerNumberForRole(role);
   const mayMove = room?.phase === "playing"
-    && playerNumber === room.game?.turn
-    && !moveInProgress;
+  && playerNumber === room.game?.turn
+  && !moveInProgress;
   const bloqueiosAtivos = room?.game?.bloqueios || [];
   const playerNumberAtual = room?.game?.turn;
   columnsElement.querySelectorAll("button").forEach(button => {
     const coluna = Number(button.dataset.column);
     const congelada = room?.phase === "playing"
-      && colunaBloqueada(bloqueiosAtivos, coluna, playerNumberAtual);
+    && colunaBloqueada(bloqueiosAtivos, coluna, playerNumberAtual);
     button.dataset.frozen = congelada ? "true" : "false";
   });
   columnsElement.querySelectorAll("button").forEach(button => {
@@ -357,7 +357,7 @@ function showEmote(lastEmote) {
   const playerNumber = playerNumberForRole(lastEmote.role);
   const card = playerNumber && document.querySelector(`[data-score-player="${playerNumber}"]`);
   if (emote?.category !== "emote" || !card) return;
-
+  
   card.querySelector(".emote-bubble")?.remove();
   clearTimeout(emoteTimers.get(playerNumber));
   const bubble = document.createElement("div");
@@ -366,7 +366,7 @@ function showEmote(lastEmote) {
   bubble.append(createEmoteImage(emote.id));
   card.append(bubble);
   emoteTimers.set(playerNumber, setTimeout(() => bubble.remove(), EMOTE_VISIBLE_MS));
-
+  
   const sender = lastEmote.role === "owner" ? "Jogador 1" : "Jogador 2";
   emoteStatus.textContent = `${sender} enviou ${emote.name}.`;
 }
@@ -384,26 +384,33 @@ function renderPowerButtons() {
     { id: "queimar-peca", label: "Queimar peça" },
     { id: "peca-extra", label: "Peça extra" },
   ];
-
+  
   for (const [index, container] of powerElements.entries()) {
     if (!container) continue;
     if (room?.mode !== "caos") {
       container.replaceChildren();
       continue;
     }
-
+    
     const playerNumber = index + 1;
     const isLocalPlayer = playerNumberForRole(role) === playerNumber;
     const isTurn = room.phase === "playing" && room.game?.turn === playerNumber;
     const extraPhase2 = room.game?.pecaExtra?.etapa === 2;
     const notPlaying = room.phase !== "playing";
+    
+    const poucosEspacos = contarEspacosLivres(room.game?.board || []) < 2;
+    
     const buttons = powers.map(power => {
       const used = (room.game?.poderesUsados?.[playerNumber] || []).includes(power.id);
       const button = document.createElement("button");
       button.type = "button";
       button.className = "button button-secondary";
       button.textContent = power.label;
-      button.disabled = used || !isLocalPlayer || !isTurn || moveInProgress || extraPhase2 || notPlaying;
+      // button.disabled = used || !isLocalPlayer || !isTurn || moveInProgress || extraPhase2 || notPlaying;
+      button.disabled = used || !isLocalPlayer || !isTurn || moveInProgress
+      || (power.id === "peca-extra" && poucosEspacos)
+      || room.game?.pecaExtra?.etapa === 2;
+      
       if (power.id === "peca-extra") {
         button.setAttribute("aria-pressed", "false");
       } else {
@@ -426,8 +433,8 @@ function renderPowerButtons() {
           if (!room || room.phase !== "playing" || moveInProgress) return;
           pendingPower = pendingPower === power.id ? null : power.id;
           statusElement.textContent = pendingPower
-            ? "Clique em uma coluna para usar o poder."
-            : "";
+          ? "Clique em uma coluna para usar o poder."
+          : "";
           renderPowerButtons();
         });
       }
@@ -481,12 +488,12 @@ async function applyPersonalization() {
   try {
     const [equippedItems, inventory] = await Promise.all([getEquippedItems(), getInventory()]);
     ownAvatarId = equippedItems.avatar.id;
-
+    
     renderEmoteBar(inventory.byCategory.emote);
-
+    
   } catch {
     // A personalização é opcional: se falhar, a partida segue com o visual padrão.
-
+    
   }
 }
 
@@ -499,7 +506,7 @@ function renderRoom(nextRoom) {
     onRoomLost();
     return;
   }
-
+  
   if (
     pendingPower
     && (nextRoom.phase !== "playing" || nextRoom.game?.turn !== playerNumberForRole(role))
@@ -529,27 +536,27 @@ function renderRoom(nextRoom) {
   } else {
     turnElement.textContent = "Partida encerrada";
   }
-
+  
   const winner = room.result?.winner;
   document.querySelector('[data-game-score="1"]').textContent = winner === 1 ? "1" : "0";
   document.querySelector('[data-game-score="2"]').textContent = winner === 2 ? "1" : "0";
-
+  
   const finished = room.phase === "finished" && Boolean(room.result);
   resultPanel.hidden = !finished;
   if (finished) {
     resultElement.textContent = room.result.draw
-      ? "Empate."
-      : `${room.result.winner === 1 ? "Jogador 1 · Dono" : "Jogador 2 · Convidado"} venceu.`;
+    ? "Empate."
+    : `${room.result.winner === 1 ? "Jogador 1 · Dono" : "Jogador 2 · Convidado"} venceu.`;
     const requested = room.rematchRequested || [];
     rematchButton.disabled = requested.includes(role);
     rematchStatus.textContent = requested.length
-      ? "Aguardando o outro jogador."
-      : "";
+    ? "Aguardando o outro jogador."
+    : "";
   } else {
     rematchStatus.textContent = "";
     rematchButton.disabled = true;
   }
-
+  
   renderBoard();
 }
 
@@ -572,7 +579,7 @@ async function animateDrop(column, steps, player) {
 
 async function dropInColumn(column) {
   if (!room || room.phase !== "playing" || moveInProgress) return;
-
+  
   const player = playerNumberForRole(role);
   if (pendingPower === "congelar-coluna") {
     try {
@@ -585,7 +592,7 @@ async function dropInColumn(column) {
     renderPowerButtons();
     return;
   }
-
+  
   if (pendingPower === "queimar-peca") {
     try {
       await usarQueimarPeca({ pin: room.pin, role, coluna: column });
@@ -597,25 +604,25 @@ async function dropInColumn(column) {
     renderPowerButtons();
     return;
   }
-
+  
   if (colunaBloqueada(room.game?.bloqueios || [], column, player)) {
     statusElement.textContent = gameErrorMessages.COLUNA_BLOQUEADA;
     return;
   }
-
+  
   const game = room.game;
   const result = jogar(game.board, column, player, game.turn, false);
   if (!result.ok) {
     statusElement.textContent = gameErrorMessages[result.code] || "Jogada inválida.";
     return;
   }
-
+  
   moveInProgress = true;
   renderPowerButtons();
   statusElement.textContent = "";
   renderBoard();
   const fall = planejarQueda(game.board, column, player);
-
+  
   try {
     await animateDrop(column, fall.passos, player);
     const moveCount = game.moveCount + 1;
@@ -626,7 +633,7 @@ async function dropInColumn(column) {
       turn: proximoTurno(player),
       moveCount,
     });
-
+    
     if (result.vitoria || result.empate) {
       await publishResult({
         pin: room.pin,
@@ -656,7 +663,7 @@ export async function abrirPartida({ onRoomLost, onLeave } = {}) {
     onRoomLost();
     return;
   }
-
+  
   try {
     await applyPersonalization();
     const initialRoom = await getRoom(session.pin);
