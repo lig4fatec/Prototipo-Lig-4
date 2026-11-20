@@ -6,6 +6,7 @@ import {
   publishState,
   requestRematch,
   sendEmote,
+  usarCongelarColuna,
   watchRoom,
 } from "../services/rooms.js";
 import {
@@ -15,7 +16,7 @@ import {
 } from "../services/store.js";
 import { applyBoardTheme, createAvatarImage, createEmoteImage } from "../player-style.js";
 import { criarTabuleiro } from "../game/board.js";
-import { jogar, proximoTurno } from "../game/rules.js";
+import { colunaBloqueada, jogar, proximoTurno } from "../game/rules.js";
 import { planejarQueda } from "../game/drop.js";
 import {
   clearRoomSession,
@@ -43,6 +44,10 @@ const playerCards = [
 const clockElements = [
   document.querySelector('[data-game-clock="1"]'),
   document.querySelector('[data-game-clock="2"]'),
+];
+const powerElements = [
+  document.querySelector('[data-game-powers="1"]'),
+  document.querySelector('[data-game-powers="2"]'),
 ];
 const statusElement = document.querySelector("[data-game-status]");
 const resultPanel = document.querySelector("[data-game-result-panel]");
@@ -78,6 +83,7 @@ const themeStatus = document.querySelector("[data-game-theme-status]");
 let room = null;
 let role = null;
 let cancelRoomWatch = null;
+let pendingPower = null;
 let clockStorageKey = null;
 let clockInterval = null;
 let clockStorageHandler = null;
@@ -93,9 +99,12 @@ const emoteTimers = new Map();
 const gameErrorMessages = {
   COLUNA_INVALIDA: "Selecione uma coluna válida.",
   COLUNA_CHEIA: "Esta coluna está cheia.",
+  COLUNA_BLOQUEADA: "Esta coluna está congelada para você.",
   NAO_EH_SEU_TURNO: "Aguarde a sua vez.",
   JOGADOR_INVALIDO: "Jogador inválido.",
   PARTIDA_ENCERRADA: "Esta partida já terminou.",
+  PODER_JA_USADO: "Você já usou este poder nesta partida.",
+  PODER_INDISPONIVEL: "Este poder só está disponível no modo Caos.",
 };
 
 function playerNumberForRole(playerRole) {
@@ -351,6 +360,38 @@ function updateEmoteButtons() {
   });
 }
 
+function renderPowerButtons() {
+  for (const [index, container] of powerElements.entries()) {
+    if (!container) continue;
+    if (room?.mode !== "caos") {
+      container.replaceChildren();
+      continue;
+    }
+
+    const playerNumber = index + 1;
+    const powerId = "congelar-coluna";
+    const used = (room.game?.poderesUsados?.[playerNumber] || []).includes(powerId);
+    const isLocalPlayer = playerNumberForRole(role) === playerNumber;
+    const isTurn = room.phase === "playing" && room.game?.turn === playerNumber;
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "button button-secondary";
+    button.textContent = "Congelar coluna";
+    button.disabled = used || !isLocalPlayer || !isTurn || moveInProgress;
+    button.setAttribute("aria-pressed", String(pendingPower === powerId && isLocalPlayer));
+    if (used) button.classList.add("is-used");
+    button.addEventListener("click", () => {
+      if (!room || room.phase !== "playing" || moveInProgress) return;
+      pendingPower = pendingPower === powerId ? null : powerId;
+      statusElement.textContent = pendingPower
+        ? "Clique em uma coluna para congelá-la."
+        : "";
+      renderPowerButtons();
+    });
+    container.replaceChildren(button);
+  }
+}
+
 function renderEmoteBar(ownedEmotes) {
   // Todos os emotes adquiridos são utilizáveis; não existe emote equipado.
   const ordered = [...ownedEmotes];
@@ -407,17 +448,23 @@ async function applyPersonalization() {
 function renderRoom(nextRoom) {
   if (!nextRoom) {
     room = null;
+    pendingPower = null;
     stopRoomWatch();
     stopClockUpdates();
     onRoomLost();
     return;
   }
 
+  if (
+    pendingPower
+    && (nextRoom.phase !== "playing" || nextRoom.game?.turn !== playerNumberForRole(role))
+  ) pendingPower = null;
   room = nextRoom;
   renderPlayerColors(room);
   renderActivePlayer(room);
   reconcileClock(room);
   redrawClocks();
+  renderPowerButtons();
   const mode = getGameMode(room.mode);
   modeLabel.textContent = mode.name;
   applyBoardTheme(boardWrap, findItem(room.boardId || "board-classico"));
@@ -482,6 +529,23 @@ async function dropInColumn(column) {
   if (!room || room.phase !== "playing" || moveInProgress) return;
 
   const player = playerNumberForRole(role);
+  if (pendingPower === "congelar-coluna") {
+    try {
+      await usarCongelarColuna({ pin: room.pin, role, coluna: column });
+      pendingPower = null;
+      statusElement.textContent = "Coluna congelada para o adversário.";
+    } catch (error) {
+      statusElement.textContent = gameErrorMessages[error.code] || getRoomErrorMessage(error.code);
+    }
+    renderPowerButtons();
+    return;
+  }
+
+  if (colunaBloqueada(room.game?.bloqueios || [], column, player)) {
+    statusElement.textContent = gameErrorMessages.COLUNA_BLOQUEADA;
+    return;
+  }
+
   const game = room.game;
   const result = jogar(game.board, column, player, game.turn, false);
   if (!result.ok) {
@@ -490,6 +554,7 @@ async function dropInColumn(column) {
   }
 
   moveInProgress = true;
+  renderPowerButtons();
   statusElement.textContent = "";
   renderBoard();
   const fall = planejarQueda(game.board, column, player);

@@ -1,4 +1,6 @@
 import { isValidGameMode } from "../game/modes.js";
+import { linhaDeQueda } from "../game/board.js";
+import { aplicarCongelar, consumirBloqueio, passarVezSeBloqueado } from "../game/rules.js";
 import { getInventory } from "./store.js";
 // MOCK DESCARTÁVEL. Persistência em localStorage apenas para desenvolvimento. Será removida quando o miolo for substituído pelo Firebase, mantendo as assinaturas.
 
@@ -75,6 +77,8 @@ function emptyGameState() {
     board: Array.from({ length: 6 }, () => Array(7).fill(0)),
     turn: 1,
     moveCount: 0,
+    bloqueios: [],
+    poderesUsados: { 1: [], 2: [] },
   };
 }
 
@@ -116,6 +120,13 @@ function getRoomSnapshot(room) {
         board: room.game.board.map(row => row.slice()),
         turn: room.game.turn,
         moveCount: room.game.moveCount,
+        ...(room.mode === "caos" ? {
+          bloqueios: (room.game.bloqueios || []).map(bloqueio => ({ ...bloqueio })),
+          poderesUsados: {
+            1: [...(room.game.poderesUsados?.[1] || [])],
+            2: [...(room.game.poderesUsados?.[2] || [])],
+          },
+        } : {}),
       }
       : null,
     result: room.result ? { ...room.result } : null,
@@ -409,14 +420,57 @@ export async function publishState({ pin, role, board, turn, moveCount } = {}) {
 
   // O turno salvo autoriza a jogada; o turno recebido é o próximo a agir.
   // Vitória e legalidade da queda pertencem a js/game/, não a este serviço.
-  room.game = {
+  const nextGame = {
     board: board.map(row => row.slice()),
     turn,
     moveCount,
+    bloqueios: room.mode === "caos"
+      ? consumirBloqueio(room.game.bloqueios || [], room.game.turn)
+      : [],
+    poderesUsados: {
+      1: [...(room.game.poderesUsados?.[1] || [])],
+      2: [...(room.game.poderesUsados?.[2] || [])],
+    },
   };
+  room.game = room.mode === "caos" ? passarVezSeBloqueado(nextGame) : nextGame;
   writeRooms(rooms);
   notifyRoom(pin);
-  return { pin, turn, moveCount };
+  return { pin, turn: room.game.turn, moveCount };
+}
+
+export async function usarCongelarColuna({ pin, role, coluna } = {}) {
+  await yieldMock();
+  validatePin(pin);
+  const rooms = readRooms();
+  const room = rooms.get(pin);
+  if (!room) throw roomError("PIN_NAO_ENCONTRADO");
+  if (room.phase !== "playing") throw roomError("FASE_INVALIDA");
+  if (room.mode !== "caos") throw roomError("PODER_INDISPONIVEL");
+
+  assertSession(pin, role);
+  const jogador = role === "owner" ? 1 : role === "guest" ? 2 : null;
+  if (!jogador || !room.players[role]) throw roomError("SEM_PERMISSAO");
+  if (room.game?.turn !== jogador) throw roomError("NAO_EH_SEU_TURNO");
+  if (!Number.isInteger(coluna) || coluna < 0 || coluna >= 7) {
+    throw roomError("COLUNA_INVALIDA");
+  }
+  if (linhaDeQueda(room.game.board, coluna) === -1) throw roomError("COLUNA_CHEIA");
+
+  const poderesUsados = room.game.poderesUsados || { 1: [], 2: [] };
+  if ((poderesUsados[jogador] || []).includes("congelar-coluna")) {
+    throw roomError("PODER_JA_USADO");
+  }
+
+  const nextGame = aplicarCongelar(room.game, coluna, jogador);
+  nextGame.poderesUsados = {
+    1: [...(poderesUsados[1] || [])],
+    2: [...(poderesUsados[2] || [])],
+    [jogador]: [...(poderesUsados[jogador] || []), "congelar-coluna"],
+  };
+  room.game = nextGame;
+  writeRooms(rooms);
+  notifyRoom(pin);
+  return { pin, coluna, jogador };
 }
 
 export async function publishResult({ pin, role, result } = {}) {

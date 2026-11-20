@@ -72,10 +72,11 @@ Regras gerais:
 Poderes:
 
 **Congelar Coluna (700 moedas)**
-- Bloqueia uma coluna para o adversário por 3 rodadas.
+- Disponível apenas no modo Caos, uma vez por jogador por partida e somente na vez do próprio jogador.
+- Bloqueia uma coluna para o adversário por 3 lances dele. Os lances próprios não consomem o bloqueio.
 - Não pode ser usado em coluna cheia.
-- Vale mesmo se restar apenas uma coluna livre.
-- O servidor guarda o bloqueio com contagem de rodadas e valida em cada jogada (mock até back-end implementar).
+- Cada lance do adversário consome um do bloqueio. Se todas as colunas não cheias estiverem bloqueadas, a vez é pulada e esse lance também é consumido.
+- O mock guarda os bloqueios e valida o poder; a integração com o back-end fica para depois.
 
 **Queimar Peça (850 moedas)**
 - Remove uma peça colocada pelo adversário.
