@@ -29,6 +29,7 @@ let equipped = {};
 let coins = 0;
 let toastElement = null;
 let toastTimer = null;
+const NON_EQUIPPABLE = new Set(["emote", "poderes"]);
 
 function setMessage(message, isError = false, isSuccess = false) {
   messageElement.textContent = message;
@@ -124,7 +125,7 @@ function makePreview(categoryId, item) {
 
   if (item.image) {
     preview.append(makeArtImage(item));
-  } else if (categoryId === "emote" && item.emoji) {
+  } else if (!NON_EQUIPPABLE.has(categoryId) && item.emoji) {
     const emoji = document.createElement("span");
     emoji.className = "store-card__emoji";
     emoji.textContent = item.emoji;
@@ -132,7 +133,7 @@ function makePreview(categoryId, item) {
   } else {
     const mark = document.createElement("span");
     mark.className = "store-card__mark";
-    mark.textContent = categoryId === "emote" ? name.slice(0, 2).toUpperCase() : name.slice(0, 1).toUpperCase();
+    mark.textContent = !NON_EQUIPPABLE.has(categoryId) ? name.slice(0, 2).toUpperCase() : name.slice(0, 1).toUpperCase();
     preview.append(mark);
   }
 
@@ -176,7 +177,7 @@ function renderItem(category, item) {
 
   const status = document.createElement("span");
   status.className = "ui-status";
-  if (category.id !== "emote" && equipped[category.id] === item.id) {
+  if (!NON_EQUIPPABLE.has(category.id) && equipped[category.id] === item.id) {
     status.textContent = "Equipado";
     status.dataset.state = "equipped";
   } else if (item.owned) {
@@ -224,7 +225,7 @@ function renderItem(category, item) {
     buyButton.setAttribute("aria-label", `Comprar ${item.name} por ${numberFormat.format(item.price)} moedas`);
     buyButton.addEventListener("click", () => buyItem(category, item, buyButton));
     details.append(buyButton);
-  } else if (category.id !== "emote" && equipped[category.id] !== item.id) {
+  } else if (!NON_EQUIPPABLE.has(category.id) && equipped[category.id] !== item.id) {
     const equipButton = document.createElement("button");
     equipButton.className = "button button-primary-light store-card__action store-card__action--equip";
     equipButton.type = "button";
@@ -310,7 +311,7 @@ function showPreviewItem() {
   const item = items[index];
   document.querySelector("[data-preview-name]").textContent = item.name;
   document.querySelector("[data-preview-description]").textContent = item.description || "";
-  document.querySelector("[data-preview-status]").textContent = item.owned ? (previewCategory !== "emote" && equipped[previewCategory] === item.id ? "Equipado" : "Adquirido") : `${numberFormat.format(item.price)} moedas`;
+  document.querySelector("[data-preview-status]").textContent = item.owned ? (!NON_EQUIPPABLE.has(previewCategory) && equipped[previewCategory] === item.id ? "Equipado" : "Adquirido") : `${numberFormat.format(item.price)} moedas`;
   document.querySelector("[data-preview-counter]").textContent = `${index + 1} de ${items.length}`;
   const art = document.querySelector("[data-preview-art]");
   art.replaceChildren(makePreview(previewCategory, item));

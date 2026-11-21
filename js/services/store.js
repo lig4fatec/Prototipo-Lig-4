@@ -52,6 +52,15 @@ const categories = [
       { id: "emote-confuso", name: "Confuso", price: 300, image: "emotes/confuso.svg", emoji: "🤔", description: "Hmm... o que será que o adversário está planejando?" },
     ],
   },
+  {
+    id: "poderes",
+    name: "Poderes",
+    items: [
+      { id: "congelar-coluna", name: "Congelar Coluna", price: 700, /*image: "powers/congelar-coluna.svg",*/ emoji: "❄️", description: "Bloqueia uma coluna do adversário por 3 lances dele." },
+      { id: "queimar-peca", name: "Queimar Peça", price: 850, /*image: "powers/queimar-peca.svg",*/ emoji: "🔥", description: "Remove a peça mais alta do adversário em uma coluna." },
+      { id: "peca-extra", name: "Peça Extra", price: 1000, /*image: "powers/peca-extra.svg",*/ emoji: "➕", description: "Joga uma segunda peça na mesma vez." },
+    ],
+  },
 ];
 
 let memoryUsers = {};
@@ -229,7 +238,7 @@ export async function purchaseItem({ category, itemId } = {}) {
 }
 
 export async function equipItem({ category, itemId } = {}) {
-  if (category === "emote") throw storeError("ITEM_NAO_EQUIPAVEL");
+  if (category === "emote" || category === "poderes") throw storeError("ITEM_NAO_EQUIPAVEL");
   const item = findCategoryItem(category, itemId);
   if (!item) throw storeError("ITEM_INEXISTENTE");
 
