@@ -28,13 +28,6 @@
 }
 
 .rooms-screen {
-  --disc-blue: #4da3ff;
-  --disc-red: #ff5a5f;
-  --disc-purple: #a77bff;
-  --disc-green: #4fd17a;
-  --disc-orange: #ff9f43;
-  --disc-yellow: #ffc93c;
-  --disc-brown: #a9714b;
   accent-color: var(--lig-accent);
 }
 
@@ -166,13 +159,13 @@
   transform: translateY(-3px);
   background-color: rgba(255, 255, 255, 0.08);
 }
-.rooms-screen .color-picker__option:has([data-color="blue"])   { --opt: var(--disc-blue); }
-.rooms-screen .color-picker__option:has([data-color="red"])    { --opt: var(--disc-red); }
-.rooms-screen .color-picker__option:has([data-color="purple"]) { --opt: var(--disc-purple); }
-.rooms-screen .color-picker__option:has([data-color="green"])  { --opt: var(--disc-green); }
-.rooms-screen .color-picker__option:has([data-color="orange"]) { --opt: var(--disc-orange); }
-.rooms-screen .color-picker__option:has([data-color="yellow"]) { --opt: var(--disc-yellow); }
-.rooms-screen .color-picker__option:has([data-color="brown"])  { --opt: var(--disc-brown); }
+.rooms-screen .color-picker__option:has([data-color="blue"])   { --opt: var(--game-color-blue); }
+.rooms-screen .color-picker__option:has([data-color="red"])    { --opt: var(--game-color-red); }
+.rooms-screen .color-picker__option:has([data-color="purple"]) { --opt: var(--game-color-purple); }
+.rooms-screen .color-picker__option:has([data-color="green"])  { --opt: var(--game-color-green); }
+.rooms-screen .color-picker__option:has([data-color="orange"]) { --opt: var(--game-color-orange); }
+.rooms-screen .color-picker__option:has([data-color="yellow"]) { --opt: var(--game-color-yellow); }
+.rooms-screen .color-picker__option:has([data-color="brown"])  { --opt: var(--game-color-brown); }
 .rooms-screen .color-picker__option:has(input:checked) {
   background-color: color-mix(in srgb, var(--opt, var(--lig-accent)) 22%, transparent);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--opt, var(--lig-accent)) 75%, transparent);
@@ -190,7 +183,7 @@
   border-radius: 50%;
   background:
     radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.55), transparent 38%),
-    var(--swatch, var(--disc-blue));
+    var(--swatch, var(--game-color-blue));
   box-shadow: inset 0 -4px 8px rgba(0, 0, 0, 0.28), 0 4px 10px rgba(0, 0, 0, 0.35);
   transition: transform 0.4s var(--lig-ease-bounce), background-color 0.3s ease;
 }
@@ -207,13 +200,13 @@
 .rooms-screen .color-picker__option:has(input:checked) .color-picker__swatch {
   transform: scale(1.18);
 }
-.rooms-screen .color-picker__swatch[data-color="blue"]   { --swatch: var(--disc-blue); }
-.rooms-screen .color-picker__swatch[data-color="red"]    { --swatch: var(--disc-red); }
-.rooms-screen .color-picker__swatch[data-color="purple"] { --swatch: var(--disc-purple); }
-.rooms-screen .color-picker__swatch[data-color="green"]  { --swatch: var(--disc-green); }
-.rooms-screen .color-picker__swatch[data-color="orange"] { --swatch: var(--disc-orange); }
-.rooms-screen .color-picker__swatch[data-color="yellow"] { --swatch: var(--disc-yellow); }
-.rooms-screen .color-picker__swatch[data-color="brown"]  { --swatch: var(--disc-brown); }
+.rooms-screen .color-picker__swatch[data-color="blue"]   { --swatch: var(--game-color-blue); }
+.rooms-screen .color-picker__swatch[data-color="red"]    { --swatch: var(--game-color-red); }
+.rooms-screen .color-picker__swatch[data-color="purple"] { --swatch: var(--game-color-purple); }
+.rooms-screen .color-picker__swatch[data-color="green"]  { --swatch: var(--game-color-green); }
+.rooms-screen .color-picker__swatch[data-color="orange"] { --swatch: var(--game-color-orange); }
+.rooms-screen .color-picker__swatch[data-color="yellow"] { --swatch: var(--game-color-yellow); }
+.rooms-screen .color-picker__swatch[data-color="brown"]  { --swatch: var(--game-color-brown); }
 /* Vaga ainda sem cor/jogador */
 .rooms-screen .color-picker__swatch[data-color="empty"] {
   background: rgba(255, 255, 255, 0.05);
@@ -345,4 +338,105 @@
 }
 .rooms-screen .online-game-result h2 {
   font-size: 1.6rem;
+}
+
+/* O tamanho dos tabuleiros especiais acompanha a largura do tabuleiro clássico. */
+.online-game-board-wrap[data-board-theme] {
+  width: min(100%, 680px);
+  max-width: 680px;
+}
+
+/* Regras de tema e botões escopadas a #secao-partida */
+#secao-partida .button-danger {
+  background: var(--game-color-red);
+  color: var(--color-text);
+  border: 2px solid transparent;
+  font-family: var(--lig-font-display, "Fredoka", "DM Sans", sans-serif);
+}
+.online-modal-box .button-danger {
+  background: var(--game-color-red);
+  color: var(--color-text);
+  border: 2px solid transparent;
+}
+
+#secao-partida .button-danger:hover {
+  background: color-mix(in srgb, var(--game-color-red) 85%, #ffffff);
+  transform: translateY(-1px);
+}
+
+#secao-partida .button-danger:active {
+  transform: translateY(0);
+}
+
+#secao-partida .button-danger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+#secao-partida .button-secondary {
+  border: 2px solid transparent;
+  font-family: var(--lig-font-display, "Fredoka", "DM Sans", sans-serif);
+}
+
+#secao-partida .button-secondary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.online-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #050214b3;
+}
+
+.online-modal-box {
+  min-width: min(90vw, 360px);
+  padding: 1.5rem 1.75rem;
+  border: 4px solid #000;
+  border-radius: 6px;
+  background: linear-gradient(160deg, rgba(26, 11, 61, 0.97), rgba(11, 26, 74, 0.97));
+  box-shadow: 8px 8px 0 #000;
+  color: var(--color-text);
+  text-align: center;
+}
+
+.online-modal-text {
+  margin: 0 0 1.25rem;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--color-text);
+}
+
+.online-modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.empate-popup {
+  display: grid;
+  justify-items: center;
+  gap: 0.4rem;
+  margin: 0.6rem auto 0;
+  padding: 0.5rem;
+  position: relative;
+  z-index: 2;
+}
+
+.empate-popup-label {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--color-text);
+}
+
+.empate-popup .button {
+  min-width: 120px;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.9rem;
 }

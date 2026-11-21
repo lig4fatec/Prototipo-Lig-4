@@ -1,21 +1,23 @@
 <!doctype html>
-<link rel="stylesheet" href="../css/base.css">
-<link rel="stylesheet" href="../css/components.css">
-<link rel="stylesheet" href="../css/screens/t04-home.css">
-<link rel="stylesheet" href="../css/theme.css">
-<link rel="stylesheet" href="../css/screens/t04-home.theme.css">
 <html lang="pt-BR">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#18301D">
+    <meta name="theme-color" content="#1a0b3d">
     <title>Home | LIG-4 Online</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/base.css">
     <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="stylesheet" href="../css/screens/t04-home.theme.css">
     <link rel="stylesheet" href="../css/screens/t04-home.css">
     <script type="module" src="../js/global-nav.js"></script>
+    <script type="module" src="../js/button-click-sound.js"></script>
+    <script type="module" src="../js/background-music.js"></script>
   </head>
-  <body class="home-screen">
+  <body class="home-screen" data-background-music="musica.mp3">
     <aside class="app-sidebar app-sidebar--global" aria-label="Navegação principal">
       <a class="app-sidebar__brand" href="./t04-home.html" aria-label="LIG-4 Online, início">
         <img class="app-sidebar__logo" src="../assets/images/logo/lig4-mark.svg" alt="">
@@ -33,22 +35,30 @@
       </div>
     </aside>
 
+    <div class="home-bg" aria-hidden="true">
+      <span class="home-bg__disc home-bg__disc--1"></span>
+      <span class="home-bg__disc home-bg__disc--2"></span>
+      <span class="home-bg__disc home-bg__disc--3"></span>
+      <span class="home-bg__disc home-bg__disc--4"></span>
+    </div>
+
     <main class="home-main">
       <section class="home-content" aria-labelledby="home-title">
         <div class="home-brand" aria-label="LIG-4 Online">
           <img src="../assets/images/logo/lig4-mark.svg" alt="" width="88" height="88">
           <span>LIG-4</span>
         </div>
+        <p class="home-kicker">Pronto para a partida?</p>
         <h1 id="home-title">Escolha as opções abaixo:</h1>
         <nav class="home-actions" aria-label="Opções">
-          <a class="button button-primary-light home-action" href="./t05-jogar.html">
+          <a class="button button-primary-light home-action home-action--play" href="./t05-jogar.html">
             <span class="home-action__copy">
               <strong>Jogar partida Online</strong>
               <small>Jogue com outra pessoa pela internet</small>
             </span>
             <span class="home-action__arrow" aria-hidden="true">→</span>
           </a>
-          <a class="button button-primary-dark home-action" href="./t10-perfil.html">
+          <a class="button button-primary-dark home-action home-action--profile" href="./t10-perfil.html">
             <span class="home-action__copy">
               <strong>Área de perfil</strong>
               <small>Tela de perfil</small>
@@ -58,5 +68,6 @@
         </nav>
       </section>
     </main>
+
   </body>
 </html>

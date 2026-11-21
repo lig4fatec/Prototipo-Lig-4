@@ -11,7 +11,9 @@ function createAuthError(code) {
 
 function getStorage() {
   try {
-    return window.localStorage;
+    const storage = globalThis.localStorage || globalThis.window?.localStorage;
+    if (!storage) throw new Error("localStorage indisponível");
+    return storage;
   } catch {
     throw createAuthError("ARMAZENAMENTO_INDISPONIVEL");
   }
@@ -44,14 +46,16 @@ function isValidEmail(email) {
 }
 
 function toPublicUser(account) {
-  return { id: account.id, email: account.email };
+  return { id: account.id, email: account.email, nickname: account.nickname || account.email.split("@")[0] };
 }
 
 // Contrato do front-end consumido por auth-forms.js. O backend pode trocar estas
 // implementações por chamadas HTTP; preserve assinaturas, retorno e error.code.
-export async function register(email, password) {
+export async function register(email, password, nickname = "") {
   const normalizedEmail = normalizeEmail(email);
   if (!isValidEmail(normalizedEmail)) throw createAuthError("EMAIL_INVALIDO");
+  const normalizedNickname = typeof nickname === "string" ? nickname.trim() : "";
+  if (normalizedNickname.length < 3 || normalizedNickname.length > 20) throw createAuthError("NICKNAME_INVALIDO");
   if (typeof password !== "string" || password.length < 6) {
     throw createAuthError("SENHA_INVALIDA");
   }

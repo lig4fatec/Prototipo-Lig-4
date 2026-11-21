@@ -83,3 +83,98 @@ export function jogar(board, coluna, jogador, turnoAtual, partidaEncerrada) {
 
   return { ok: true, board: nextBoard, linha, vitoria, empate };
 }
+
+export function colunaBloqueada(bloqueios, coluna, jogador) {
+  if (!Array.isArray(bloqueios)) return false;
+  return bloqueios.some(bloqueio => (
+    bloqueio.coluna === coluna
+    && bloqueio.jogador === jogador
+    && bloqueio.lances > 0
+  ));
+}
+
+export function aplicarCongelar(estado, coluna, jogador) {
+  const bloqueio = {
+    coluna,
+    jogador: proximoTurno(jogador),
+    lances: 3,
+  };
+  return {
+    ...estado,
+    bloqueios: [...(estado.bloqueios || []), bloqueio],
+  };
+}
+
+export function consumirBloqueio(bloqueios, jogador) {
+  return (bloqueios || [])
+    .map(bloqueio => bloqueio.jogador === jogador
+      ? { ...bloqueio, lances: Math.max(0, bloqueio.lances - 1) }
+      : bloqueio)
+    .filter(bloqueio => bloqueio.lances > 0);
+}
+
+export function passarVezSeBloqueado(estado) {
+  let nextState = {
+    ...estado,
+    bloqueios: (estado.bloqueios || []).map(bloqueio => ({ ...bloqueio })),
+  };
+
+  for (let skips = 0; skips < 2; skips++) {
+    const openColumns = Array.from({ length: COLUMNS }, (_, coluna) => coluna)
+      .filter(coluna => linhaDeQueda(nextState.board, coluna) !== -1);
+    if (openColumns.length === 0) break;
+
+    const playableColumns = openColumns.filter(coluna => (
+      !colunaBloqueada(nextState.bloqueios, coluna, nextState.turn)
+    ));
+    if (playableColumns.length > 0) break;
+
+    nextState = {
+      ...nextState,
+      turn: proximoTurno(nextState.turn),
+      bloqueios: consumirBloqueio(nextState.bloqueios, nextState.turn),
+    };
+  }
+
+  return nextState;
+}
+
+export function contarEspacosLivres(board) {
+  let count = 0;
+  for (let row = 0; row < ROWS; row++) {
+    for (let col = 0; col < COLUMNS; col++) {
+      if (board[row][col] === 0) count++;
+    }
+  }
+  return count;
+}
+
+export function temColunaJogavel(board, bloqueios, jogador) {
+  for (let col = 0; col < COLUMNS; col++) {
+    if (linhaDeQueda(board, col) !== -1 && !colunaBloqueada(bloqueios, col, jogador)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+export function removerPecaAdversaria(board, coluna, jogador) {
+  if (!Number.isInteger(coluna) || coluna < 0 || coluna >= COLUMNS) {
+    return { ok: false, code: "COLUNA_INVALIDA" };
+  }
+  if (jogador !== 1 && jogador !== 2) {
+    return { ok: false, code: "JOGADOR_INVALIDO" };
+  }
+
+  const adversario = proximoTurno(jogador);
+  const novoTabuleiro = copiarTabuleiro(board);
+
+  for (let row = 0; row < ROWS; row++) {
+    if (novoTabuleiro[row][coluna] === adversario) {
+      novoTabuleiro[row][coluna] = 0;
+      return { ok: true, board: novoTabuleiro };
+    }
+  }
+
+  return { ok: false, code: "SEM_PECA_ADVERSARIA" };
+}

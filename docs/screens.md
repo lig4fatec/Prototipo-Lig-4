@@ -134,19 +134,48 @@ Todas as telas desta categoria usam a barra de navegação global (desktop: late
 - **Status:** Porte, bloqueado até `services/rooms.js` existir.
 
 ### T09 · Partida
-- **Arquivo:** `Seção de html/online.html`
-- **Objetivo:** jogar a série no tabuleiro e exibir o resultado.
-- **Elementos:** tabuleiro 7x6 (alta fidelidade), placar, indicação de turno, PIN da sala (discreto), botão Sair da sala. Barra de navegação global oculta, ou reduzida ao botão Sair.
-- **Relógios (mock)**: 5:00 cada. Só corre na própria vez. Se zerar, perde.
-- **Modal de resultado (novo)**: aparece ao fim da partida, com vencedor, empate ou desistência, e o placar. Dois botões: “Revanche” e “Sair”.
-- **Revanche**: cria uma nova partida na mesma sala. A tela continua em T09, com novo partidaId e placar mantido. Quem começa alterna. Não volta para T08, porque a sala já está em jogo.
+### T09 · Partida
+- **Arquivo:** `html/online.html` (seção de T09)
+- **Objetivo:** jogar a partida no tabuleiro e exibir o resultado.
+- **Layout:**
+  - Centro: título "Modo: Clássico/Caos", PIN discreto e tabuleiro 7x6 com a skin do próprio jogador.
+  - Painéis laterais: um para cada jogador, com avatar, nome (com "(Você)" ou "(Adversário)"), relógio e poderes.
+  - Abaixo do tabuleiro: botões Empate e Desistir, em linha.
+  - Barra de navegação global oculta nesta tela.
+- **Cores:** a cor escolhida no lobby define o painel, a borda e o relógio de cada jogador. Peças usam a mesma cor.
+  - Vez ativa: opacidade 100% e borda visível.
+  - Vez inativa: opacidade reduzida (cerca de 45%) e traço no ícone de pausa. Textos continuam brancos.
+- **Poderes (só no Caos):**
+  - Cada poder pode ser usado uma vez por partida.
+  - Cada ícone aparece somente enquanto o jogador tem o poder.
+  - Ao usar, o ícone esmaece e recebe um traço.
+- **Emote:**
+  - Botão entre o painel do jogador e o tabuleiro, compartilhado pelos dois.
+  - Abre um menu pop-up com os emotes equipados (`equipados.emote`). Fecha ao clicar fora ou no botão X.
+  - Ao escolher, aparece um balão de fala ancorado ao painel de quem enviou. O balão esmaece em 3 s.
+  - Cooldown de 1 s, inclusive com o menu aberto.
+- **Desistir:**
+  - Botão vermelho com ícone de bandeira. Sempre disponível.
+  - Abre modal de confirmação. Efeito: derrota para quem desistiu.
+  - Tooltip e rótulo para leitor de tela.
+- **Empate:**
+  - Botão cinza com ícone "1/2". Uma vez por jogador, por partida.
+  - Quem propõe fica com o botão desabilitado e vê "Aguardando resposta" no lugar do pop-up.
+  - Pop-up aparece só no painel do adversário, abaixo do nome, com "Empate?", botão Aceitar (branco) e Recusar (preto, com borda clara).
+  - Aceito: a partida termina e o modal de resultado aparece.
+  - Recusado: "O adversário recusou o empate." aparece no lugar de "Aguardando resposta" por 5 s. O botão continua desabilitado.
+- **Relógios (mock):** 5:00 cada. Corre só na própria vez. Ao zerar, perde.
+- **Modal de resultado (novo):** aparece ao fim da partida, com vencedor, empate ou desistência e o placar. Botões "Revanche" e "Sair".
+- **Revanche:** cria uma nova partida na mesma sala. A tela continua em T09, com novo `partidaId`, placar mantido e alternância de quem começa. Não volta para T08, porque a sala já está em jogo.
 - **Navegação:** modal → Revanche (T09, nova partida) ou Sair (T05).
-- **Dados:** mock em `services/rooms.js` (partida, relógio, desistência, empate, emote) e `js/game/` (regras puras).
+- **Dados (mock):** `services/rooms.js` (partida, relógio, desistência, empate, emote) e `js/game/` (regras puras).
 - **Legado:** `#game-container` (`index.html:544`), `script.js` (jogo e regras), `online.js` (sincronização). Visual "Chaos" descartado (efeitos, poderes, confetes).
-- **Limitação da demo (mock)**: emote, empate e desistência só aparecem entre abas do mesmo navegador. Duas máquinas exigem a integração.
+- **Limitação da demo (mock):** emote, empate e desistência só funcionam entre abas do mesmo navegador. Duas máquinas exigem a integração.
+- **Integração (anotar):** `GET /partidas/{id}/estado`, `POST /partidas/{id}/jogadas`, WebSocket `/ws/partidas/{id}` e `POST /salas/{pin}/revanche`. Relógio, desistência, empate e emote exigem contrato novo.
 - **Status:** Porte (mock), com layout novo a implementar.
-- **Fora do escopo atual:** habilidades (bomba, inversão, gelo, elétrica) e modo bot.
+- **Fora do escopo atual:** habilidades do legado (bomba, inversão, gelo, elétrica) e modo bot.
 
+**Pendências de T09:** teste de contraste nas cores escuras.
 ---
 
 ## Telas do legado sem correspondência ("origem de T05 a T09")
