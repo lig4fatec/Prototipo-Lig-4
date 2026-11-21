@@ -117,6 +117,9 @@ const gameErrorMessages = {
   PODER_INDISPONIVEL: "Este poder só está disponível no modo Caos.",
   SEM_PECA_ADVERSARIA: "Não há peça do adversário nesta coluna.",
   SEM_ESPACO_SUFICIENTE: "Restam poucos espaços para usar este poder.",
+  EMPATE_JA_PROPOSTO: "Você já propôs empate nesta partida.",
+  EMPATE_SEM_PROPOSTA: "Não há proposta de empate pendente.",
+  EMPATE_PROPONENTE_INVALIDO: "Você não pode responder à sua própria proposta.",
 };
 
 function playerNumberForRole(playerRole) {
@@ -914,6 +917,7 @@ drawButton.addEventListener("click", async () => {
   try {
     await proporEmpate({ pin: room.pin, role });
   } catch (error) {
+    console.error(error);
     statusElement.textContent =
       gameErrorMessages[error.code] || getRoomErrorMessage(error.code);
   }

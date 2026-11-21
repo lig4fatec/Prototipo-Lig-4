@@ -425,6 +425,7 @@ export async function proporEmpate({ pin, role } = {}) {
 
   const jogador = role === "owner" ? 1 : role === "guest" ? 2 : null;
   if (!jogador || !room.players[role] || !room.game) throw roomError("SEM_PERMISSAO");
+  room.game.empatesPropostos = { 1: false, 2: false, ...(room.game.empatesPropostos || {}) }; 
   if (room.game.empatesPropostos[jogador]) throw roomError("EMPATE_JA_PROPOSTO");
 
   room.game.empatesPropostos[jogador] = true;
