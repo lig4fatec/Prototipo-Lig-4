@@ -508,36 +508,28 @@ async function applyPersonalization() {
 function confirmarModal(mensagem) {
   return new Promise(resolve => {
     const overlay = document.createElement("div");
-    overlay.style.position = "fixed";
-    overlay.style.inset = "0";
-    overlay.style.background = "rgba(0, 0, 0, 0.5)";
-    overlay.style.display = "flex";
-    overlay.style.alignItems = "center";
-    overlay.style.justifyContent = "center";
-    overlay.style.zIndex = "1000";
+    overlay.className = "online-modal-overlay";
 
     const box = document.createElement("div");
-    box.style.background = "#ffffff";
-    box.style.padding = "1.5rem 2rem";
-    box.style.borderRadius = "8px";
-    box.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.3)";
-    box.style.minWidth = "260px";
-    box.style.textAlign = "center";
+    box.className = "online-modal-box";
+    box.setAttribute("role", "dialog");
+    box.setAttribute("aria-modal", "true");
 
     const mensagemEl = document.createElement("p");
+    mensagemEl.className = "online-modal-text";
     mensagemEl.textContent = mensagem;
-    mensagemEl.style.margin = "0 0 1rem";
 
     const botoes = document.createElement("div");
-    botoes.style.display = "flex";
-    botoes.style.gap = "0.5rem";
-    botoes.style.justifyContent = "center";
+    botoes.className = "online-modal-actions";
 
     const confirmar = document.createElement("button");
     confirmar.type = "button";
+    confirmar.className = "button button-danger";
     confirmar.textContent = "Confirmar";
+
     const cancelar = document.createElement("button");
     cancelar.type = "button";
+    cancelar.className = "button button-secondary";
     cancelar.textContent = "Cancelar";
 
     const fechar = () => overlay.remove();
@@ -627,8 +619,10 @@ function renderEmpateUI() {
 
   const box = document.createElement("div");
   box.dataset.empatePopup = "true";
+  box.className = "empate-popup";
 
   const label = document.createElement("span");
+  label.className = "empate-popup-label";
   label.textContent = "Empate?";
 
   const aceitar = document.createElement("button");
