@@ -21,6 +21,6 @@ test("equipItem aceita item possuído e atualiza equipamento", async () => {
 
   assert.equal((await getEquipped()).avatar, "avatar-padrao");
   const catalog = await getCatalog();
-  assert.equal(catalog.categories.length, 2);
-  assert.deepEqual(catalog.categories.map(category => category.items.length), [6, 8]);
+  assert.equal(catalog.categories.length, 3);
+  assert.deepEqual(catalog.categories.map(category => category.items.length), [6, 5, 8]);
 });

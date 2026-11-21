@@ -5,14 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#18301D">
   <title>Criar conta | LIG-4 Online</title>
+  <script type="module" src="../js/button-click-sound.js"></script>
+  <script type="module" src="../js/background-music.js"></script>
   <link rel="stylesheet" href="../css/base.css">
-  <link rel="stylesheet" href="../css/components.css">
-  <link rel="stylesheet" href="../css/screens/auth.css">
-  <link rel="stylesheet" href="../css/theme.css">
-  <link rel="stylesheet" href="../css/screens/auth.theme.css">
+<link rel="stylesheet" href="../css/components.css">
+<link rel="stylesheet" href="../css/screens/auth.css">
+<link rel="stylesheet" href="../css/theme.css">
+<link rel="stylesheet" href="../css/screens/auth.theme.css">
   <script type="module" src="../js/auth-forms.js"></script>
 </head>
-  <body class="auth-screen">
+  <body class="auth-screen" data-background-music="musica1.mp3">
     <header class="auth-header">
       <a class="auth-back" href="./t01-boas-vindas.html" aria-label="Voltar à página inicial" title="Voltar à página inicial">
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -31,6 +33,16 @@
         <p class="auth-intro">Prepare-se para conectar quatro.</p>
 
         <form class="auth-form" data-auth-form="register" novalidate>
+          <div class="form-field">
+            <label class="form-field__label" for="register-nickname">Nickname/apelido</label>
+            <div class="form-field__control">
+              <input id="register-nickname" name="nickname" type="text" autocomplete="nickname"
+                minlength="3" maxlength="20" placeholder="Seu apelido" data-field="nickname"
+                aria-describedby="register-nickname-error" aria-invalid="false" required>
+            </div>
+            <p class="form-field__error" id="register-nickname-error" data-error-for="nickname" aria-live="polite"></p>
+          </div>
+
           <div class="form-field">
             <label class="form-field__label" for="register-email">E-mail</label>
             <div class="form-field__control">

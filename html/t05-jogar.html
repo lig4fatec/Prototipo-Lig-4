@@ -1,22 +1,25 @@
 <!doctype html>
-<link rel="stylesheet" href="../css/base.css">
-<link rel="stylesheet" href="../css/components.css">
-<link rel="stylesheet" href="../css/screens/rooms.css">
-<link rel="stylesheet" href="../css/theme.css">
-<link rel="stylesheet" href="../css/screens/rooms.theme.css">
-<script type="module" src="../js/global-nav.js"></script>
 <html lang="pt-BR">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#18301D">
+    <meta name="theme-color" content="#1a0b3d">
     <title>Jogar | LIG-4 Online</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/base.css">
     <link rel="stylesheet" href="../css/components.css">
     <link rel="stylesheet" href="../css/screens/rooms.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="stylesheet" href="../css/screens/rooms.theme.css">
+    <link rel="stylesheet" href="../css/screens/online-sala.css">
+    <link rel="stylesheet" href="../css/screens/t05-jogar.css">
     <script type="module" src="../js/global-nav.js"></script>
+    <script type="module" src="../js/button-click-sound.js"></script>
+    <script type="module" src="../js/background-music.js"></script>
   </head>
-  <body class="rooms-screen">
+  <body class="rooms-screen" data-background-music="musica.mp3">
     <aside class="app-sidebar app-sidebar--global" aria-label="Navegação principal">
       <a class="app-sidebar__brand" href="./t04-home.html" aria-label="LIG-4 Online, início">
         <img class="app-sidebar__logo" src="../assets/images/logo/lig4-mark.svg" alt="">
@@ -32,24 +35,37 @@
       <div class="app-sidebar__footer"><button class="app-sidebar__link" type="button" data-global-logout>Sair</button></div>
     </aside>
 
+    <div class="home-bg" aria-hidden="true">
+      <span class="home-bg__disc home-bg__disc--1"></span>
+      <span class="home-bg__disc home-bg__disc--2"></span>
+      <span class="home-bg__disc home-bg__disc--3"></span>
+      <span class="home-bg__disc home-bg__disc--4"></span>
+    </div>
+
     <main class="rooms-main">
       <section class="rooms-content" aria-labelledby="play-title">
+        <p class="rooms-kicker">Online</p>
         <h1 id="play-title">Lig - 4 Online</h1>
         <p class="rooms-subtitle">Escolha uma opção para jogar online</p>
         <p class="rooms-warning" data-room-warning role="status" aria-live="polite" hidden></p>
         <nav class="rooms-options" aria-label="Opções de partida">
           <a class="button button-primary-light rooms-option" href="./online.html#criar">
-            <span><strong>Criar uma sala</strong><small>Crie uma sala para outro jogador entrar</small></span>
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span class="rooms-option__copy"><strong>Criar uma sala</strong><small>Crie uma sala para outro jogador entrar</small></span>
+            <span class="rooms-option__arrow" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
           </a>
           <a class="button button-primary-dark rooms-option" href="./online.html#entrar">
-            <span><strong>Entrar em uma sala</strong><small>Entre em uma sala existente</small></span>
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span class="rooms-option__copy"><strong>Entrar em uma sala</strong><small>Entre em uma sala existente</small></span>
+            <span class="rooms-option__arrow" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
           </a>
         </nav>
         <a class="button button-secondary rooms-back" href="./t04-home.html">Voltar</a>
       </section>
     </main>
+
     <script type="module" src="../js/online/aviso-t05.js"></script>
   </body>
 </html>

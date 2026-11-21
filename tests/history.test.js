@@ -6,14 +6,13 @@ test("listMatches rejeita filtro inválido", async () => {
   await assert.rejects(listMatches({ filter: "favoritos" }), { code: "FILTRO_INVALIDO" });
 });
 
-test("listMatches retorna apenas partidas do filtro solicitado", async () => {
-  const online = await listMatches({ filter: "online" });
-  const daily = await listMatches({ filter: "diario" });
+test("listMatches mantém o histórico vazio", async () => {
+  const classic = await listMatches({ filter: "classico" });
+  const chaos = await listMatches({ filter: "caos" });
+  const search = await listMatches({ query: "qualquer adversário" });
   const all = await listMatches({ filter: "todos" });
-
-  assert.ok(online.matches.length > 0);
-  assert.ok(online.matches.every(match => match.mode === "online"));
-  assert.ok(daily.matches.length > 0);
-  assert.ok(daily.matches.every(match => match.mode === "diario"));
-  assert.equal(all.matches.length, 7);
+  assert.deepEqual(classic.matches, []);
+  assert.deepEqual(chaos.matches, []);
+  assert.deepEqual(search.matches, []);
+  assert.deepEqual(all.matches, []);
 });

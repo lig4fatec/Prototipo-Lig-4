@@ -31,7 +31,7 @@ export async function getProfile() {
   const userKey = await getUserKey();
   const saved = readJson(PROFILES_KEY)[userKey] ?? {};
   return {
-    nick: saved.nick ?? defaultNick(userKey),
+    nick: saved.nick ?? (await getCurrentUser())?.nickname ?? defaultNick(userKey),
     name: saved.name ?? "",
     bio: saved.bio ?? "",
     color: saved.color ?? "blue",

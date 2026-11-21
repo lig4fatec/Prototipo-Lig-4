@@ -1,4 +1,7 @@
 import { isValidGameMode } from "../game/modes.js";
+import { linhaDeQueda } from "../game/board.js";
+import { aplicarCongelar, consumirBloqueio, contarEspacosLivres, passarVezSeBloqueado, removerPecaAdversaria, temColunaJogavel } from "../game/rules.js";
+import { getInventory } from "./store.js";
 // MOCK DESCARTÁVEL. Persistência em localStorage apenas para desenvolvimento. Será removida quando o miolo for substituído pelo Firebase, mantendo as assinaturas.
 
 export const CORES_VALIDAS = Object.freeze([
@@ -74,6 +77,10 @@ function emptyGameState() {
     board: Array.from({ length: 6 }, () => Array(7).fill(0)),
     turn: 1,
     moveCount: 0,
+    bloqueios: [],
+    poderesUsados: { 1: [], 2: [] },
+    pecaExtra: null,
+    empatesPropostos: { 1: false, 2: false },
   };
 }
 
@@ -102,7 +109,8 @@ function validateColor(color) {
 function getRoomSnapshot(room) {
   return {
     pin: room.pin,
-    series: room.series,
+    boardId: room.boardId || "board-classico",
+    ready: { owner: Boolean(room.ready?.owner), guest: Boolean(room.ready?.guest) },
     mode: room.mode || "classico",
     players: {
       owner: { ...room.players.owner },
@@ -114,9 +122,23 @@ function getRoomSnapshot(room) {
         board: room.game.board.map(row => row.slice()),
         turn: room.game.turn,
         moveCount: room.game.moveCount,
+        empatesPropostos: {
+          ...(room.game.empatesPropostos || { 1: false, 2: false }),
+        },
+        ...(room.mode === "caos" ? {
+          bloqueios: (room.game.bloqueios || []).map(bloqueio => ({ ...bloqueio })),
+          poderesUsados: {
+            1: [...(room.game.poderesUsados?.[1] || [])],
+            2: [...(room.game.poderesUsados?.[2] || [])],
+          },
+          pecaExtra: room.game.pecaExtra ? { ...room.game.pecaExtra } : null,
+        } : {}),
       }
       : null,
     result: room.result ? { ...room.result } : null,
+    ...(room.empate
+      ? { empate: { proponente: room.empate.proponente, status: room.empate.status } }
+      : {}),
     rematchRequested: [...(room.rematchRequested || [])],
     ...(room.lastEmote ? { lastEmote: { ...room.lastEmote } } : {}),
   };
@@ -217,12 +239,10 @@ async function yieldMock() {
 
 export async function createRoom(options = {}) {
   await yieldMock();
-  const series = options?.series === undefined ? 1 : options.series;
-  const color = options?.color;
+  const color = options?.color ?? "blue";
   const mode = options?.mode ?? "classico";
   if (!isValidGameMode(mode)) throw roomError("MODO_INVALIDO");
 
-  if (![1, 3, 5].includes(series)) throw roomError("SERIE_INVALIDA");
   validateColor(color);
 
   const rooms = readRooms();
@@ -230,8 +250,9 @@ export async function createRoom(options = {}) {
   saveSession(pin, "owner");
   rooms.set(pin, {
     pin,
-    series,
     mode,
+    boardId: "board-classico",
+    ready: { owner: false, guest: false },
     players: { owner: { color, ...avatarField(options?.avatar) }, guest: null },
     phase: "waiting",
     game: null,
@@ -246,13 +267,14 @@ export async function createRoom(options = {}) {
 export async function joinRoom(options = {}) {
   await yieldMock();
   const pin = options?.pin;
-  const color = options?.color;
+  let color = options?.color;
   validatePin(pin);
-  validateColor(color);
 
   const rooms = readRooms();
   const room = rooms.get(pin);
   if (!room) throw roomError("PIN_NAO_ENCONTRADO");
+  if (!color) color = CORES_VALIDAS.find(candidate => candidate !== room.players.owner.color) || "red";
+  validateColor(color);
   if (room.phase !== "waiting" || room.players.guest) {
     throw roomError("SALA_CHEIA");
   }
@@ -262,6 +284,7 @@ export async function joinRoom(options = {}) {
 
   saveSession(pin, "guest");
   room.players.guest = { color, ...avatarField(options?.avatar) };
+  room.ready = { owner: false, guest: false };
   writeRooms(rooms);
   notifyRoom(pin);
   return { pin, role: "guest" };
@@ -298,9 +321,8 @@ export async function setPlayerColor(options = {}) {
   await yieldMock();
   const pin = options?.pin;
   const role = options?.role;
-  const color = options?.color;
+  let color = options?.color;
   validatePin(pin);
-  validateColor(color);
   assertSession(pin, role);
 
   const rooms = readRooms();
@@ -316,8 +338,50 @@ export async function setPlayerColor(options = {}) {
   }
 
   room.players[role].color = color;
+  room.ready = { owner: false, guest: false };
   writeRooms(rooms);
   notifyRoom(pin);
+}
+
+export async function setRoomBoard({ pin, role, boardId } = {}) {
+  await yieldMock();
+  validatePin(pin);
+  assertSession(pin, role);
+  if (role !== "owner") throw roomError("SEM_PERMISSAO");
+  if (typeof boardId !== "string" || !/^board-[a-z0-9-]{1,32}$/.test(boardId)) {
+    throw roomError("TABULEIRO_INVALIDO");
+  }
+  const inventory = await getInventory();
+  if (!inventory.byCategory.board?.some(item => item.id === boardId)) {
+    throw roomError("TABULEIRO_NAO_POSSUIDO");
+  }
+  const rooms = readRooms();
+  const room = rooms.get(pin);
+  if (!room) throw roomError("PIN_NAO_ENCONTRADO");
+  if (room.phase !== "waiting") throw roomError("SEM_PERMISSAO");
+  room.boardId = boardId;
+  room.ready = { owner: false, guest: false };
+  writeRooms(rooms);
+  notifyRoom(pin);
+  return { pin, boardId };
+}
+
+export async function setPlayerReady({ pin, role, ready } = {}) {
+  await yieldMock();
+  validatePin(pin);
+  assertSession(pin, role);
+  if (typeof ready !== "boolean") throw roomError("PRONTIDAO_INVALIDA");
+  const rooms = readRooms();
+  const room = rooms.get(pin);
+  if (!room) throw roomError("PIN_NAO_ENCONTRADO");
+  if (room.phase !== "waiting" || !room.players[role] || !room.players.guest) {
+    throw roomError("SALA_NAO_PRONTA");
+  }
+  room.ready = { owner: Boolean(room.ready?.owner), guest: Boolean(room.ready?.guest) };
+  room.ready[role] = ready;
+  writeRooms(rooms);
+  notifyRoom(pin);
+  return { pin, ready: room.ready[role] };
 }
 
 export async function startMatch(options = {}) {
@@ -334,6 +398,8 @@ export async function startMatch(options = {}) {
     || !room.players.owner
     || !room.players.guest
     || room.players.owner.color === room.players.guest.color
+    || !room.ready?.owner
+    || !room.ready?.guest
   ) {
     throw roomError("SALA_NAO_PRONTA");
   }
@@ -341,9 +407,62 @@ export async function startMatch(options = {}) {
   room.phase = "playing";
   room.game = emptyGameState();
   room.result = null;
+  room.empate = null;
   room.rematchRequested = [];
   writeRooms(rooms);
   notifyRoom(pin);
+}
+
+export async function proporEmpate({ pin, role } = {}) {
+  await yieldMock();
+  validatePin(pin);
+
+  const rooms = readRooms();
+  const room = rooms.get(pin);
+  if (!room) throw roomError("PIN_NAO_ENCONTRADO");
+  assertSession(pin, role);
+  if (room.phase !== "playing") throw roomError("FASE_INVALIDA");
+
+  const jogador = role === "owner" ? 1 : role === "guest" ? 2 : null;
+  if (!jogador || !room.players[role] || !room.game) throw roomError("SEM_PERMISSAO");
+  if (room.game.empatesPropostos[jogador]) throw roomError("EMPATE_JA_PROPOSTO");
+
+  room.game.empatesPropostos[jogador] = true;
+  room.empate = { proponente: jogador, status: "pendente" };
+
+  writeRooms(rooms);
+  notifyRoom(pin);
+  return { pin, jogador };
+}
+
+export async function responderEmpate({ pin, role, aceitar } = {}) {
+  await yieldMock();
+  validatePin(pin);
+
+  const rooms = readRooms();
+  const room = rooms.get(pin);
+  if (!room) throw roomError("PIN_NAO_ENCONTRADO");
+  assertSession(pin, role);
+  if (room.phase !== "playing") throw roomError("FASE_INVALIDA");
+
+  const jogador = role === "owner" ? 1 : role === "guest" ? 2 : null;
+  if (!jogador || !room.players[role]) throw roomError("SEM_PERMISSAO");
+  if (!room.empate || room.empate.status !== "pendente") {
+    throw roomError("EMPATE_SEM_PROPOSTA");
+  }
+  if (room.empate.proponente === jogador) throw roomError("EMPATE_PROPONENTE_INVALIDO");
+
+  if (aceitar) {
+    room.result = { winner: null, draw: true };
+    room.phase = "finished";
+    room.empate = null;
+  } else {
+    room.empate = { proponente: room.empate.proponente, status: "recusado" };
+  }
+
+  writeRooms(rooms);
+  notifyRoom(pin);
+  return { pin, aceitar };
 }
 
 export async function publishState({ pin, role, board, turn, moveCount } = {}) {
@@ -363,14 +482,161 @@ export async function publishState({ pin, role, board, turn, moveCount } = {}) {
 
   // O turno salvo autoriza a jogada; o turno recebido é o próximo a agir.
   // Vitória e legalidade da queda pertencem a js/game/, não a este serviço.
-  room.game = {
+  const pecaExtra = room.game.pecaExtra;
+  const isFirstExtra = room.mode === "caos"
+    && pecaExtra?.etapa === 1
+    && pecaExtra.jogador === room.game.turn;
+  const isSecondExtra = room.mode === "caos"
+    && pecaExtra?.etapa === 2
+    && pecaExtra.jogador === room.game.turn;
+
+  const nextGame = {
     board: board.map(row => row.slice()),
-    turn,
+    turn: isFirstExtra ? room.game.turn : turn,
     moveCount,
+    bloqueios: room.mode === "caos"
+      ? (isFirstExtra ? (room.game.bloqueios || []).map(b => ({ ...b })) : consumirBloqueio(room.game.bloqueios || [], room.game.turn))
+      : [],
+    poderesUsados: {
+      1: [...(room.game.poderesUsados?.[1] || [])],
+      2: [...(room.game.poderesUsados?.[2] || [])],
+    },
+    pecaExtra: isFirstExtra ? { jogador: pecaExtra.jogador, etapa: 2 } : null,
+  };
+  if (isFirstExtra) {
+    room.game = nextGame;
+  } else {
+    room.game = room.mode === "caos" ? passarVezSeBloqueado(nextGame) : nextGame;
+  }
+  writeRooms(rooms);
+  notifyRoom(pin);
+  return { pin, turn: room.game.turn, moveCount };
+}
+
+export async function usarCongelarColuna({ pin, role, coluna } = {}) {
+  await yieldMock();
+  validatePin(pin);
+  const rooms = readRooms();
+  const room = rooms.get(pin);
+  if (!room) throw roomError("PIN_NAO_ENCONTRADO");
+  if (room.phase !== "playing") throw roomError("FASE_INVALIDA");
+  if (room.mode !== "caos") throw roomError("PODER_INDISPONIVEL");
+
+  assertSession(pin, role);
+  const jogador = role === "owner" ? 1 : role === "guest" ? 2 : null;
+  if (!jogador || !room.players[role]) throw roomError("SEM_PERMISSAO");
+  if (room.game?.turn !== jogador) throw roomError("NAO_EH_SEU_TURNO");
+  if (!Number.isInteger(coluna) || coluna < 0 || coluna >= 7) {
+    throw roomError("COLUNA_INVALIDA");
+  }
+  if (linhaDeQueda(room.game.board, coluna) === -1) throw roomError("COLUNA_CHEIA");
+
+  const poderesUsados = room.game.poderesUsados || { 1: [], 2: [] };
+  if ((poderesUsados[jogador] || []).includes("congelar-coluna")) {
+    throw roomError("PODER_JA_USADO");
+  }
+
+  const nextGame = aplicarCongelar(room.game, coluna, jogador);
+  nextGame.poderesUsados = {
+    1: [...(poderesUsados[1] || [])],
+    2: [...(poderesUsados[2] || [])],
+    [jogador]: [...(poderesUsados[jogador] || []), "congelar-coluna"],
+  };
+  room.game = nextGame;
+  writeRooms(rooms);
+  notifyRoom(pin);
+  return { pin, coluna, jogador };
+}
+
+export async function usarQueimarPeca({ pin, role, coluna } = {}) {
+  await yieldMock();
+  validatePin(pin);
+  const rooms = readRooms();
+  const room = rooms.get(pin);
+  if (!room) throw roomError("PIN_NAO_ENCONTRADO");
+  if (room.phase !== "playing") throw roomError("FASE_INVALIDA");
+  if (room.mode !== "caos") throw roomError("PODER_INDISPONIVEL");
+
+  assertSession(pin, role);
+  const jogador = role === "owner" ? 1 : role === "guest" ? 2 : null;
+  if (!jogador || !room.players[role]) throw roomError("SEM_PERMISSAO");
+  if (room.game?.turn !== jogador) throw roomError("NAO_EH_SEU_TURNO");
+
+  const poderesUsados = room.game.poderesUsados || { 1: [], 2: [] };
+  if ((poderesUsados[jogador] || []).includes("queimar-peca")) {
+    throw roomError("PODER_JA_USADO");
+  }
+
+  const result = removerPecaAdversaria(room.game.board, coluna, jogador);
+  if (!result.ok) throw roomError(result.code);
+
+  room.game = {
+    ...room.game,
+    board: result.board,
+    poderesUsados: {
+      1: [...(poderesUsados[1] || [])],
+      2: [...(poderesUsados[2] || [])],
+      [jogador]: [...(poderesUsados[jogador] || []), "queimar-peca"],
+    },
   };
   writeRooms(rooms);
   notifyRoom(pin);
-  return { pin, turn, moveCount };
+  return { pin, coluna, jogador };
+}
+
+export async function usarPecaExtra({ pin, role } = {}) {
+  await yieldMock();
+  validatePin(pin);
+  const rooms = readRooms();
+  const room = rooms.get(pin);
+  if (!room) throw roomError("PIN_NAO_ENCONTRADO");
+  if (room.phase !== "playing") throw roomError("FASE_INVALIDA");
+  if (room.mode !== "caos") throw roomError("PODER_INDISPONIVEL");
+
+  assertSession(pin, role);
+  const jogador = role === "owner" ? 1 : role === "guest" ? 2 : null;
+  if (!jogador || !room.players[role]) throw roomError("SEM_PERMISSAO");
+  if (room.game?.turn !== jogador) throw roomError("NAO_EH_SEU_TURNO");
+
+  const poderesUsados = room.game.poderesUsados || { 1: [], 2: [] };
+  if ((poderesUsados[jogador] || []).includes("peca-extra")) {
+    throw roomError("PODER_JA_USADO");
+  }
+
+  if (contarEspacosLivres(room.game.board) < 2) {
+    throw roomError("SEM_ESPACO_SUFICIENTE");
+  }
+
+  room.game = {
+    ...room.game,
+    poderesUsados: {
+      1: [...(poderesUsados[1] || [])],
+      2: [...(poderesUsados[2] || [])],
+      [jogador]: [...(poderesUsados[jogador] || []), "peca-extra"],
+    },
+    pecaExtra: { jogador, etapa: 1 },
+  };
+  writeRooms(rooms);
+  notifyRoom(pin);
+  return { pin, jogador };
+}
+
+export async function desistirPartida({ pin, role } = {}) {
+  await yieldMock();
+  validatePin(pin);
+  const rooms = readRooms();
+  const room = rooms.get(pin);
+  if (!room) throw roomError("PIN_NAO_ENCONTRADO");
+  assertSession(pin, role);
+  if (room.phase !== "playing") throw roomError("FASE_INVALIDA");
+  const jogador = role === "owner" ? 1 : role === "guest" ? 2 : null;
+  if (!jogador || !room.players[role]) throw roomError("SEM_PERMISSAO");
+  const winner = jogador === 1 ? 2 : 1;
+  room.result = { winner, draw: false, motivo: "desistencia" };
+  room.phase = "finished";
+  writeRooms(rooms);
+  notifyRoom(pin);
+  return { pin, jogador };
 }
 
 export async function publishResult({ pin, role, result } = {}) {
@@ -418,6 +684,7 @@ export async function requestRematch({ pin, role } = {}) {
     room.phase = "playing";
     room.game = emptyGameState();
     room.result = null;
+    room.empate = null;
     room.rematchRequested = [];
   }
 
@@ -466,6 +733,7 @@ export async function leaveRoom(options = {}) {
   } else {
     if (!room.players.guest) throw roomError("SEM_PERMISSAO");
     room.players.guest = null;
+    room.ready = { owner: false, guest: false };
     room.phase = "waiting";
   }
 

@@ -3,15 +3,17 @@ import { test } from "node:test";
 import { GAME_MODES, getGameMode, isValidGameMode } from "../js/game/modes.js";
 import { getCatalog, purchaseItem, equipItem } from "../js/services/store.js";
 
-test("modos incluem clássico, caos e inverno", () => {
-  for (const mode of ["classico", "caos", "inverno"]) assert.equal(isValidGameMode(mode), true);
-  assert.equal(isValidGameMode("invalido"), false);
-  assert.equal(getGameMode("inverno").boardId, "board-inverno");
+test("os modos disponíveis são apenas clássico e caos", () => {
+  assert.deepEqual(GAME_MODES.map(mode => mode.id), ["classico", "caos"]);
+  for (const mode of ["classico", "caos"]) assert.equal(isValidGameMode(mode), true);
+  assert.equal(isValidGameMode("inverno"), false);
   assert.equal(getGameMode("invalido").id, "classico");
 });
-test("tabuleiros não aparecem na loja nem podem ser comprados/equipados", async () => {
+test("tabuleiros especiais aparecem na loja, podem ser comprados e equipados", async () => {
   const catalog = await getCatalog();
-  assert.deepEqual(catalog.categories.map(c => c.id), ["avatar", "emote"]);
-  await assert.rejects(purchaseItem({ category: "board", itemId: "board-inverno" }), { code: "ITEM_INDISPONIVEL" });
-  await assert.rejects(equipItem({ category: "board", itemId: "board-classico" }), { code: "ITEM_INDISPONIVEL" });
+  assert.deepEqual(catalog.categories.map(c => c.id), ["avatar", "board", "emote"]);
+  assert.deepEqual(catalog.categories.find(c => c.id === "board").items.map(item => item.id),
+    ["board-espacial", "board-floresta", "board-medieval", "board-praia", "board-inverno"]);
+  await purchaseItem({ category: "board", itemId: "board-inverno" });
+  await equipItem({ category: "board", itemId: "board-inverno" });
 });

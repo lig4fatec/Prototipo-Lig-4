@@ -23,22 +23,70 @@ tests/         testes de fluxo, modos, partida, perfil, loja, histórico e salas
 - Atualizar esta seção sempre que um arquivo for criado ou movido, no mesmo commit.
 
 ## Direção visual
-Proposta B: Tabuleiro Minimalista. Escolhida por praticidade de implementação.
-A Proposta A (Cyberpunk Neon) pode ser retomada se o time mudar de decisão.
+- **Referência histórica:** Proposta B (Tabuleiro Minimalista em verde `#18301D`) foi adotada na fase inicial como modelo de implementação básica.
+- **Identidade atual (Tema Estilo "Battle Royale" / Vibrante):** O projeto migrou integralmente para uma identidade visual enérgica e vibrante, caracterizada por fundos em degradê azul/roxo escuro com iluminação radial, texturas diagonais, elementos com brilho neon e tipografia marcante (`Lilita One` com apoio de `Arial`).
 
-Cores (definidas em `variables.css`):
-- Fundo principal: #18301D (com gradiente sutil, variação entre tons próximos)
-- Cor principal (botão de fundo claro, texto preto): #F2B705
-- Destaque: #E52B2B
-- Texto: #FFFFFF
-- Botão de fundo escuro (texto branco): #011205
-- Botão secundário: #0460D9
+### Tipografia
+- **Títulos, Botões e Destaques:** `"Lilita One", Impact, sans-serif` (fonte principal display adotada na interface).
+- **Textos de Apoio e Rótulos Menores:** `Arial, sans-serif` (legibilidade em campos, legendas e descrições).
 
-Dois tipos de botão:
-- Primário claro: fundo #F2B705, texto #000000.
-- Primário escuro: fundo #011205, texto #FFFFFF.
+### Paleta do Tema Principal (Vibrante / "Battle Royale")
+Conforme aplicado nas telas ativas (`t04-home`, `t10-perfil`, `t11-loja`, etc.) e visível nas capturas de tela:
+- **Fundos (Gradiente & Iluminação):**
+  - `--h-bg-1: #12062e` (roxo profundo)
+  - `--h-bg-2: #1b0f5c` (índigo escuro)
+  - `--h-bg-3: #0b2a7a` (azul noturno)
+  - Gradiente linear 135° combinado com luzes radiais em ciano e roxo (`rgba(139, 61, 255, 0.55)` e `rgba(61, 232, 255, 0.35)`).
+- **Acentos Neon e Destaques:**
+  - Amarelo principal / Botões: `--h-yellow: #ffd400`
+  - Laranja de transição: `--h-yellow-2: #ff9d00`
+  - Ciano neon (fichas/brilhos): `--h-cyan: #3de8ff`
+  - Roxo / Destaques secundários: `--h-purple: #8b3dff`
+  - Rosa neon (fichas/badges "Em Breve" / "Popular"): `--h-pink: #ff3d9a`
+  - Texto e contraste: `--h-text: #ffffff` e `--h-black: #090514`
 
-Trocar a direção = trocar o bloco de tokens em `variables.css`.
+### Tokens globais de suporte (`css/variables.css`)
+Mantidos no arquivo de variáveis como fonte estrutural e de lógica de partida:
+- Fundo estrutural (`--color-background`): `#18301D`
+- Primária (`--color-primary`): `#F2B705`
+- Destaque (`--color-highlight`): `#E52B2B`
+- Texto (`--color-text`): `#FFFFFF`
+- Botão escuro (`--color-button-dark`): `#011205`
+- Secundária (`--color-secondary`): `#0460D9`
+- Texto sobre claro (`--color-primary-text`): `#000000`
+
+### Cores das peças de jogo (`variables.css` e T10 Perfil)
+Visíveis na seleção de cores do perfil e no tabuleiro:
+- Azul (`--game-color-blue`): `var(--color-secondary)` (`#0460D9`)
+- Vermelha (`--game-color-red`): `var(--color-highlight)` (`#E52B2B`)
+- Roxa (`--game-color-purple`): `color-mix(in srgb, var(--color-secondary) 55%, var(--color-highlight))` (~`#69488B`)
+- Verde (`--game-color-green`): `color-mix(in srgb, var(--color-background) 35%, var(--color-text))` (~`#AEB7B0`)
+- Laranja (`--game-color-orange`): `color-mix(in srgb, var(--color-primary) 65%, var(--color-highlight))` (~`#ED8612`)
+- Amarela (`--game-color-yellow`): `var(--color-primary)` (`#F2B705`)
+- Marrom (`--game-color-brown`): `color-mix(in srgb, var(--color-button-dark) 55%, var(--color-primary))` (~`#6D5C05`)
+- Destaque de vitória (`--color-win`): `color-mix(in srgb, var(--color-background) 35%, var(--color-text))` (~`#AEB7B0`)
+
+### Unificação dos Tokens em `variables.css` (Definição Oficial)
+Os tokens de `variables.css` passam a refletir oficialmente a nova identidade visual neon/battle royale, alinhando a paleta de fichas e componentes à nova tipografia e visual:
+
+- **Fundo principal** (`--color-background`): `#12062E` (roxo escuro de base, substituindo o verde `#18301D`)
+- **Cor primária** (`--color-primary`): `#FFD400` (amarelo vibrante, substituindo `#F2B705`)
+- **Destaque** (`--color-highlight`): `#FF3D9A` (rosa neon para badges e ênfase, com vermelho `#E52B2B` reservado para ações críticas/desistência)
+- **Texto principal** (`--color-text`): `#FFFFFF`
+- **Fundo escuro / Botões escuros** (`--color-button-dark`): `#090514` (preto/roxo profundo, substituindo `#011205`)
+- **Secundária / Ação alternativa** (`--color-secondary`): `#8B3DFF` (roxo vibrante para botões e áreas secundárias)
+- **Acento Ciano** (`--color-cyan`): `#3DE8FF` (usado em fichas de fundo e realces)
+- **Texto sobre fundos claros** (`--color-primary-text`): `#000000`
+
+### Paleta de Fichas e Peças (`--lig-disc-*` e `--game-color-*`)
+A paleta de fichas integra-se diretamente ao novo tema visual e à tipografia `Lilita One`:
+- **Ficha Amarela** (`--lig-disc-yellow` / `--game-color-yellow`): `#FFD400`
+- **Ficha Ciano / Azul** (`--lig-disc-blue` / `--game-color-blue`): `#3DE8FF` (ciano neon) e `#0460D9` (azul clássico)
+- **Ficha Rosa / Vermelha** (`--lig-disc-pink` / `--game-color-red`): `#FF3D9A` (fichas de tela) e `#E52B2B` (peça clássica)
+- **Peças restantes do jogo:** mantidas com cálculos dinâmicos (`--game-color-purple`, `--game-color-green`, `--game-color-orange`, `--game-color-brown`) e cor de vitória (`--color-win`).
+
+### Cores a confirmar
+- Nenhuma cor pendente de confirmação. A decisão do time consolidou a unificação dos tokens em torno da paleta neon vibrante e tipografia `Lilita One`.
 
 ## Padrão de fundo (telas de autenticação)
 - Padrão repetido (background repeat) com formas simples: casas de tabuleiro com cantos arredondados e círculos que sugerem peças.

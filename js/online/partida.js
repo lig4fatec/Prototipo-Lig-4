@@ -6,6 +6,12 @@ import {
   publishState,
   requestRematch,
   sendEmote,
+  usarCongelarColuna,  
+  usarPecaExtra,
+  usarQueimarPeca,
+  desistirPartida,
+  proporEmpate,
+  responderEmpate,
   watchRoom,
 } from "../services/rooms.js";
 import {
@@ -15,7 +21,7 @@ import {
 } from "../services/store.js";
 import { applyBoardTheme, createAvatarImage, createEmoteImage } from "../player-style.js";
 import { criarTabuleiro } from "../game/board.js";
-import { jogar, proximoTurno } from "../game/rules.js";
+import { colunaBloqueada, jogar, proximoTurno, contarEspacosLivres } from "../game/rules.js";
 import { planejarQueda } from "../game/drop.js";
 import {
   clearRoomSession,
@@ -29,17 +35,33 @@ const COLUMNS = 7;
 const FALL_STEP_MS = 80;
 const EMOTE_COOLDOWN_MS = 1500;
 const EMOTE_VISIBLE_MS = 2600;
+const INITIAL_CLOCK_MS = 300000;
+const CLOCK_REFRESH_MS = 250;
 const boardWrap = document.querySelector(".online-game-board-wrap");
 const boardElement = document.querySelector("[data-game-board]");
 const columnsElement = document.querySelector("[data-game-columns]");
 const pinElement = document.querySelector("[data-game-pin]");
 const turnElement = document.querySelector("[data-game-turn]");
+const playerCards = [
+  document.querySelector('[data-score-player="1"]'),
+  document.querySelector('[data-score-player="2"]'),
+];
+const clockElements = [
+  document.querySelector('[data-game-clock="1"]'),
+  document.querySelector('[data-game-clock="2"]'),
+];
+const powerElements = [
+  document.querySelector('[data-game-powers="1"]'),
+  document.querySelector('[data-game-powers="2"]'),
+];
 const statusElement = document.querySelector("[data-game-status]");
 const resultPanel = document.querySelector("[data-game-result-panel]");
 const resultElement = document.querySelector("[data-game-result]");
 const rematchStatus = document.querySelector("[data-game-rematch-status]");
 const rematchButton = document.querySelector("[data-game-rematch]");
 const leaveButton = document.querySelector("[data-game-leave]");
+const drawButton = document.querySelector("[data-game-draw]");
+
 const emotesElement = document.querySelector("[data-game-emotes]");
 const emoteToggle = document.querySelector("[data-game-emote-toggle]");
 function closeEmoteMenu() {
@@ -68,6 +90,10 @@ const themeStatus = document.querySelector("[data-game-theme-status]");
 let room = null;
 let role = null;
 let cancelRoomWatch = null;
+let pendingPower = null;
+let clockStorageKey = null;
+let clockInterval = null;
+let clockStorageHandler = null;
 let onRoomLost = () => {};
 let onLeave = () => {};
 let moveInProgress = false;
@@ -76,17 +102,177 @@ let ownAvatarId = null;
 let lastEmoteSeen = null;
 let emoteCooldown = false;
 const emoteTimers = new Map();
+let empatePopup = null;
+let empateRecusadoTimer = null;
+let empateRecusadoAvisado = false;
 
 const gameErrorMessages = {
   COLUNA_INVALIDA: "Selecione uma coluna válida.",
   COLUNA_CHEIA: "Esta coluna está cheia.",
+  COLUNA_BLOQUEADA: "Esta coluna está congelada para você.",
   NAO_EH_SEU_TURNO: "Aguarde a sua vez.",
   JOGADOR_INVALIDO: "Jogador inválido.",
   PARTIDA_ENCERRADA: "Esta partida já terminou.",
+  PODER_JA_USADO: "Você já usou este poder nesta partida.",
+  PODER_INDISPONIVEL: "Este poder só está disponível no modo Caos.",
+  SEM_PECA_ADVERSARIA: "Não há peça do adversário nesta coluna.",
+  SEM_ESPACO_SUFICIENTE: "Restam poucos espaços para usar este poder.",
 };
 
 function playerNumberForRole(playerRole) {
   return playerRole === "owner" ? 1 : playerRole === "guest" ? 2 : null;
+}
+
+function readClockState() {
+  if (!clockStorageKey) return null;
+  const serialized = localStorage.getItem(clockStorageKey);
+  if (!serialized) return null;
+  
+  try {
+    const state = JSON.parse(serialized);
+    if (
+      !Number.isFinite(state.restante1) || state.restante1 < 0
+      || !Number.isFinite(state.restante2) || state.restante2 < 0
+      || ![1, 2].includes(state.vez)
+      || !(state.inicioVez === null || Number.isFinite(state.inicioVez))
+    ) return null;
+    
+    return {
+      restante1: state.restante1,
+      restante2: state.restante2,
+      vez: state.vez,
+      inicioVez: state.inicioVez,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function sameClockState(left, right) {
+  return Boolean(left && right)
+  && left.restante1 === right.restante1
+  && left.restante2 === right.restante2
+  && left.vez === right.vez
+  && left.inicioVez === right.inicioVez;
+}
+
+function storeClockState(nextState, expectedState = null) {
+  if (!clockStorageKey) return null;
+  const currentState = readClockState();
+  if (expectedState ? !sameClockState(currentState, expectedState) : currentState) {
+    return currentState;
+  }
+  if (sameClockState(currentState, nextState)) return currentState;
+  
+  localStorage.setItem(clockStorageKey, JSON.stringify(nextState));
+  return nextState;
+}
+
+function remainingClockTime(state, playerNumber, now = Date.now()) {
+  const remaining = state[`restante${playerNumber}`];
+  if (state.vez !== playerNumber || state.inicioVez === null) return remaining;
+  const elapsed = Math.max(0, now - state.inicioVez);
+  return Math.max(0, remaining - elapsed);
+}
+
+function formatClock(milliseconds) {
+  const totalSeconds = Math.ceil(Math.max(0, milliseconds) / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+function redrawClocks({ stopAtZero = true } = {}) {
+  let state = readClockState();
+  if (!state) return;
+  
+  if (stopAtZero && state.inicioVez !== null && remainingClockTime(state, state.vez) === 0) {
+    const stoppedState = storeClockState({
+      ...state,
+      [`restante${state.vez}`]: 0,
+      inicioVez: null,
+    }, state);
+    state = stoppedState || readClockState();
+  }
+  
+  if (!state) return;
+  const now = Date.now();
+  for (let index = 0; index < clockElements.length; index++) {
+    const element = clockElements[index];
+    if (element) element.textContent = formatClock(remainingClockTime(state, index + 1, now));
+  }
+}
+
+function reconcileClock(nextRoom) {
+  const turn = nextRoom.game?.turn;
+  if (![1, 2].includes(turn)) return;
+  
+  const playing = nextRoom.phase === "playing";
+  const now = Date.now();
+  const currentState = readClockState();
+  if (!currentState) {
+    storeClockState({
+      restante1: INITIAL_CLOCK_MS,
+      restante2: INITIAL_CLOCK_MS,
+      vez: turn,
+      inicioVez: playing ? now : null,
+    });
+    return;
+  }
+  
+  const nextState = { ...currentState };
+  if (currentState.vez !== turn) {
+    if (currentState.inicioVez !== null) {
+      nextState[`restante${currentState.vez}`] = remainingClockTime(currentState, currentState.vez, now);
+    }
+    nextState.vez = turn;
+    nextState.inicioVez = playing && nextState[`restante${turn}`] > 0 ? now : null;
+  } else if (playing && currentState.inicioVez === null) {
+    if (currentState[`restante${turn}`] > 0) nextState.inicioVez = now;
+  } else if (!playing && currentState.inicioVez !== null) {
+    nextState[`restante${turn}`] = remainingClockTime(currentState, turn, now);
+    nextState.inicioVez = null;
+  }
+  
+  if (!sameClockState(currentState, nextState)) storeClockState(nextState, currentState);
+}
+
+function renderPlayerColors(nextRoom) {
+  for (const [index, playerRole] of ["owner", "guest"].entries()) {
+    const card = playerCards[index];
+    if (!card) continue;
+    
+    const color = nextRoom.players?.[playerRole]?.color;
+    const variable = color ? `--game-color-${color}` : "";
+    const value = variable ? getComputedStyle(card).getPropertyValue(variable).trim() : "";
+    if (value) card.style.setProperty("--player-color", `var(${variable})`);
+    else card.style.removeProperty("--player-color");
+  }
+}
+
+function renderActivePlayer(nextRoom) {
+  for (const [index, card] of playerCards.entries()) {
+    card?.classList.toggle(
+      "is-active",
+      nextRoom.phase === "playing" && nextRoom.game?.turn === index + 1,
+    );
+  }
+}
+
+function startClockUpdates() {
+  clockStorageHandler = event => {
+    if (event.key === clockStorageKey) redrawClocks({ stopAtZero: false });
+  };
+  window.addEventListener("storage", clockStorageHandler);
+  clockInterval = window.setInterval(() => redrawClocks(), CLOCK_REFRESH_MS);
+}
+
+function stopClockUpdates() {
+  if (clockInterval !== null) window.clearInterval(clockInterval);
+  if (clockStorageHandler) window.removeEventListener("storage", clockStorageHandler);
+  clockInterval = null;
+  clockStorageHandler = null;
+  clockStorageKey = null;
 }
 
 function stopRoomWatch() {
@@ -112,7 +298,7 @@ function renderBoard() {
   const ownerColor = room?.players.owner.color || "blue";
   const guestColor = room?.players.guest?.color || "red";
   const cells = [];
-
+  
   for (let row = 0; row < ROWS; row++) {
     for (let column = 0; column < COLUMNS; column++) {
       const cell = document.createElement("div");
@@ -122,12 +308,18 @@ function renderBoard() {
       cell.setAttribute(
         "aria-label",
         player === 0
-          ? `Linha ${row + 1}, coluna ${column + 1}, vazia`
-          : `Linha ${row + 1}, coluna ${column + 1}, ${player === 1 ? "Jogador 1" : "Jogador 2"}`,
+        ? `Linha ${row + 1}, coluna ${column + 1}, vazia`
+        : `Linha ${row + 1}, coluna ${column + 1}, ${player === 1 ? "Jogador 1" : "Jogador 2"}`,
       );
       cell.dataset.row = String(row);
       cell.dataset.column = String(column);
       cell.dataset.player = String(player);
+      
+      const bloqueiosAtivos = room?.game?.bloqueios || [];
+      const frozen = room?.phase === "playing"
+      && colunaBloqueada(bloqueiosAtivos, column, room?.game?.turn);
+      cell.dataset.frozen = frozen && player === 0 ? "true" : "false";
+      
       // Futuras imagens de fichas serão escolhidas pelo modo e pelo papel.
       if (player !== 0) cell.dataset.discRole = player === 1 ? "owner" : "guest";
       cell.style.setProperty("--row", String(row));
@@ -137,11 +329,19 @@ function renderBoard() {
     }
   }
   boardElement.replaceChildren(...cells);
-
+  
   const playerNumber = playerNumberForRole(role);
   const mayMove = room?.phase === "playing"
-    && playerNumber === room.game?.turn
-    && !moveInProgress;
+  && playerNumber === room.game?.turn
+  && !moveInProgress;
+  const bloqueiosAtivos = room?.game?.bloqueios || [];
+  const playerNumberAtual = room?.game?.turn;
+  columnsElement.querySelectorAll("button").forEach(button => {
+    const coluna = Number(button.dataset.column);
+    const congelada = room?.phase === "playing"
+    && colunaBloqueada(bloqueiosAtivos, coluna, playerNumberAtual);
+    button.dataset.frozen = congelada ? "true" : "false";
+  });
   columnsElement.querySelectorAll("button").forEach(button => {
     button.disabled = !mayMove;
   });
@@ -165,7 +365,7 @@ function showEmote(lastEmote) {
   const playerNumber = playerNumberForRole(lastEmote.role);
   const card = playerNumber && document.querySelector(`[data-score-player="${playerNumber}"]`);
   if (emote?.category !== "emote" || !card) return;
-
+  
   card.querySelector(".emote-bubble")?.remove();
   clearTimeout(emoteTimers.get(playerNumber));
   const bubble = document.createElement("div");
@@ -174,7 +374,7 @@ function showEmote(lastEmote) {
   bubble.append(createEmoteImage(emote.id));
   card.append(bubble);
   emoteTimers.set(playerNumber, setTimeout(() => bubble.remove(), EMOTE_VISIBLE_MS));
-
+  
   const sender = lastEmote.role === "owner" ? "Jogador 1" : "Jogador 2";
   emoteStatus.textContent = `${sender} enviou ${emote.name}.`;
 }
@@ -184,6 +384,72 @@ function updateEmoteButtons() {
   emotesElement.querySelectorAll("button").forEach(button => {
     button.disabled = !mayEmote || emoteCooldown;
   });
+}
+
+function renderPowerButtons() {
+  const powers = [
+    { id: "congelar-coluna", label: "Congelar coluna" },
+    { id: "queimar-peca", label: "Queimar peça" },
+    { id: "peca-extra", label: "Peça extra" },
+  ];
+  
+  for (const [index, container] of powerElements.entries()) {
+    if (!container) continue;
+    if (room?.mode !== "caos") {
+      container.replaceChildren();
+      continue;
+    }
+    
+    const playerNumber = index + 1;
+    const isLocalPlayer = playerNumberForRole(role) === playerNumber;
+    const isTurn = room.phase === "playing" && room.game?.turn === playerNumber;
+    const extraPhase2 = room.game?.pecaExtra?.etapa === 2;
+    const notPlaying = room.phase !== "playing";
+    
+    const poucosEspacos = contarEspacosLivres(room.game?.board || []) < 2;
+    
+    const buttons = powers.map(power => {
+      const used = (room.game?.poderesUsados?.[playerNumber] || []).includes(power.id);
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "button button-secondary";
+      button.textContent = power.label;
+      // button.disabled = used || !isLocalPlayer || !isTurn || moveInProgress || extraPhase2 || notPlaying;
+      button.disabled = used || !isLocalPlayer || !isTurn || moveInProgress
+      || (power.id === "peca-extra" && poucosEspacos)
+      || room.game?.pecaExtra?.etapa === 2;
+      
+      if (power.id === "peca-extra") {
+        button.setAttribute("aria-pressed", "false");
+      } else {
+        button.setAttribute("aria-pressed", String(pendingPower === power.id && isLocalPlayer));
+      }
+      if (used) button.classList.add("is-used");
+      if (power.id === "peca-extra") {
+        button.addEventListener("click", async () => {
+          if (!room || room.phase !== "playing" || moveInProgress) return;
+          try {
+            await usarPecaExtra({ pin: room.pin, role });
+            statusElement.textContent = "Jogue sua segunda peça.";
+          } catch (error) {
+            statusElement.textContent = gameErrorMessages[error.code] || getRoomErrorMessage(error.code);
+          }
+          renderPowerButtons();
+        });
+      } else {
+        button.addEventListener("click", () => {
+          if (!room || room.phase !== "playing" || moveInProgress) return;
+          pendingPower = pendingPower === power.id ? null : power.id;
+          statusElement.textContent = pendingPower
+          ? "Clique em uma coluna para usar o poder."
+          : "";
+          renderPowerButtons();
+        });
+      }
+      return button;
+    });
+    container.replaceChildren(...buttons);
+  }
 }
 
 function renderEmoteBar(ownedEmotes) {
@@ -230,27 +496,199 @@ async function applyPersonalization() {
   try {
     const [equippedItems, inventory] = await Promise.all([getEquippedItems(), getInventory()]);
     ownAvatarId = equippedItems.avatar.id;
-
+    
     renderEmoteBar(inventory.byCategory.emote);
-
+    
   } catch {
     // A personalização é opcional: se falhar, a partida segue com o visual padrão.
-
+    
   }
+}
+
+function confirmarModal(mensagem) {
+  return new Promise(resolve => {
+    const overlay = document.createElement("div");
+    overlay.className = "online-modal-overlay";
+
+    const box = document.createElement("div");
+    box.className = "online-modal-box";
+    box.setAttribute("role", "dialog");
+    box.setAttribute("aria-modal", "true");
+
+    const mensagemEl = document.createElement("p");
+    mensagemEl.className = "online-modal-text";
+    mensagemEl.textContent = mensagem;
+
+    const botoes = document.createElement("div");
+    botoes.className = "online-modal-actions";
+
+    const confirmar = document.createElement("button");
+    confirmar.type = "button";
+    confirmar.className = "button button-danger";
+    confirmar.textContent = "Confirmar";
+
+    const cancelar = document.createElement("button");
+    cancelar.type = "button";
+    cancelar.className = "button button-secondary";
+    cancelar.textContent = "Cancelar";
+
+    const fechar = () => overlay.remove();
+    confirmar.addEventListener("click", () => { fechar(); resolve(true); });
+    cancelar.addEventListener("click", () => { fechar(); resolve(false); });
+
+    botoes.append(confirmar, cancelar);
+    box.append(mensagemEl, botoes);
+    overlay.append(box);
+    document.body.append(overlay);
+  });
+}
+
+async function handleResign() {
+  if (!room) return;
+  const confirmado = await confirmarModal("Deseja mesmo desistir da partida?");
+  if (!confirmado) return;
+  try {
+    await desistirPartida({ pin: room.pin, role });
+  } catch (error) {
+    statusElement.textContent = getRoomErrorMessage(error.code);
+  }
+}
+
+function removerEmpatePopup() {
+  if (empatePopup) {
+    empatePopup.remove();
+    empatePopup = null;
+  }
+}
+
+function renderEmpateUI() {
+  removerEmpatePopup();
+
+  const jogo = room?.game;
+  const empate = room?.empate;
+  const jogador = playerNumberForRole(role);
+  const jaProposto = Boolean(jogo?.empatesPropostos?.[jogador]);
+  const pendente = Boolean(empate && empate.status === "pendente");
+
+  if (drawButton) {
+    drawButton.disabled = !(
+      room?.phase === "playing" && Boolean(jogador) && !jaProposto && !pendente
+    );
+  }
+
+  const recusadoLocal = Boolean(
+    empate && empate.status === "recusado" && empate.proponente === jogador
+  );
+
+  if (recusadoLocal) {
+    if (!empateRecusadoAvisado) {
+      empateRecusadoAvisado = true;
+      statusElement.textContent = "O adversário recusou o empate.";
+      if (empateRecusadoTimer) clearTimeout(empateRecusadoTimer);
+      empateRecusadoTimer = setTimeout(() => {
+        empateRecusadoTimer = null;
+        empateRecusadoAvisado = false;
+        if (statusElement.textContent === "O adversário recusou o empate.") {
+          statusElement.textContent = "";
+        }
+      }, 5000);
+    }
+    return;
+  }
+
+  empateRecusadoAvisado = false;
+  if (empateRecusadoTimer) {
+    clearTimeout(empateRecusadoTimer);
+    empateRecusadoTimer = null;
+  }
+  if (statusElement.textContent === "O adversário recusou o empate.") {
+    statusElement.textContent = "";
+  }
+
+  if (!pendente) return;
+
+  if (empate.proponente === jogador) {
+    statusElement.textContent = "Aguardando resposta.";
+    return;
+  }
+
+  const card = document.querySelector(`[data-score-player="${jogador}"]`);
+  if (!card) return;
+  const playerName = card.querySelector(".player-name");
+  if (!playerName) return;
+
+  const box = document.createElement("div");
+  box.dataset.empatePopup = "true";
+  box.className = "empate-popup";
+
+  const label = document.createElement("span");
+  label.className = "empate-popup-label";
+  label.textContent = "Empate?";
+
+  const aceitar = document.createElement("button");
+  aceitar.type = "button";
+  aceitar.className = "button button-secondary";
+  aceitar.textContent = "Aceitar";
+
+  const recusar = document.createElement("button");
+  recusar.type = "button";
+  recusar.className = "button button-danger";
+  recusar.textContent = "Recusar";
+
+  box.append(label, aceitar, recusar);
+  playerName.after(box);
+  empatePopup = box;
+
+  aceitar.addEventListener("click", async () => {
+    if (!room) return;
+    try {
+      await responderEmpate({ pin: room.pin, role, aceitar: true });
+    } catch (error) {
+      statusElement.textContent =
+        gameErrorMessages[error.code] || getRoomErrorMessage(error.code);
+    }
+  });
+
+  recusar.addEventListener("click", async () => {
+    if (!room) return;
+    try {
+      await responderEmpate({ pin: room.pin, role, aceitar: false });
+    } catch (error) {
+      statusElement.textContent =
+        gameErrorMessages[error.code] || getRoomErrorMessage(error.code);
+    }
+  });
 }
 
 function renderRoom(nextRoom) {
   if (!nextRoom) {
     room = null;
+    pendingPower = null;
     stopRoomWatch();
+    stopClockUpdates();
+    removerEmpatePopup();
+    if (empateRecusadoTimer) {
+      clearTimeout(empateRecusadoTimer);
+      empateRecusadoTimer = null;
+    }
+    empateRecusadoAvisado = false;
     onRoomLost();
     return;
   }
-
+  
+  if (
+    pendingPower
+    && (nextRoom.phase !== "playing" || nextRoom.game?.turn !== playerNumberForRole(role))
+  ) pendingPower = null;
   room = nextRoom;
+  renderPlayerColors(room);
+  renderActivePlayer(room);
+  reconcileClock(room);
+  redrawClocks();
+  renderPowerButtons();
   const mode = getGameMode(room.mode);
   modeLabel.textContent = mode.name;
-  applyBoardTheme(boardWrap, findItem(mode.boardId));
+  applyBoardTheme(boardWrap, findItem(room.boardId || "board-classico"));
   boardWrap.dataset.gameMode = mode.id;
   pinElement.textContent = room.pin;
   renderAvatars();
@@ -267,28 +705,38 @@ function renderRoom(nextRoom) {
   } else {
     turnElement.textContent = "Partida encerrada";
   }
-
+  
   const winner = room.result?.winner;
   document.querySelector('[data-game-score="1"]').textContent = winner === 1 ? "1" : "0";
   document.querySelector('[data-game-score="2"]').textContent = winner === 2 ? "1" : "0";
-
+  
   const finished = room.phase === "finished" && Boolean(room.result);
   resultPanel.hidden = !finished;
   if (finished) {
-    resultElement.textContent = room.result.draw
-      ? "Empate."
-      : `${room.result.winner === 1 ? "Jogador 1 · Dono" : "Jogador 2 · Convidado"} venceu.`;
+    if (room.result.draw) {
+      resultElement.textContent = "Empate.";
+    } else if (room.result.motivo === "desistencia") {
+      const perdedor = room.result.winner === 1 ? 2 : 1;
+      resultElement.textContent = `${perdedor === 1 ? "Jogador 1 · Dono" : "Jogador 2 · Convidado"} desistiu. ${room.result.winner === 1 ? "Jogador 1 · Dono" : "Jogador 2 · Convidado"} venceu.`;
+    } else {
+      resultElement.textContent = `${room.result.winner === 1 ? "Jogador 1 · Dono" : "Jogador 2 · Convidado"} venceu.`;
+    }
     const requested = room.rematchRequested || [];
     rematchButton.disabled = requested.includes(role);
     rematchStatus.textContent = requested.length
-      ? "Aguardando o outro jogador."
-      : "";
+    ? "Aguardando o outro jogador."
+    : "";
   } else {
     rematchStatus.textContent = "";
     rematchButton.disabled = true;
   }
 
+  const podeDesistir = room.phase === "playing" && Boolean(playerNumberForRole(role));
+  const btnDesistir = document.querySelector("[data-game-resign]");
+  if (btnDesistir) btnDesistir.disabled = !podeDesistir;
+
   renderBoard();
+  renderEmpateUI();
 }
 
 function delay(milliseconds) {
@@ -310,20 +758,50 @@ async function animateDrop(column, steps, player) {
 
 async function dropInColumn(column) {
   if (!room || room.phase !== "playing" || moveInProgress) return;
-
+  
   const player = playerNumberForRole(role);
+  if (pendingPower === "congelar-coluna") {
+    try {
+      await usarCongelarColuna({ pin: room.pin, role, coluna: column });
+      pendingPower = null;
+      statusElement.textContent = "Coluna congelada para o adversário.";
+    } catch (error) {
+      statusElement.textContent = gameErrorMessages[error.code] || getRoomErrorMessage(error.code);
+    }
+    renderPowerButtons();
+    return;
+  }
+  
+  if (pendingPower === "queimar-peca") {
+    try {
+      await usarQueimarPeca({ pin: room.pin, role, coluna: column });
+      pendingPower = null;
+      statusElement.textContent = "Peça adversária removida.";
+    } catch (error) {
+      statusElement.textContent = gameErrorMessages[error.code] || getRoomErrorMessage(error.code);
+    }
+    renderPowerButtons();
+    return;
+  }
+  
+  if (colunaBloqueada(room.game?.bloqueios || [], column, player)) {
+    statusElement.textContent = gameErrorMessages.COLUNA_BLOQUEADA;
+    return;
+  }
+  
   const game = room.game;
   const result = jogar(game.board, column, player, game.turn, false);
   if (!result.ok) {
     statusElement.textContent = gameErrorMessages[result.code] || "Jogada inválida.";
     return;
   }
-
+  
   moveInProgress = true;
+  renderPowerButtons();
   statusElement.textContent = "";
   renderBoard();
   const fall = planejarQueda(game.board, column, player);
-
+  
   try {
     await animateDrop(column, fall.passos, player);
     const moveCount = game.moveCount + 1;
@@ -334,7 +812,7 @@ async function dropInColumn(column) {
       turn: proximoTurno(player),
       moveCount,
     });
-
+    
     if (result.vitoria || result.empate) {
       await publishResult({
         pin: room.pin,
@@ -355,6 +833,7 @@ async function dropInColumn(column) {
 
 export async function abrirPartida({ onRoomLost, onLeave } = {}) {
   stopRoomWatch();
+  stopClockUpdates();
   onRoomLost ||= () => {};
   onLeave ||= () => {};
   const session = readRoomSession();
@@ -363,15 +842,17 @@ export async function abrirPartida({ onRoomLost, onLeave } = {}) {
     onRoomLost();
     return;
   }
-
+  
   try {
     await applyPersonalization();
     const initialRoom = await getRoom(session.pin);
     room = initialRoom;
+    clockStorageKey = `lig4-relogio:${session.pin}`;
     // Emotes anteriores à entrada na partida não devem reaparecer.
     lastEmoteSeen = initialRoom.lastEmote?.id ?? null;
     emoteStatus.textContent = "";
     renderRoom(initialRoom);
+    startClockUpdates();
     cancelRoomWatch = watchRoom(session.pin, renderRoom);
   } catch (error) {
     if (error.code === "PIN_NAO_ENCONTRADO") onRoomLost();
@@ -381,7 +862,14 @@ export async function abrirPartida({ onRoomLost, onLeave } = {}) {
 
 export function fecharPartida() {
   stopRoomWatch();
+  stopClockUpdates();
   moveInProgress = false;
+  removerEmpatePopup();
+  if (empateRecusadoTimer) {
+    clearTimeout(empateRecusadoTimer);
+    empateRecusadoTimer = null;
+  }
+  empateRecusadoAvisado = false;
 }
 
 rematchButton.addEventListener("click", async () => {
@@ -410,6 +898,24 @@ leaveButton.addEventListener("click", async () => {
   } finally {
     clearRoomSession();
     onLeave();
+  }
+});
+
+document.querySelector("[data-game-resign]").addEventListener("click", async () => {
+  await handleResign();
+});
+
+drawButton.addEventListener("click", async () => {
+  if (!room || room.phase !== "playing") return;
+  const jogador = playerNumberForRole(role);
+  if (!jogador) return;
+  if (Boolean(room.game?.empatesPropostos?.[jogador])) return;
+  if (room.empate?.status === "pendente") return;
+  try {
+    await proporEmpate({ pin: room.pin, role });
+  } catch (error) {
+    statusElement.textContent =
+      gameErrorMessages[error.code] || getRoomErrorMessage(error.code);
   }
 });
 

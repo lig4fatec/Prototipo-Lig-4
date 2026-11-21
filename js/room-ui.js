@@ -23,7 +23,10 @@ const ERROR_MESSAGES = Object.freeze({
   COR_JA_ESCOLHIDA: "Esta cor já foi escolhida pelo outro jogador.",
   SERIE_INVALIDA: "Selecione uma série válida.",
   SEM_PERMISSAO: "Você não tem permissão para esta ação.",
-  SALA_NAO_PRONTA: "A sala precisa de dois jogadores com cores diferentes.",
+  SALA_NAO_PRONTA: "Os dois jogadores precisam estar presentes, escolher cores diferentes e confirmar que estão prontos.",
+  TABULEIRO_INVALIDO: "Selecione um tabuleiro válido.",
+  TABULEIRO_NAO_POSSUIDO: "O criador da sala não possui esse tabuleiro.",
+  PRONTIDAO_INVALIDA: "Não foi possível atualizar sua prontidão.",
 });
 
 export function getRoomErrorMessage(code) {

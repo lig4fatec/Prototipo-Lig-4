@@ -50,8 +50,10 @@ Prévia no lobby: mostra a cor e a skin do próprio jogador. O tabuleiro da part
 ## 6. Desistência
 
 - Qualquer jogador, em qualquer modo, pode desistir a qualquer momento da partida.
-- Interface: botão que abre modal de confirmação.
-- Efeito: partida encerra como derrota para quem desistiu.
+- Interface: botão Desistir abre modal de confirmação (Confirmar / Cancelar).
+- Efeito: quem desistiu perde; a fase vira `finished` e o resultado é exibido.
+- Não dá moedas (conforme a API: partida abandonada não conta e não gera moedas).
+- O resultado é exibido no painel `[data-game-result-panel]` já existente no markup.
 
 ## 7. Proposta de empate
 
@@ -72,19 +74,29 @@ Regras gerais:
 Poderes:
 
 **Congelar Coluna (700 moedas)**
-- Bloqueia uma coluna para o adversário por 3 rodadas.
+- Disponível apenas no modo Caos, uma vez por jogador por partida e somente na vez do próprio jogador.
+- Bloqueia uma coluna para o adversário por 3 lances dele. Os lances próprios não consomem o bloqueio.
 - Não pode ser usado em coluna cheia.
-- Vale mesmo se restar apenas uma coluna livre.
-- O servidor guarda o bloqueio com contagem de rodadas e valida em cada jogada (mock até back-end implementar).
+- Cada lance do adversário consome um do bloqueio. Se todas as colunas não cheias estiverem bloqueadas, a vez é pulada e esse lance também é consumido.
+- O mock guarda os bloqueios e valida o poder; a integração com o back-end fica para depois.
 
 **Queimar Peça (850 moedas)**
-- Remove uma peça colocada pelo adversário.
-- Não pode ser usado no primeiro lance da partida (sem peças do adversário).
-- Gravidade de Queimar Peça: desligada. As peças acima não caem.
+- Disponível apenas no modo Caos, uma vez por jogador por partida e somente na vez do próprio jogador.
+- Remove a peça mais alta do adversário em uma coluna escolhida.
+- Exige que exista peça do adversário na coluna; caso contrário, retorna `SEM_PECA_ADVERSARIA`.
+- Não passa a vez: após usar, o mesmo jogador faz sua jogada normal.
+- Não consome lances de bloqueio do Congelar Coluna.
+- Gravidade desligada: a casa removida fica vazia e as peças acima permanecem suspensas. A coluna continua jogável pela casa vazia mais baixa.
+- Vitória é avaliada apenas pela matriz do tabuleiro, então sequências formadas com peças suspensas contam normalmente.
 
-**Peça Extra (1000 moedas)** (antigo "Jogar 2x")
-- Permite jogar duas peças seguidas antes do adversário.
-- Não pode ser usado quando há apenas 1 espaço livre no tabuleiro.
+**Peça Extra (1000 moedas)**
+- Disponível apenas no modo Caos, uma vez por jogador por partida e somente na vez do próprio jogador.
+- Permite jogar uma segunda peça na mesma vez, antes de passar a vez.
+- Não pode ser usado se restar apenas 1 espaço livre no tabuleiro.
+- Se a primeira peça encerrar a partida (vitória ou empate), não há segunda jogada.
+- Se não houver coluna válida para a segunda peça (cheia ou congelada para o jogador), o turno termina normalmente, sem penalidade; o poder já foi gasto.
+- Não consome lances de bloqueio do Congelar Coluna, exceto quando a segunda peça é impedida por ele.
+- Na segunda peça, nenhum poder pode ser usado.
 
 ## 9. Moedas
 
