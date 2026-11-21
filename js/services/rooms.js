@@ -561,6 +561,24 @@ export async function usarPecaExtra({ pin, role } = {}) {
   return { pin, jogador };
 }
 
+export async function desistirPartida({ pin, role } = {}) {
+  await yieldMock();
+  validatePin(pin);
+  const rooms = readRooms();
+  const room = rooms.get(pin);
+  if (!room) throw roomError("PIN_NAO_ENCONTRADO");
+  assertSession(pin, role);
+  if (room.phase !== "playing") throw roomError("FASE_INVALIDA");
+  const jogador = role === "owner" ? 1 : role === "guest" ? 2 : null;
+  if (!jogador || !room.players[role]) throw roomError("SEM_PERMISSAO");
+  const winner = jogador === 1 ? 2 : 1;
+  room.result = { winner, draw: false, motivo: "desistencia" };
+  room.phase = "finished";
+  writeRooms(rooms);
+  notifyRoom(pin);
+  return { pin, jogador };
+}
+
 export async function publishResult({ pin, role, result } = {}) {
   await yieldMock();
   validatePin(pin);

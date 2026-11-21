@@ -9,6 +9,7 @@ import {
   usarCongelarColuna,  
   usarPecaExtra,
   usarQueimarPeca,
+  desistirPartida,
   watchRoom,
 } from "../services/rooms.js";
 import {
@@ -57,6 +58,7 @@ const resultElement = document.querySelector("[data-game-result]");
 const rematchStatus = document.querySelector("[data-game-rematch-status]");
 const rematchButton = document.querySelector("[data-game-rematch]");
 const leaveButton = document.querySelector("[data-game-leave]");
+
 const emotesElement = document.querySelector("[data-game-emotes]");
 const emoteToggle = document.querySelector("[data-game-emote-toggle]");
 function closeEmoteMenu() {
@@ -497,6 +499,63 @@ async function applyPersonalization() {
   }
 }
 
+function confirmarModal(mensagem) {
+  return new Promise(resolve => {
+    const overlay = document.createElement("div");
+    overlay.style.position = "fixed";
+    overlay.style.inset = "0";
+    overlay.style.background = "rgba(0, 0, 0, 0.5)";
+    overlay.style.display = "flex";
+    overlay.style.alignItems = "center";
+    overlay.style.justifyContent = "center";
+    overlay.style.zIndex = "1000";
+
+    const box = document.createElement("div");
+    box.style.background = "#ffffff";
+    box.style.padding = "1.5rem 2rem";
+    box.style.borderRadius = "8px";
+    box.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.3)";
+    box.style.minWidth = "260px";
+    box.style.textAlign = "center";
+
+    const mensagemEl = document.createElement("p");
+    mensagemEl.textContent = mensagem;
+    mensagemEl.style.margin = "0 0 1rem";
+
+    const botoes = document.createElement("div");
+    botoes.style.display = "flex";
+    botoes.style.gap = "0.5rem";
+    botoes.style.justifyContent = "center";
+
+    const confirmar = document.createElement("button");
+    confirmar.type = "button";
+    confirmar.textContent = "Confirmar";
+    const cancelar = document.createElement("button");
+    cancelar.type = "button";
+    cancelar.textContent = "Cancelar";
+
+    const fechar = () => overlay.remove();
+    confirmar.addEventListener("click", () => { fechar(); resolve(true); });
+    cancelar.addEventListener("click", () => { fechar(); resolve(false); });
+
+    botoes.append(confirmar, cancelar);
+    box.append(mensagemEl, botoes);
+    overlay.append(box);
+    document.body.append(overlay);
+  });
+}
+
+async function handleResign() {
+  if (!room) return;
+  const confirmado = await confirmarModal("Deseja mesmo desistir da partida?");
+  if (!confirmado) return;
+  try {
+    await desistirPartida({ pin: room.pin, role });
+  } catch (error) {
+    statusElement.textContent = getRoomErrorMessage(error.code);
+  }
+}
+
 function renderRoom(nextRoom) {
   if (!nextRoom) {
     room = null;
@@ -544,9 +603,14 @@ function renderRoom(nextRoom) {
   const finished = room.phase === "finished" && Boolean(room.result);
   resultPanel.hidden = !finished;
   if (finished) {
-    resultElement.textContent = room.result.draw
-    ? "Empate."
-    : `${room.result.winner === 1 ? "Jogador 1 · Dono" : "Jogador 2 · Convidado"} venceu.`;
+    if (room.result.draw) {
+      resultElement.textContent = "Empate.";
+    } else if (room.result.motivo === "desistencia") {
+      const perdedor = room.result.winner === 1 ? 2 : 1;
+      resultElement.textContent = `${perdedor === 1 ? "Jogador 1 · Dono" : "Jogador 2 · Convidado"} desistiu. ${room.result.winner === 1 ? "Jogador 1 · Dono" : "Jogador 2 · Convidado"} venceu.`;
+    } else {
+      resultElement.textContent = `${room.result.winner === 1 ? "Jogador 1 · Dono" : "Jogador 2 · Convidado"} venceu.`;
+    }
     const requested = room.rematchRequested || [];
     rematchButton.disabled = requested.includes(role);
     rematchStatus.textContent = requested.length
@@ -556,7 +620,11 @@ function renderRoom(nextRoom) {
     rematchStatus.textContent = "";
     rematchButton.disabled = true;
   }
-  
+
+  const podeDesistir = room.phase === "playing" && Boolean(playerNumberForRole(role));
+  const btnDesistir = document.querySelector("[data-game-resign]");
+  if (btnDesistir) btnDesistir.disabled = !podeDesistir;
+
   renderBoard();
 }
 
@@ -714,6 +782,10 @@ leaveButton.addEventListener("click", async () => {
     clearRoomSession();
     onLeave();
   }
+});
+
+document.querySelector("[data-game-resign]").addEventListener("click", async () => {
+  await handleResign();
 });
 
 // Atualiza avatar e emotes locais; o tabuleiro é sempre definido pelo modo da sala.
