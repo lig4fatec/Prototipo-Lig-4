@@ -80,6 +80,7 @@ function emptyGameState() {
     bloqueios: [],
     poderesUsados: { 1: [], 2: [] },
     pecaExtra: null,
+    empatesPropostos: { 1: false, 2: false },
   };
 }
 
@@ -121,6 +122,9 @@ function getRoomSnapshot(room) {
         board: room.game.board.map(row => row.slice()),
         turn: room.game.turn,
         moveCount: room.game.moveCount,
+        empatesPropostos: {
+          ...(room.game.empatesPropostos || { 1: false, 2: false }),
+        },
         ...(room.mode === "caos" ? {
           bloqueios: (room.game.bloqueios || []).map(bloqueio => ({ ...bloqueio })),
           poderesUsados: {
@@ -132,6 +136,9 @@ function getRoomSnapshot(room) {
       }
       : null,
     result: room.result ? { ...room.result } : null,
+    ...(room.empate
+      ? { empate: { proponente: room.empate.proponente, status: room.empate.status } }
+      : {}),
     rematchRequested: [...(room.rematchRequested || [])],
     ...(room.lastEmote ? { lastEmote: { ...room.lastEmote } } : {}),
   };
@@ -400,9 +407,62 @@ export async function startMatch(options = {}) {
   room.phase = "playing";
   room.game = emptyGameState();
   room.result = null;
+  room.empate = null;
   room.rematchRequested = [];
   writeRooms(rooms);
   notifyRoom(pin);
+}
+
+export async function proporEmpate({ pin, role } = {}) {
+  await yieldMock();
+  validatePin(pin);
+
+  const rooms = readRooms();
+  const room = rooms.get(pin);
+  if (!room) throw roomError("PIN_NAO_ENCONTRADO");
+  assertSession(pin, role);
+  if (room.phase !== "playing") throw roomError("FASE_INVALIDA");
+
+  const jogador = role === "owner" ? 1 : role === "guest" ? 2 : null;
+  if (!jogador || !room.players[role] || !room.game) throw roomError("SEM_PERMISSAO");
+  if (room.game.empatesPropostos[jogador]) throw roomError("EMPATE_JA_PROPOSTO");
+
+  room.game.empatesPropostos[jogador] = true;
+  room.empate = { proponente: jogador, status: "pendente" };
+
+  writeRooms(rooms);
+  notifyRoom(pin);
+  return { pin, jogador };
+}
+
+export async function responderEmpate({ pin, role, aceitar } = {}) {
+  await yieldMock();
+  validatePin(pin);
+
+  const rooms = readRooms();
+  const room = rooms.get(pin);
+  if (!room) throw roomError("PIN_NAO_ENCONTRADO");
+  assertSession(pin, role);
+  if (room.phase !== "playing") throw roomError("FASE_INVALIDA");
+
+  const jogador = role === "owner" ? 1 : role === "guest" ? 2 : null;
+  if (!jogador || !room.players[role]) throw roomError("SEM_PERMISSAO");
+  if (!room.empate || room.empate.status !== "pendente") {
+    throw roomError("EMPATE_SEM_PROPOSTA");
+  }
+  if (room.empate.proponente === jogador) throw roomError("EMPATE_PROPONENTE_INVALIDO");
+
+  if (aceitar) {
+    room.result = { winner: null, draw: true };
+    room.phase = "finished";
+    room.empate = null;
+  } else {
+    room.empate = { proponente: room.empate.proponente, status: "recusado" };
+  }
+
+  writeRooms(rooms);
+  notifyRoom(pin);
+  return { pin, aceitar };
 }
 
 export async function publishState({ pin, role, board, turn, moveCount } = {}) {
@@ -624,6 +684,7 @@ export async function requestRematch({ pin, role } = {}) {
     room.phase = "playing";
     room.game = emptyGameState();
     room.result = null;
+    room.empate = null;
     room.rematchRequested = [];
   }
 

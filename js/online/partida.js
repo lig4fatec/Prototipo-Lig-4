@@ -10,6 +10,8 @@ import {
   usarPecaExtra,
   usarQueimarPeca,
   desistirPartida,
+  proporEmpate,
+  responderEmpate,
   watchRoom,
 } from "../services/rooms.js";
 import {
@@ -58,6 +60,7 @@ const resultElement = document.querySelector("[data-game-result]");
 const rematchStatus = document.querySelector("[data-game-rematch-status]");
 const rematchButton = document.querySelector("[data-game-rematch]");
 const leaveButton = document.querySelector("[data-game-leave]");
+const drawButton = document.querySelector("[data-game-draw]");
 
 const emotesElement = document.querySelector("[data-game-emotes]");
 const emoteToggle = document.querySelector("[data-game-emote-toggle]");
@@ -99,6 +102,9 @@ let ownAvatarId = null;
 let lastEmoteSeen = null;
 let emoteCooldown = false;
 const emoteTimers = new Map();
+let empatePopup = null;
+let empateRecusadoTimer = null;
+let empateRecusadoAvisado = false;
 
 const gameErrorMessages = {
   COLUNA_INVALIDA: "Selecione uma coluna válida.",
@@ -556,12 +562,122 @@ async function handleResign() {
   }
 }
 
+function removerEmpatePopup() {
+  if (empatePopup) {
+    empatePopup.remove();
+    empatePopup = null;
+  }
+}
+
+function renderEmpateUI() {
+  removerEmpatePopup();
+
+  const jogo = room?.game;
+  const empate = room?.empate;
+  const jogador = playerNumberForRole(role);
+  const jaProposto = Boolean(jogo?.empatesPropostos?.[jogador]);
+  const pendente = Boolean(empate && empate.status === "pendente");
+
+  if (drawButton) {
+    drawButton.disabled = !(
+      room?.phase === "playing" && Boolean(jogador) && !jaProposto && !pendente
+    );
+  }
+
+  const recusadoLocal = Boolean(
+    empate && empate.status === "recusado" && empate.proponente === jogador
+  );
+
+  if (recusadoLocal) {
+    if (!empateRecusadoAvisado) {
+      empateRecusadoAvisado = true;
+      statusElement.textContent = "O adversário recusou o empate.";
+      if (empateRecusadoTimer) clearTimeout(empateRecusadoTimer);
+      empateRecusadoTimer = setTimeout(() => {
+        empateRecusadoTimer = null;
+        empateRecusadoAvisado = false;
+        if (statusElement.textContent === "O adversário recusou o empate.") {
+          statusElement.textContent = "";
+        }
+      }, 5000);
+    }
+    return;
+  }
+
+  empateRecusadoAvisado = false;
+  if (empateRecusadoTimer) {
+    clearTimeout(empateRecusadoTimer);
+    empateRecusadoTimer = null;
+  }
+  if (statusElement.textContent === "O adversário recusou o empate.") {
+    statusElement.textContent = "";
+  }
+
+  if (!pendente) return;
+
+  if (empate.proponente === jogador) {
+    statusElement.textContent = "Aguardando resposta.";
+    return;
+  }
+
+  const card = document.querySelector(`[data-score-player="${jogador}"]`);
+  if (!card) return;
+  const playerName = card.querySelector(".player-name");
+  if (!playerName) return;
+
+  const box = document.createElement("div");
+  box.dataset.empatePopup = "true";
+
+  const label = document.createElement("span");
+  label.textContent = "Empate?";
+
+  const aceitar = document.createElement("button");
+  aceitar.type = "button";
+  aceitar.className = "button button-secondary";
+  aceitar.textContent = "Aceitar";
+
+  const recusar = document.createElement("button");
+  recusar.type = "button";
+  recusar.className = "button button-danger";
+  recusar.textContent = "Recusar";
+
+  box.append(label, aceitar, recusar);
+  playerName.after(box);
+  empatePopup = box;
+
+  aceitar.addEventListener("click", async () => {
+    if (!room) return;
+    try {
+      await responderEmpate({ pin: room.pin, role, aceitar: true });
+    } catch (error) {
+      statusElement.textContent =
+        gameErrorMessages[error.code] || getRoomErrorMessage(error.code);
+    }
+  });
+
+  recusar.addEventListener("click", async () => {
+    if (!room) return;
+    try {
+      await responderEmpate({ pin: room.pin, role, aceitar: false });
+    } catch (error) {
+      statusElement.textContent =
+        gameErrorMessages[error.code] || getRoomErrorMessage(error.code);
+    }
+  });
+}
+
 function renderRoom(nextRoom) {
   if (!nextRoom) {
     room = null;
     pendingPower = null;
     stopRoomWatch();
     stopClockUpdates();
+    removerEmpatePopup();
+    if (empateRecusadoTimer) {
+      clearTimeout(empateRecusadoTimer);
+      empateRecusadoTimer = null;
+    }
+    empateRecusadoAvisado = false;
     onRoomLost();
     return;
   }
@@ -626,6 +742,7 @@ function renderRoom(nextRoom) {
   if (btnDesistir) btnDesistir.disabled = !podeDesistir;
 
   renderBoard();
+  renderEmpateUI();
 }
 
 function delay(milliseconds) {
@@ -753,6 +870,12 @@ export function fecharPartida() {
   stopRoomWatch();
   stopClockUpdates();
   moveInProgress = false;
+  removerEmpatePopup();
+  if (empateRecusadoTimer) {
+    clearTimeout(empateRecusadoTimer);
+    empateRecusadoTimer = null;
+  }
+  empateRecusadoAvisado = false;
 }
 
 rematchButton.addEventListener("click", async () => {
@@ -786,6 +909,20 @@ leaveButton.addEventListener("click", async () => {
 
 document.querySelector("[data-game-resign]").addEventListener("click", async () => {
   await handleResign();
+});
+
+drawButton.addEventListener("click", async () => {
+  if (!room || room.phase !== "playing") return;
+  const jogador = playerNumberForRole(role);
+  if (!jogador) return;
+  if (Boolean(room.game?.empatesPropostos?.[jogador])) return;
+  if (room.empate?.status === "pendente") return;
+  try {
+    await proporEmpate({ pin: room.pin, role });
+  } catch (error) {
+    statusElement.textContent =
+      gameErrorMessages[error.code] || getRoomErrorMessage(error.code);
+  }
 });
 
 // Atualiza avatar e emotes locais; o tabuleiro é sempre definido pelo modo da sala.
