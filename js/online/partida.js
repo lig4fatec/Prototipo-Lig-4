@@ -502,8 +502,8 @@ async function applyPersonalization() {
     
     renderEmoteBar(inventory.byCategory.emote);
     
-  } catch {
-    // A personalização é opcional: se falhar, a partida segue com o visual padrão.
+  } catch (error) {
+    console.error(error);
     
   }
 }
