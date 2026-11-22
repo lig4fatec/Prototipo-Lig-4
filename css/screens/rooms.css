@@ -452,11 +452,11 @@
   font-size: 1.25rem;
   font-variant-numeric: tabular-nums;
 }
-
+/* 
 .online-game-board-wrap {
   width: min(100%, 680px);
   margin-inline: auto;
-}
+} */
 
 .online-game-columns,
 .online-game-board {
@@ -712,11 +712,11 @@
   font-size: 1.25rem;
   font-variant-numeric: tabular-nums;
 }
-
+/* 
 .online-game-board-wrap {
   width: min(100%, 680px);
   margin-inline: 0;
-}
+} */
 
 .online-game-columns,
 .online-game-board {
@@ -1184,9 +1184,6 @@
   padding: 12px; background: #18301D; border: 1px solid #F2B705;
   border-radius: 12px; box-shadow: 0 10px 28px #0009;
 }
-
-/* Todos os tabuleiros temáticos usam a mesma área útil do tabuleiro clássico. */
-.online-game-board-wrap { width: min(100%, 680px); max-width: 680px; }
 
 .lobby-board-section {
   display: grid;

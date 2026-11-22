@@ -329,6 +329,10 @@
   outline-offset: 2px;
 }
 
+.online-game-board-wrap[data-board-theme] .online-game-columns {
+  padding: 0;
+}
+
 .rooms-screen .online-game-result {
   padding: 20px 24px;
   border-top: 4px solid var(--lig-accent);
