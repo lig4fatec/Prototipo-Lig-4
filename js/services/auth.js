@@ -1,124 +1,52 @@
-// Adaptador de autenticação do front-end; a UI deve usar os exports deste módulo.
-const ACCOUNTS_KEY = "lig4.accounts";
-const CURRENT_USER_KEY = "lig4.currentUser";
+// js/services/auth.js — login, cadastro e sessão via API
+// Exporta o que as telas já usam: login, cadastro, getCurrentUser, logout.
+// Códigos de erro do back: CREDENCIAIS_INVALIDAS (401), EMAIL_JA_CADASTRADO (409),
+// EMAIL_INVALIDO, SENHA_INVALIDA, NICK_INVALIDO (400). Falha de rede: SEM_CONEXAO.
+import { post, ApiError } from "./http.js";
 
-// Helpers do mock local: podem ser substituídos/removidos na integração com a API.
-function createAuthError(code) {
-  const error = new Error(code);
-  error.code = code;
-  return error;
+// AJUSTAR se o mock usava outra chave de sessão no localStorage.
+const CHAVE_SESSAO = "lig4-sessao";
+
+function salvarSessao(jogador) {
+  localStorage.setItem(CHAVE_SESSAO, JSON.stringify(jogador));
 }
 
-function getStorage() {
-  try {
-    const storage = globalThis.localStorage || globalThis.window?.localStorage;
-    if (!storage) throw new Error("localStorage indisponível");
-    return storage;
-  } catch {
-    throw createAuthError("ARMAZENAMENTO_INDISPONIVEL");
-  }
+export function jogadorLogado() {
+  try { return JSON.parse(localStorage.getItem(CHAVE_SESSAO)); } catch { return null; }
 }
 
-function readAccounts(storage) {
-  let serializedAccounts;
-  try {
-    serializedAccounts = storage.getItem(ACCOUNTS_KEY);
-  } catch {
-    throw createAuthError("ARMAZENAMENTO_INDISPONIVEL");
-  }
-  if (!serializedAccounts) return [];
-
-  try {
-    const accounts = JSON.parse(serializedAccounts);
-    if (!Array.isArray(accounts)) throw new Error();
-    return accounts;
-  } catch {
-    throw createAuthError("DADOS_DE_AUTENTICACAO_INVALIDOS");
-  }
-}
-
-function normalizeEmail(email) {
-  return typeof email === "string" ? email.trim().toLowerCase() : "";
-}
-
-function isValidEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-function toPublicUser(account) {
-  return { id: account.id, email: account.email, nickname: account.nickname || account.email.split("@")[0] };
-}
-
-// Contrato do front-end consumido por auth-forms.js. O backend pode trocar estas
-// implementações por chamadas HTTP; preserve assinaturas, retorno e error.code.
-export async function register(email, password, nickname = "") {
-  const normalizedEmail = normalizeEmail(email);
-  if (!isValidEmail(normalizedEmail)) throw createAuthError("EMAIL_INVALIDO");
-  const normalizedNickname = typeof nickname === "string" ? nickname.trim() : "";
-  if (normalizedNickname.length < 3 || normalizedNickname.length > 20) throw createAuthError("NICKNAME_INVALIDO");
-  if (typeof password !== "string" || password.length < 6) {
-    throw createAuthError("SENHA_INVALIDA");
-  }
-
-  const storage = getStorage();
-  const accounts = readAccounts(storage);
-  if (accounts.some((account) => account.email === normalizedEmail)) {
-    throw createAuthError("EMAIL_JA_CADASTRADO");
-  }
-
-  const account = {
-    id: globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-    email: normalizedEmail,
-    password,
-  };
-
-  try {
-    storage.setItem(ACCOUNTS_KEY, JSON.stringify([...accounts, account]));
-    storage.setItem(CURRENT_USER_KEY, account.email);
-  } catch {
-    throw createAuthError("ARMAZENAMENTO_INDISPONIVEL");
-  }
-
-  return toPublicUser(account);
-}
-
-export async function login(email, password) {
-  const normalizedEmail = normalizeEmail(email);
-  const storage = getStorage();
-  const account = readAccounts(storage).find(
-    (candidate) => candidate.email === normalizedEmail && candidate.password === password,
-  );
-
-  if (!account) throw createAuthError("CREDENCIAIS_INVALIDAS");
-
-  try {
-    storage.setItem(CURRENT_USER_KEY, account.email);
-  } catch {
-    throw createAuthError("ARMAZENAMENTO_INDISPONIVEL");
-  }
-
-  return toPublicUser(account);
-}
-
-export async function logout() {
-  const storage = getStorage();
-  try {
-    storage.removeItem(CURRENT_USER_KEY);
-  } catch {
-    throw createAuthError("ARMAZENAMENTO_INDISPONIVEL");
-  }
+// Sem token: o back identifica o jogador pelo id, que o front envia nas chamadas.
+export function exigirId() {
+  const id = jogadorLogado()?.id;
+  if (id == null) throw new ApiError(401, "NAO_AUTENTICADO", "Faça login para continuar.");
+  return id;
 }
 
 export async function getCurrentUser() {
-  const storage = getStorage();
-  let currentEmail;
-  try {
-    currentEmail = storage.getItem(CURRENT_USER_KEY);
-  } catch {
-    throw createAuthError("ARMAZENAMENTO_INDISPONIVEL");
-  }
-  if (!currentEmail) return null;
+  return jogadorLogado(); // {id, nome, email, criadoEm, cor} ou null
+}
 
-  const account = readAccounts(storage).find((candidate) => candidate.email === currentEmail);
-  return account ? toPublicUser(account) : null;
+export async function logout() {
+  localStorage.removeItem(CHAVE_SESSAO);
+}
+export const sair = logout;
+
+// Aceita login(email, senha) ou login({ email, senha })
+export async function login(arg, senhaPos) {
+  const { email, senha } = typeof arg === "object" ? arg : { email: arg, senha: senhaPos };
+  const jogador = await post("/auth/login", { email, senha });
+  salvarSessao(jogador);
+  return jogador;
+}
+
+// Aceita cadastro(email, senha, nick) ou cadastro({ email, senha, nick })
+// senha: 6 a 72 caracteres; nick opcional, de 3 a 20
+export async function cadastro(arg, senhaPos, nickPos) {
+  const o = typeof arg === "object" ? arg : { email: arg, senha: senhaPos, nick: nickPos };
+  const corpo = { email: o.email, senha: o.senha };
+  const nick = o.nick ?? o.nome ?? o.name;
+  if (nick) corpo.nick = nick;
+  const jogador = await post("/auth/cadastro", corpo);
+  salvarSessao(jogador);
+  return jogador;
 }

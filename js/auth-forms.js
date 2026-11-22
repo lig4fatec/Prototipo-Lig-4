@@ -1,9 +1,9 @@
-import { login, register, logout } from "./services/auth.js";
+import { login, cadastro, logout } from "./services/auth.js";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const authErrorMessages = {
-  NICKNAME_JA_CADASTRADO: "Este apelido já está em uso.",\n  NICKNAME_INVALIDO: "O apelido deve ter entre 3 e 20 caracteres.",\n  EMAIL_JA_CADASTRADO: "Este e-mail já está cadastrado.",
+  NICKNAME_JA_CADASTRADO: "Este apelido já está em uso.",  NICKNAME_INVALIDO: "O apelido deve ter entre 3 e 20 caracteres.", EMAIL_JA_CADASTRADO: "Este e-mail já está cadastrado.",
   CREDENCIAIS_INVALIDAS: "E-mail ou senha incorretos.",
   ARMAZENAMENTO_INDISPONIVEL: "Não foi possível acessar os dados locais. Tente novamente.",
   DADOS_DE_AUTENTICACAO_INVALIDOS: "Os dados locais estão inválidos.",
@@ -27,7 +27,7 @@ function validateField(form, name) {
   const value = field.value.trim();
   let message = "";
 
-  if (name === "nickname") {\n    if (value.length < 3 || value.length > 20) message = "O apelido deve ter entre 3 e 20 caracteres.";\n  } else if (name === "email") {
+  if (name === "nickname") {if (value.length < 3 || value.length > 20) message = "O apelido deve ter entre 3 e 20 caracteres.";} else if (name === "email") {
     if (!value) message = "Informe seu e-mail.";
     else if (!emailPattern.test(value)) message = "Informe um e-mail válido.";
   } else if (name === "password") {
@@ -71,7 +71,7 @@ function showServiceError(form, error) {
 
 function bindForm(form) {
   const type = form.dataset.authForm;
-  const fieldNames = type === "register" ? ["nickname", "email", "password", "confirm-password"] : ["email", "password"];
+  const fieldNames = type === "cadastro" ? ["nickname", "email", "password", "confirm-password"] : ["email", "password"];
 
   for (const field of form.querySelectorAll("[data-field]")) {
     field.addEventListener("blur", () => {
@@ -100,14 +100,14 @@ function bindForm(form) {
 
     const submitButton = form.querySelector('[type="submit"]');
     submitButton.disabled = true;
-    setStatus(form, type === "register" ? "Cadastrando..." : "Entrando...");
+    setStatus(form, type === "cadastro" ? "Cadastrando..." : "Entrando...");
 
     try {
       const email = getField(form, "email").value.trim();
       const password = getField(form, "password").value;
 
-      if (type === "register") {
-        await register(email, password, getField(form, "nickname").value);
+      if (type === "cadastro") {
+        await cadastro(email, password, getField(form, "nickname").value);
         await logout();
         setStatus(form, "Cadastro realizado com sucesso. Redirecionando para o login...", "success");
         setTimeout(() => {
