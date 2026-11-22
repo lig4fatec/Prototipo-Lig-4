@@ -189,10 +189,10 @@ export async function getEquipped() {
 
 export async function getEquippedItems() {
   const state = await readState();
-  return Object.fromEntries(categories.map(category => [
-    category.id,
-    toPublicItem(category.id, findCategoryItem(category.id, state.equipped[category.id]), state),
-  ]));
+  return Object.fromEntries(categories.map(category => {
+    const item = findCategoryItem(category.id, state.equipped[category.id]);
+    return [category.id, item ? toPublicItem(category.id, item, state) : null];
+  }));
 }
 
 export async function getInventory() {
