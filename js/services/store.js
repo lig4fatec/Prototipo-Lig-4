@@ -30,7 +30,7 @@ const categories = [
     id: "board",
     name: "Tabuleiros",
     items: [
-      { id: "board-classico", name: "Clássico", price: 0, image: "boards/classico.svg", description: "O tabuleiro azul tradicional do LIG-4." },
+      { id: "board-classico", name: "Clássico", price: 0, image: "boards/classico.webp", frame: { file: "boards/classico-frame.webp", width: 952, height: 970, x0: 173.0, y0: 206.8, dx: 101.0, dy: 111.0, radius: 44.0, empty: "#03110d" }, description: "O tabuleiro azul tradicional do LIG-4." },
       { id: "board-espacial", name: "Espacial", price: 800, image: "boards/espacial.webp", frame: { file: "boards/espacial-frame.webp", width: 940, height: 986, x0: 222.3, y0: 295.9, dx: 82.55, dy: 82.56, radius: 32.8, empty: "#010c10" }, description: "Estrutura metálica com luzes de neon e um satélite orbitando o tabuleiro." },
       { id: "board-floresta", name: "Floresta", price: 800, image: "boards/floresta.webp", frame: { file: "boards/floresta-frame.webp", width: 952, height: 970, x0: 242.9, y0: 317.0, dx: 77.35, dy: 77.34, radius: 31.0, empty: "#040d08" }, description: "Pedra coberta de musgo, samambaias, cogumelos e uma rã curiosa." },
       { id: "board-medieval", name: "Medieval", price: 1200, image: "boards/medieval.webp", frame: { file: "boards/medieval-frame.webp", width: 953, height: 953, x0: 232.9, y0: 329.1, dx: 80.87, dy: 80.84, radius: 32.0, empty: "#121411" }, description: "Muralha de pedra com torres, estandartes e um dragão guardando o tesouro." },

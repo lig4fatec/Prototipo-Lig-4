@@ -610,6 +610,14 @@
   margin-inline: auto;
 }
 
+.rooms-screen .online-game-board-wrap[data-board-theme] {
+  display: block;
+  gap: 0;
+  width: min(100%, 680px, calc(76vh * var(--board-aspect, 1)));
+  max-width: none;
+  margin-inline: auto;
+}
+
 .rooms-screen .online-game-columns,
 .rooms-screen .online-game-board {
   display: grid;
@@ -627,7 +635,7 @@
   color: #1a0b3d;
   border: 3px solid #000;
   border-radius: 6px;
-  box-shadow: 3px 3px 0 #000;
+  box-shadow: none;
   font-weight: 900;
   cursor: pointer;
 }
