@@ -46,7 +46,7 @@ const categories = [
     id: "poderes",
     name: "Poderes",
     items: [
-      { id: "congelar-coluna", name: "Congelar Coluna", emoji: "❄️", description: "Bloqueia uma coluna do adversário por 3 lances dele." },
+      { id: "congelar-coluna", name: "Congelar Coluna", emoji: "❄️", description: "Bloqueia uma coluna do adversário pelo próximo lance." },
       { id: "queimar-peca", name: "Queimar Peça", emoji: "🔥", description: "Remove a peça mais alta do adversário em uma coluna." },
       { id: "peca-extra", name: "Peça Extra", emoji: "➕", description: "Joga uma segunda peça na mesma vez." },
     ],
