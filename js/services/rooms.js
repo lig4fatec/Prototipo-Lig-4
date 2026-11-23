@@ -70,6 +70,7 @@ export class PartidaSocket {
       else if (m.tipo === "JOGADA") this.h.onJogada?.(m.dados);
       else if (m.tipo === "PRESENCA") this.h.onPresenca?.(m.dados.conectados);
       else if (m.tipo === "ERRO") this.h.onErro?.(m.codigo, m.mensagem);
+      else if (m.tipo === "EMOTE") this.h.onEmote?.(m.dados);
     };
     this.ws.onclose = () => {
       this.h.onStatus?.("fechado");
@@ -93,6 +94,7 @@ export class PartidaSocket {
   congelar(coluna)       { this._enviar({ tipo: "PODER", poder: "CONGELAR", coluna }); }
   pecaExtra()            { this._enviar({ tipo: "PODER", poder: "EXTRA" }); }
   fechar()               { this.encerrado = true; this.ws?.close(); }
+  emote(emote)           { this._enviar({ tipo: "EMOTE", emote }); }
 }
 /* ---------- Adaptador para as telas atuais (formato antigo do front) ---------- */
 // As telas usam nomes e formatos do mock. Este bloco traduz o back para eles.
@@ -259,12 +261,22 @@ function notificarPartida(estado) {
   for (const ouvinte of ouvintesPartida) ouvinte(estado);
 }
 
+let seqEmote = 0;
+
 export function abrirPartidaSocket(partidaId, jogadorId, sala, onEstado, onErro) {
   fecharPartidaSocket();
   ouvintesPartida = new Set([onEstado]);
   partidaAtiva = new PartidaSocket(partidaId, jogadorId, {
     onEstado: (estado) => notificarPartida(estadoParaTela(estado, sala)),
     onJogada: () => partidaAtiva?.pedirEstado(),
+    onEmote: (dados) => {
+      if (!estadoAtual) return;
+      const role = sala.players?.owner?.id === dados.jogadorId ? "owner" : "guest";
+      notificarPartida({
+        ...estadoAtual,
+        lastEmote: { id: ++seqEmote, emoteId: dados.emote, role },
+      });
+    },
     onErro: (codigo, mensagem) => onErro?.({ code: codigo, message: mensagem }),
   });
   partidaAtiva.conectar();
@@ -297,7 +309,6 @@ export const responderEmpate = ({ aceitar }) => enviar(s => (aceitar ? s.aceitar
 // Revanche usa REST (não há comando no socket): POST /salas/{pin}/revanche.
 export const requestRematch = ({ pin }) => pedirRevanche(pin, exigirId()).then(sala => paraTela(sala));
 
-// Emotes não existem no back: stub até decidir o caminho.
-export const sendEmote = () => Promise.reject({ code: "NAO_INTEGRADO" });
+export const sendEmote = ({ emoteId }) => enviar(s => s.emote(emoteId));
 
 export const buscarEstadoPartida = (partidaId) => buscarEstado(partidaId).then(e => e);

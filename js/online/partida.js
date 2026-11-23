@@ -68,7 +68,7 @@ const drawButton = document.querySelector("[data-game-draw]");
 
 const emotesElement = document.querySelector("[data-game-emotes]");
 const emoteToggle = document.querySelector("[data-game-emote-toggle]");
-const EMOTES_HABILITADOS = false; //TODO: ligar quando o back tiver EMOTE
+const EMOTES_HABILITADOS = true;
 function closeEmoteMenu() {
   emotesElement.hidden = true;
   emoteToggle.setAttribute("aria-expanded", "false");
@@ -128,6 +128,7 @@ const gameErrorMessages = {
   EMPATE_JA_PROPOSTO: "Você já propôs empate nesta partida.",
   EMPATE_SEM_PROPOSTA: "Não há proposta de empate pendente.",
   EMPATE_PROPONENTE_INVALIDO: "Você não pode responder à sua própria proposta.",
+  EMOTE_INVALIDO: "Este emote não está disponível.",
 };
 
 function playerNumberForRole(playerRole) {
@@ -488,10 +489,10 @@ async function sendOwnEmote(emoteId) {
       statusElement.textContent = "Você não possui este emote.";
       return;
     }
-    await sendEmote({ pin: room.pin, role, emoteId });
+    await sendEmote({ emoteId });
     closeEmoteMenu();
   } catch (error) {
-    statusElement.textContent = getRoomErrorMessage(error.code);
+      statusElement.textContent = gameErrorMessages[error.code] || getRoomErrorMessage(error.code);
   } finally {
     setTimeout(() => {
       emoteCooldown = false;
