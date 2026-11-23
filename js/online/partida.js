@@ -34,6 +34,7 @@ import {
   getRoomErrorMessage,
   readRoomSession,
 } from "../room-ui.js";
+import { playSound } from "../sound-effects.js";
 
 const ROWS = 6;
 const COLUMNS = 7;
@@ -111,6 +112,7 @@ let empateRecusadoAvisado = false;
 let socketAtual = null;
 let tabuleiroProprio = "board-classico";
 let pedidoTempoEm = null;
+let somTocadoPara = null;
 
 // Relógio derivado só do que o servidor mandou, sem localStorage.
 function relogioDaSala(sala) {
@@ -645,6 +647,16 @@ function renderRoom(nextRoom) {
       resultElement.textContent = `${perdedor === 1 ? "Jogador 1 · Dono" : "Jogador 2 · Convidado"} desistiu. ${room.result.winner === 1 ? "Jogador 1 · Dono" : "Jogador 2 · Convidado"} venceu.`;
     } else {
       resultElement.textContent = `${room.result.winner === 1 ? "Jogador 1 · Dono" : "Jogador 2 · Convidado"} venceu.`;
+    }
+    if (!room.result.draw) {
+      const currentPlayer = playerNumberForRole(role);
+      if (somTocadoPara !== room.partidaId) {
+        somTocadoPara = room.partidaId;
+        playSound(
+          room.result.winner === currentPlayer ? "Vitoria.mp3" : "Derrota.mp3",
+          room.result.winner === currentPlayer ? "o som da vitória" : "o som da derrota",
+        );
+      }
     }
     const requested = room.rematchRequested || [];
     rematchButton.disabled = requested.includes(role);
