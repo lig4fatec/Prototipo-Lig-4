@@ -1,5 +1,7 @@
 import { getGameMode } from "../game/modes.js";
 import {
+  abrirPartidaSocket,
+  fecharPartidaSocket,
   getRoom,
   leaveRoom,
   publishResult,
@@ -14,6 +16,7 @@ import {
   responderEmpate,
   watchRoom,
 } from "../services/rooms.js";
+import { exigirId } from "../services/auth.js";
 import {
   findItem,
   getEquippedItems,
@@ -105,6 +108,8 @@ const emoteTimers = new Map();
 let empatePopup = null;
 let empateRecusadoTimer = null;
 let empateRecusadoAvisado = false;
+
+let socketAtual = null;
 
 const gameErrorMessages = {
   COLUNA_INVALIDA: "Selecione uma coluna válida.",
@@ -512,33 +517,33 @@ function confirmarModal(mensagem) {
   return new Promise(resolve => {
     const overlay = document.createElement("div");
     overlay.className = "online-modal-overlay";
-
+    
     const box = document.createElement("div");
     box.className = "online-modal-box";
     box.setAttribute("role", "dialog");
     box.setAttribute("aria-modal", "true");
-
+    
     const mensagemEl = document.createElement("p");
     mensagemEl.className = "online-modal-text";
     mensagemEl.textContent = mensagem;
-
+    
     const botoes = document.createElement("div");
     botoes.className = "online-modal-actions";
-
+    
     const confirmar = document.createElement("button");
     confirmar.type = "button";
     confirmar.className = "button button-danger";
     confirmar.textContent = "Confirmar";
-
+    
     const cancelar = document.createElement("button");
     cancelar.type = "button";
     cancelar.className = "button button-secondary";
     cancelar.textContent = "Cancelar";
-
+    
     const fechar = () => overlay.remove();
     confirmar.addEventListener("click", () => { fechar(); resolve(true); });
     cancelar.addEventListener("click", () => { fechar(); resolve(false); });
-
+    
     botoes.append(confirmar, cancelar);
     box.append(mensagemEl, botoes);
     overlay.append(box);
@@ -566,23 +571,23 @@ function removerEmpatePopup() {
 
 function renderEmpateUI() {
   removerEmpatePopup();
-
+  
   const jogo = room?.game;
   const empate = room?.empate;
   const jogador = playerNumberForRole(role);
   const jaProposto = Boolean(jogo?.empatesPropostos?.[jogador]);
   const pendente = Boolean(empate && empate.status === "pendente");
-
+  
   if (drawButton) {
     drawButton.disabled = !(
       room?.phase === "playing" && Boolean(jogador) && !jaProposto && !pendente
     );
   }
-
+  
   const recusadoLocal = Boolean(
     empate && empate.status === "recusado" && empate.proponente === jogador
   );
-
+  
   if (recusadoLocal) {
     if (!empateRecusadoAvisado) {
       empateRecusadoAvisado = true;
@@ -598,7 +603,7 @@ function renderEmpateUI() {
     }
     return;
   }
-
+  
   empateRecusadoAvisado = false;
   if (empateRecusadoTimer) {
     clearTimeout(empateRecusadoTimer);
@@ -607,63 +612,65 @@ function renderEmpateUI() {
   if (statusElement.textContent === "O adversário recusou o empate.") {
     statusElement.textContent = "";
   }
-
+  
   if (!pendente) return;
-
+  
   if (empate.proponente === jogador) {
     statusElement.textContent = "Aguardando resposta.";
     return;
   }
-
+  
   const card = document.querySelector(`[data-score-player="${jogador}"]`);
   if (!card) return;
   const playerName = card.querySelector(".player-name");
   if (!playerName) return;
-
+  
   const box = document.createElement("div");
   box.dataset.empatePopup = "true";
   box.className = "empate-popup";
-
+  
   const label = document.createElement("span");
   label.className = "empate-popup-label";
   label.textContent = "Empate?";
-
+  
   const aceitar = document.createElement("button");
   aceitar.type = "button";
   aceitar.className = "button button-secondary";
   aceitar.textContent = "Aceitar";
-
+  
   const recusar = document.createElement("button");
   recusar.type = "button";
   recusar.className = "button button-danger";
   recusar.textContent = "Recusar";
-
+  
   box.append(label, aceitar, recusar);
   playerName.after(box);
   empatePopup = box;
-
+  
   aceitar.addEventListener("click", async () => {
     if (!room) return;
     try {
       await responderEmpate({ pin: room.pin, role, aceitar: true });
     } catch (error) {
       statusElement.textContent =
-        gameErrorMessages[error.code] || getRoomErrorMessage(error.code);
+      gameErrorMessages[error.code] || getRoomErrorMessage(error.code);
     }
   });
-
+  
   recusar.addEventListener("click", async () => {
     if (!room) return;
     try {
       await responderEmpate({ pin: room.pin, role, aceitar: false });
     } catch (error) {
       statusElement.textContent =
-        gameErrorMessages[error.code] || getRoomErrorMessage(error.code);
+      gameErrorMessages[error.code] || getRoomErrorMessage(error.code);
     }
   });
 }
 
 function renderRoom(nextRoom) {
+  
+
   if (!nextRoom) {
     room = null;
     pendingPower = null;
@@ -716,6 +723,8 @@ function renderRoom(nextRoom) {
   const finished = room.phase === "finished" && Boolean(room.result);
   resultPanel.hidden = !finished;
   if (finished) {
+  
+
     if (room.result.draw) {
       resultElement.textContent = "Empate.";
     } else if (room.result.motivo === "desistencia") {
@@ -729,17 +738,23 @@ function renderRoom(nextRoom) {
     rematchStatus.textContent = requested.length
     ? "Aguardando o outro jogador."
     : "";
+    
+
   } else {
     rematchStatus.textContent = "";
     rematchButton.disabled = true;
   }
-
+  
   const podeDesistir = room.phase === "playing" && Boolean(playerNumberForRole(role));
   const btnDesistir = document.querySelector("[data-game-resign]");
   if (btnDesistir) btnDesistir.disabled = !podeDesistir;
-
+  
   renderBoard();
+  
+
   renderEmpateUI();
+
+
 }
 
 function delay(milliseconds) {
@@ -807,25 +822,7 @@ async function dropInColumn(column) {
   
   try {
     await animateDrop(column, fall.passos, player);
-    const moveCount = game.moveCount + 1;
-    await publishState({
-      pin: room.pin,
-      role,
-      board: result.board,
-      turn: proximoTurno(player),
-      moveCount,
-    });
-    
-    if (result.vitoria || result.empate) {
-      await publishResult({
-        pin: room.pin,
-        role,
-        result: {
-          winner: result.vitoria ? player : null,
-          draw: result.empate,
-        },
-      });
-    }
+    await publishState({ column });
   } catch (error) {
     statusElement.textContent = getRoomErrorMessage(error.code);
   } finally {
@@ -856,7 +853,44 @@ export async function abrirPartida({ onRoomLost, onLeave } = {}) {
     emoteStatus.textContent = "";
     renderRoom(initialRoom);
     startClockUpdates();
-    cancelRoomWatch = watchRoom(session.pin, renderRoom);
+    
+    // Polling da sala: só para detectar quando ela some (ex.: o outro jogador saiu).
+    let partidaAtualId = initialRoom.partidaId;
+    const cancelarPolling = watchRoom(session.pin, sala => {
+      if (!sala) {
+        onRoomLost();
+        return;
+      }
+      if (sala.phase === "playing" && sala.partidaId && sala.partidaId !== partidaAtualId) {
+        partidaAtualId = sala.partidaId;
+        socketAtual.fechar();
+        socketAtual = abrirPartidaSocket(
+          sala.partidaId,
+          exigirId(),
+          sala,
+          renderRoom,
+          ({ code, message }) => {
+            statusElement.textContent = getRoomErrorMessage(code) || message;
+          },
+        );
+      }
+    });
+    
+    // Socket da partida: traz o estado (tabuleiro, turno, tempos, poderes).
+    socketAtual = abrirPartidaSocket(
+      initialRoom.partidaId,
+      exigirId(),
+      initialRoom,
+      renderRoom,
+      ({ code, message }) => {
+        statusElement.textContent = getRoomErrorMessage(code) || message;
+      },
+    );
+    
+        cancelRoomWatch = () => {
+      cancelarPolling();
+      socketAtual?.fechar();
+    };;
   } catch (error) {
     if (error.code === "PIN_NAO_ENCONTRADO") onRoomLost();
     else statusElement.textContent = getRoomErrorMessage(error.code);
@@ -865,6 +899,7 @@ export async function abrirPartida({ onRoomLost, onLeave } = {}) {
 
 export function fecharPartida() {
   stopRoomWatch();
+  fecharPartidaSocket();
   stopClockUpdates();
   moveInProgress = false;
   removerEmpatePopup();
@@ -880,27 +915,39 @@ rematchButton.addEventListener("click", async () => {
   rematchButton.disabled = true;
   rematchStatus.textContent = "";
   try {
-    const result = await requestRematch({ pin: room.pin, role });
-    if (result.phase === "finished") rematchStatus.textContent = "Aguardando o outro jogador.";
+    await requestRematch({ pin: room.pin, role });
+    rematchStatus.textContent = "Aguardando o outro jogador.";
   } catch (error) {
     rematchStatus.textContent = getRoomErrorMessage(error.code);
     rematchButton.disabled = false;
   }
-});
+});;
 
 leaveButton.addEventListener("click", async () => {
+  console.log("sair: início");
   if (leaveInProgress) return;
   leaveInProgress = true;
   leaveButton.disabled = true;
   stopRoomWatch();
+  console.log("sair: após stopRoomWatch");
+  
   const session = readRoomSession();
   try {
     if (session.pin && session.role) await leaveRoom({ pin: session.pin, role: session.role });
+    console.log("sair: após leaveRoom");
+    
   } catch (error) {
+    console.log("sair: erro", error);
+    
     statusElement.textContent = getRoomErrorMessage(error.code);
   } finally {
+    console.log("sair: finally");
+    
     clearRoomSession();
+    console.log("sair: clearRoomSession");
     onLeave();
+    console.log("sair: onLeave");
+    
   }
 });
 
@@ -919,7 +966,7 @@ drawButton.addEventListener("click", async () => {
   } catch (error) {
     console.error(error);
     statusElement.textContent =
-      gameErrorMessages[error.code] || getRoomErrorMessage(error.code);
+    gameErrorMessages[error.code] || getRoomErrorMessage(error.code);
   }
 });
 

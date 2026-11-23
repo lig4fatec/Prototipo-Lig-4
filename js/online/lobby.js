@@ -1,5 +1,5 @@
 import { getGameMode } from "../game/modes.js";
-import { getRoom, leaveRoom, setPlayerColor, setRoomBoard, setPlayerReady, startMatch, watchRoom } from "../services/rooms.js";
+import { getRoom, leaveRoom, setPlayerColor, setPlayerReady, watchRoom } from "../services/rooms.js";
 import { findItem, getInventory, getItemImageUrl } from "../services/store.js";
 import {
   clearRoomSession,
@@ -157,11 +157,7 @@ function updateLobby(nextRoom) {
     : `Prontidão — Criador: ${ready.owner ? "pronto" : "aguardando"} · Convidado: ${ready.guest ? "pronto" : "aguardando"}.`;
   readyButton.disabled = !room.players.guest || room.phase !== "waiting";
   readyButton.textContent = ready[role] ? "Cancelar prontidão" : "Estou pronto";
-  startButton.disabled = role !== "owner"
-    || !room.players.guest
-    || !colorsDiffer
-    || !bothReady
-    || room.phase !== "waiting";
+  startButton.disabled = true;
 }
 
 export async function abrirLobby({ onLost }) {
@@ -191,28 +187,6 @@ export function fecharLobby() {
   stopWatching();
 }
 
-boardChoices.addEventListener("click", async event => {
-  const choice = event.target.closest("[data-board-id]");
-  if (!choice || !room || choice.disabled) return;
-  boardError.textContent = "";
-  const previousBoardId = room.boardId || "board-classico";
-  boardChoices.querySelectorAll("[data-board-id]").forEach(button => {
-    button.disabled = true;
-  });
-  try {
-    const { pin, role } = readRoomSession();
-    await setRoomBoard({ pin, role, boardId: choice.dataset.boardId });
-  } catch (error) {
-    boardError.textContent = getRoomErrorMessage(error.code);
-    // Restaura a seleção visual se a alteração for recusada.
-    boardChoices.querySelectorAll("[data-board-id]").forEach(button => {
-      const selected = button.dataset.boardId === previousBoardId;
-      button.setAttribute("aria-pressed", String(selected));
-      button.disabled = selected || readRoomSession().role !== "owner" || room?.phase !== "waiting";
-    });
-  }
-});
-
 readyButton.addEventListener("click", async () => {
   if (!room) return;
   readyButton.disabled = true;
@@ -223,19 +197,6 @@ readyButton.addEventListener("click", async () => {
   } catch (error) {
     status.textContent = getRoomErrorMessage(error.code);
   } finally {
-    if (room) updateLobby(room);
-  }
-});
-
-startButton.addEventListener("click", async () => {
-  startButton.disabled = true;
-  status.textContent = "";
-  const { pin } = readRoomSession();
-  try {
-    await startMatch({ pin });
-    // TODO: T09
-  } catch (error) {
-    status.textContent = getRoomErrorMessage(error.code);
     if (room) updateLobby(room);
   }
 });
