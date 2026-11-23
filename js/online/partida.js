@@ -1,6 +1,7 @@
 import { getGameMode } from "../game/modes.js";
 import {
   abrirPartidaSocket,
+  linhaDaBase,
   fecharPartidaSocket,
   getRoom,
   leaveRoom,
@@ -67,6 +68,7 @@ const drawButton = document.querySelector("[data-game-draw]");
 
 const emotesElement = document.querySelector("[data-game-emotes]");
 const emoteToggle = document.querySelector("[data-game-emote-toggle]");
+const EMOTES_HABILITADOS = false; //TODO: ligar quando o back tiver EMOTE
 function closeEmoteMenu() {
   emotesElement.hidden = true;
   emoteToggle.setAttribute("aria-expanded", "false");
@@ -108,6 +110,7 @@ const emoteTimers = new Map();
 let empatePopup = null;
 let empateRecusadoTimer = null;
 let empateRecusadoAvisado = false;
+let tabuleiroProprio = "board-classico";
 
 let socketAtual = null;
 
@@ -388,7 +391,8 @@ function showEmote(lastEmote) {
 }
 
 function updateEmoteButtons() {
-  const mayEmote = Boolean(room) && (room.phase === "playing" || room.phase === "finished");
+  const mayEmote = EMOTES_HABILITADOS
+    && Boolean(room) && (room.phase === "playing" || room.phase === "finished");
   emotesElement.querySelectorAll("button").forEach(button => {
     button.disabled = !mayEmote || emoteCooldown;
   });
@@ -400,33 +404,29 @@ function renderPowerButtons() {
     { id: "queimar-peca", label: "Queimar peça" },
     { id: "peca-extra", label: "Peça extra" },
   ];
-  
+
   for (const [index, container] of powerElements.entries()) {
     if (!container) continue;
-    if (room?.mode !== "caos") {
+    if (room?.mode !== "caos" || !room?.game) {
       container.replaceChildren();
       continue;
     }
-    
+
     const playerNumber = index + 1;
     const isLocalPlayer = playerNumberForRole(role) === playerNumber;
     const isTurn = room.phase === "playing" && room.game?.turn === playerNumber;
-    const extraPhase2 = room.game?.pecaExtra?.etapa === 2;
-    const notPlaying = room.phase !== "playing";
-    
     const poucosEspacos = contarEspacosLivres(room.game?.board || []) < 2;
-    
     const buttons = powers.map(power => {
       const used = (room.game?.poderesUsados?.[playerNumber] || []).includes(power.id);
+      const disponivel = (room.game?.poderesDisponiveis?.[playerNumber] || []).includes(power.id);
       const button = document.createElement("button");
       button.type = "button";
       button.className = "button button-secondary";
       button.textContent = power.label;
-      // button.disabled = used || !isLocalPlayer || !isTurn || moveInProgress || extraPhase2 || notPlaying;
-      button.disabled = used || !isLocalPlayer || !isTurn || moveInProgress
-      || (power.id === "peca-extra" && poucosEspacos)
-      || room.game?.pecaExtra?.etapa === 2;
-      
+      button.disabled = !disponivel || used || !isLocalPlayer || !isTurn || moveInProgress
+        || (power.id === "peca-extra" && poucosEspacos)
+        || room.game?.pecaExtra?.etapa === 2;
+      if (!disponivel) button.title = "Compre este poder na loja";
       if (power.id === "peca-extra") {
         button.setAttribute("aria-pressed", "false");
       } else {
@@ -449,8 +449,8 @@ function renderPowerButtons() {
           if (!room || room.phase !== "playing" || moveInProgress) return;
           pendingPower = pendingPower === power.id ? null : power.id;
           statusElement.textContent = pendingPower
-          ? "Clique em uma coluna para usar o poder."
-          : "";
+            ? "Clique em uma coluna para usar o poder."
+            : "";
           renderPowerButtons();
         });
       }
@@ -461,7 +461,7 @@ function renderPowerButtons() {
 }
 
 function renderEmoteBar(ownedEmotes) {
-  // Todos os emotes adquiridos são utilizáveis; não existe emote equipado.
+  // Todos os emotes comprados aparecem; equipar não é necessário.
   const ordered = [...ownedEmotes];
   emotesElement.replaceChildren(...ordered.map(emote => {
     const button = document.createElement("button");
@@ -504,6 +504,9 @@ async function applyPersonalization() {
   try {
     const [equippedItems, inventory] = await Promise.all([getEquippedItems(), getInventory()]);
     ownAvatarId = equippedItems.avatar.id;
+
+    tabuleiroProprio = equippedItems.board?.id || "board-classico";
+    if (room) applyBoardTheme(boardWrap, findItem(tabuleiroProprio));
     
     renderEmoteBar(inventory.byCategory.emote);
     
@@ -698,7 +701,7 @@ function renderRoom(nextRoom) {
   renderPowerButtons();
   const mode = getGameMode(room.mode);
   modeLabel.textContent = mode.name;
-  applyBoardTheme(boardWrap, findItem(room.boardId || "board-classico"));
+  applyBoardTheme(boardWrap, findItem(tabuleiroProprio));
   boardWrap.dataset.gameMode = mode.id;
   pinElement.textContent = room.pin;
   renderAvatars();
@@ -790,9 +793,15 @@ async function dropInColumn(column) {
     return;
   }
   
-  if (pendingPower === "queimar-peca") {
+    if (pendingPower === "queimar-peca") {
+    const oponente = player === 1 ? 2 : 1;
+    const linhaMatriz = room.game.board.findIndex(linha => linha[column] === oponente);
+    if (linhaMatriz < 0) {
+      statusElement.textContent = gameErrorMessages.SEM_PECA_ADVERSARIA;
+      return;
+    }
     try {
-      await usarQueimarPeca({ pin: room.pin, role, coluna: column });
+      await usarQueimarPeca({ pin: room.pin, role, coluna: column, linha: linhaDaBase(linhaMatriz) });
       pendingPower = null;
       statusElement.textContent = "Peça adversária removida.";
     } catch (error) {
@@ -892,6 +901,7 @@ export async function abrirPartida({ onRoomLost, onLeave } = {}) {
       socketAtual?.fechar();
     };;
   } catch (error) {
+    console.error("abrirPartida:", error);
     if (error.code === "PIN_NAO_ENCONTRADO") onRoomLost();
     else statusElement.textContent = getRoomErrorMessage(error.code);
   }

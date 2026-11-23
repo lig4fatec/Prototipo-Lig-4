@@ -1,6 +1,6 @@
 import { getGameMode } from "../game/modes.js";
 import { getRoom, leaveRoom, setPlayerColor, setPlayerReady, watchRoom } from "../services/rooms.js";
-import { findItem, getInventory, getItemImageUrl } from "../services/store.js";
+import { equipItem, getInventory, getItemImageUrl } from "../services/store.js";
 import {
   clearRoomSession,
   COLOR_NAMES,
@@ -23,6 +23,7 @@ let room = null;
 let cancelRoomWatch = null;
 let onRoomLost = () => {};
 let leaving = false;
+let ultimaFase = null;
 
 function stopWatching() {
   if (cancelRoomWatch) cancelRoomWatch();
@@ -49,7 +50,7 @@ function setPlayer(roleName, player) {
   const swatch = document.querySelector(`[data-player-swatch="${roleName}"]`);
   const preview = document.querySelector(`[data-player-swatch-preview="${roleName}"]`);
   setPlayerAvatar(roleName, player);
-
+  
   if (!player) {
     roleElement.textContent = "Aguardando jogador";
     colorElement.textContent = "—";
@@ -57,7 +58,7 @@ function setPlayer(roleName, player) {
     preview.dataset.color = "empty";
     return;
   }
-
+  
   roleElement.textContent = roleName === "owner" ? "Dono" : "Convidado";
   colorElement.textContent = COLOR_NAMES[player.color] || "—";
   swatch.dataset.color = player.color;
@@ -65,45 +66,55 @@ function setPlayer(roleName, player) {
 }
 
 async function renderBoardChoices() {
-  const { role } = readRoomSession();
   const inventory = await getInventory();
-  const boards = inventory.byCategory.board || [];
-  const available = boards.filter(item => item.owned);
-  const selected = room?.boardId || "board-classico";
-  const visibleItems = role === "owner"
-    ? available
-    : [findItem(selected)].filter(Boolean);
-
-  const cards = visibleItems.map(item => {
+  const boards = (inventory.byCategory.board || []).filter(item => item.owned);
+  const podeTrocar = room?.phase === "waiting";
+  
+  const cards = boards.map(item => {
     const button = document.createElement("button");
-    const isSelected = item.id === selected;
     button.type = "button";
     button.className = "lobby-board-choice";
     button.dataset.boardId = item.id;
-    button.setAttribute("aria-pressed", String(isSelected));
-    button.disabled = role !== "owner" || room?.phase !== "waiting" || isSelected;
-    button.title = role === "owner"
-      ? `Selecionar tabuleiro ${item.name}`
-      : `Tabuleiro escolhido pelo criador: ${item.name}`;
-
+    button.setAttribute("aria-pressed", String(item.equipped));
+    button.disabled = !podeTrocar || item.equipped;
+    button.title = item.equipped
+    ? `Tabuleiro ${item.name} (em uso)`
+    : `Usar tabuleiro ${item.name}`;
+    
     const image = document.createElement("img");
     image.src = getItemImageUrl(item);
     image.alt = "";
     image.loading = "lazy";
     image.decoding = "async";
-
+    
     const name = document.createElement("span");
     name.textContent = item.name;
     button.append(image, name);
+    button.addEventListener("click", async () => {
+      boardError.textContent = "";
+      cardsDisabled(true);
+      try {
+        await equipItem({ category: "board", itemId: item.id });
+      } catch (error) {
+        boardError.textContent = "Não foi possível escolher este tabuleiro.";
+      } finally {
+        await renderBoardChoices();
+      }
+    });
     return button;
   });
 
   boardChoices.replaceChildren(...cards);
-  boardChoices.dataset.role = role;
-  boardChoices.setAttribute("aria-readonly", String(role !== "owner"));
-  boardChoices.title = role === "owner"
-    ? "Escolha o tabuleiro que os dois jogadores verão."
-    : "Somente o criador da sala pode escolher o tabuleiro.";
+  boardChoices.setAttribute("aria-readonly", String(!podeTrocar));
+  boardChoices.title = podeTrocar
+  ? "Escolha o seu tabuleiro. Ele aparece só para você."
+  : "A escolha do tabuleiro só pode ser feita antes da partida.";
+}
+
+function cardsDisabled(disabled) {
+  boardChoices.querySelectorAll("button").forEach(button => {
+    button.disabled = disabled;
+  });
 }
 
 function updateLobby(nextRoom) {
@@ -115,7 +126,12 @@ function updateLobby(nextRoom) {
   }
 
   room = nextRoom;
-  void renderBoardChoices().catch(() => { boardError.textContent = "Não foi possível carregar seus tabuleiros."; });
+  if (room.phase !== ultimaFase) {
+    ultimaFase = room.phase;
+    renderBoardChoices().catch(() => {
+      boardError.textContent = "Não foi possível carregar seus tabuleiros.";
+    });
+  }
   pinElement.textContent = room.pin;
   document.querySelector("[data-lobby-mode]").textContent = getGameMode(room.mode).name;
   setPlayer("owner", room.players.owner);
@@ -149,12 +165,12 @@ function updateLobby(nextRoom) {
     else input.setAttribute("aria-label", COLOR_NAMES[input.value]);
   });
   const colorsDiffer = room.players.guest
-    && room.players.owner.color !== room.players.guest.color;
+  && room.players.owner.color !== room.players.guest.color;
   const ready = room.ready || { owner: false, guest: false };
   const bothReady = Boolean(ready.owner && ready.guest);
   readyStatus.textContent = !room.players.guest
-    ? "Aguardando o convidado entrar."
-    : `Prontidão — Criador: ${ready.owner ? "pronto" : "aguardando"} · Convidado: ${ready.guest ? "pronto" : "aguardando"}.`;
+  ? "Aguardando o convidado entrar."
+  : `Prontidão — Criador: ${ready.owner ? "pronto" : "aguardando"} · Convidado: ${ready.guest ? "pronto" : "aguardando"}.`;
   readyButton.disabled = !room.players.guest || room.phase !== "waiting";
   readyButton.textContent = ready[role] ? "Cancelar prontidão" : "Estou pronto";
   startButton.disabled = true;
@@ -171,6 +187,7 @@ export async function abrirLobby({ onLost }) {
 
   try {
     const initialRoom = await getRoom(pin);
+    ultimaFase = null;
     updateLobby(initialRoom);
     cancelRoomWatch = watchRoom(pin, updateLobby);
   } catch (error) {

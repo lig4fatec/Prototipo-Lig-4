@@ -203,7 +203,7 @@ function estadoParaTela(estado, sala) {
     phase: emFim ? "finished" : "playing",
     game: {
       board: tabuleiroParaTela(estado.tabuleiro, seatVermelho),
-      turn: s(estado.proximoJogadorId),
+      turn: estado.proximoJogadorId == null ? null : s(estado.proximoJogadorId),
       moveCount: estado.totalJogadas,
       bloqueios: (estado.congelamentos || []).map(c => ({
         coluna: c.coluna,
@@ -211,6 +211,7 @@ function estadoParaTela(estado, sala) {
         lances: c.turnosRestantes,
       })),
       poderesUsados: poderesUsadosParaTela(estado, sala),
+      poderesDisponiveis: poderesDisponiveisParaTela(estado, sala),
       pecaExtra: estado.pecaExtraAtiva
         ? { jogador: s(estado.proximoJogadorId), etapa: 2 } : null,
       empatesPropostos: {
@@ -228,6 +229,15 @@ function estadoParaTela(estado, sala) {
       relogioDe: s(estado.relogioDe),
     },
   };
+}
+
+function poderesDisponiveisParaTela(estado, sala) {
+  const disponiveis = { 1: [], 2: [] };
+  const mapa = { QUEIMAR: "queimar-peca", CONGELAR: "congelar-coluna", EXTRA: "peca-extra" };
+  for (const p of estado.poderesDisponiveis || []) {
+    disponiveis[seatDe(p.jogadorId, sala)].push(mapa[p.poder] ?? p.poder);
+  }
+  return disponiveis;
 }
 
 function poderesUsadosParaTela(estado, sala) {

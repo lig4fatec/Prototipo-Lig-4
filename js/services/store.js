@@ -1,250 +1,167 @@
-// Loja do jogador. Catálogo fixo + saldo, inventário e itens equipados persistidos por jogador em localStorage
-// (mesma chave de identidade usada em profile.js: e-mail do usuário logado ou "visitante").
-// Um backend poderá substituir o miolo mantendo as assinaturas; a validação de compra deve migrar junto.
-import { getCurrentUser } from "./auth.js";
+// Loja do jogador. O back é a fonte da verdade: preços, saldo, posse e equipados.
+// Este arquivo guarda só metadados de apresentação (imagem, descrição, frame do tabuleiro).
+import { get, post, put } from "./http.js";
+import { exigirId } from "./auth.js";
 
-const STORE_KEY = "lig4.store";
-const INITIAL_COINS = 1250;
-const DEFAULT_EQUIPPED = Object.freeze({
-  avatar: "avatar-padrao",
-  board: "board-classico",
-  emote: "emote-risadinha",
-});
-
-// Itens com price 0 são o kit inicial: pertencem a todos os jogadores e não podem ser comprados.
-// Boards temáticos trazem em "frame" a geometria dos furos (em pixels da imagem) para encaixar as peças.
 const categories = [
   {
     id: "avatar",
     name: "Avatares",
     items: [
-      { id: "avatar-padrao", name: "Padrão", price: 0, image: "avatars/padrao.svg", description: "O jogador clássico: simpático e sempre pronto para a próxima partida." },
-      { id: "avatar-samurai", name: "Samurai", price: 800, image: "avatars/samurai.svg", popular: true, description: "Foco, honra e uma faixa vermelha. Ninguém liga quatro com tanta disciplina." },
-      { id: "avatar-robo", name: "Robô", price: 800, image: "avatars/robo.svg", description: "Calcula todas as jogadas em milissegundos. Só não conta com a sua criatividade." },
-      { id: "avatar-rei", name: "Rei", price: 1200, image: "avatars/rei.svg", description: "Coroa, barba e postura real para quem domina o centro do tabuleiro." },
-      { id: "avatar-rainha", name: "Rainha", price: 1200, image: "avatars/rainha.svg", description: "Elegância e estratégia: cada peça jogada é um xeque-mate em potencial." },
-      { id: "avatar-mago", name: "Mago", price: 1200, image: "avatars/mago.svg", description: "Chapéu estrelado e barba longa. Dizem que ele enxerga cinco jogadas à frente." },
+      { id: "avatar-padrao", name: "Padrão", image: "avatars/padrao.svg", description: "O jogador clássico: simpático e sempre pronto para a próxima partida." },
+      { id: "avatar-samurai", name: "Samurai", image: "avatars/samurai.svg", popular: true, description: "Foco, honra e uma faixa vermelha. Ninguém liga quatro com tanta disciplina." },
+      { id: "avatar-robo", name: "Robô", image: "avatars/robo.svg", description: "Calcula todas as jogadas em milissegundos. Só não conta com a sua criatividade." },
+      { id: "avatar-rei", name: "Rei", image: "avatars/rei.svg", description: "Coroa, barba e postura real para quem domina o centro do tabuleiro." },
+      { id: "avatar-rainha", name: "Rainha", image: "avatars/rainha.svg", description: "Elegância e estratégia: cada peça jogada é um xeque-mate em potencial." },
+      { id: "avatar-mago", name: "Mago", image: "avatars/mago.svg", description: "Chapéu estrelado e barba longa. Dizem que ele enxerga cinco jogadas à frente." },
     ],
   },
   {
     id: "board",
     name: "Tabuleiros",
     items: [
-      { id: "board-classico", name: "Clássico", price: 0, image: "boards/classico.webp", frame: { file: "boards/classico-frame.webp", width: 952, height: 970, x0: 173.0, y0: 206.8, dx: 101.0, dy: 111.0, radius: 44.0, empty: "#03110d" }, description: "O tabuleiro azul tradicional do LIG-4." },
-      { id: "board-espacial", name: "Espacial", price: 800, image: "boards/espacial.webp", frame: { file: "boards/espacial-frame.webp", width: 940, height: 986, x0: 222.3, y0: 295.9, dx: 82.55, dy: 82.56, radius: 32.8, empty: "#010c10" }, description: "Estrutura metálica com luzes de neon e um satélite orbitando o tabuleiro." },
-      { id: "board-floresta", name: "Floresta", price: 800, image: "boards/floresta.webp", frame: { file: "boards/floresta-frame.webp", width: 952, height: 970, x0: 242.9, y0: 317.0, dx: 77.35, dy: 77.34, radius: 31.0, empty: "#040d08" }, description: "Pedra coberta de musgo, samambaias, cogumelos e uma rã curiosa." },
-      { id: "board-medieval", name: "Medieval", price: 1200, image: "boards/medieval.webp", frame: { file: "boards/medieval-frame.webp", width: 953, height: 953, x0: 232.9, y0: 329.1, dx: 80.87, dy: 80.84, radius: 32.0, empty: "#121411" }, description: "Muralha de pedra com torres, estandartes e um dragão guardando o tesouro." },
-      { id: "board-praia", name: "Praia", price: 1200, image: "boards/praia.webp", frame: { file: "boards/praia-frame.webp", width: 952, height: 974, x0: 228.5, y0: 276.8, dx: 77.98, dy: 77.99, radius: 28.9, empty: "#192b37" }, description: "Madeira listrada, boia, farol, guarda-sol e um caranguejo na areia." },
-      { id: "board-inverno", name: "Inverno", price: 1200, image: "boards/inverno.webp", frame: { file: "boards/inverno-frame.webp", width: 989, height: 934, x0: 261.8, y0: 228.3, dx: 77.24, dy: 77.19, radius: 30.6, empty: "#000a13" }, description: "Pinheiros nevados, bancada de madeira e um boneco de neve de cachecol." },
+      { id: "board-classico", name: "Clássico", image: "boards/classico.webp", frame: { file: "boards/classico-frame.webp", width: 952, height: 970, x0: 173.0, y0: 206.8, dx: 101.0, dy: 111.0, radius: 44.0, empty: "#03110d" }, description: "O tabuleiro azul tradicional do LIG-4." },
+      { id: "board-espacial", name: "Espacial", image: "boards/espacial.webp", frame: { file: "boards/espacial-frame.webp", width: 940, height: 986, x0: 222.3, y0: 295.9, dx: 82.55, dy: 82.56, radius: 32.8, empty: "#010c10" }, description: "Estrutura metálica com luzes de neon e um satélite orbitando o tabuleiro." },
+      { id: "board-floresta", name: "Floresta", image: "boards/floresta.webp", frame: { file: "boards/floresta-frame.webp", width: 952, height: 970, x0: 242.9, y0: 317.0, dx: 77.35, dy: 77.34, radius: 31.0, empty: "#040d08" }, description: "Pedra coberta de musgo, samambaias, cogumelos e uma rã curiosa." },
+      { id: "board-medieval", name: "Medieval", image: "boards/medieval.webp", frame: { file: "boards/medieval-frame.webp", width: 953, height: 953, x0: 232.9, y0: 329.1, dx: 80.87, dy: 80.84, radius: 32.0, empty: "#121411" }, description: "Muralha de pedra com torres, estandartes e um dragão guardando o tesouro." },
+      { id: "board-praia", name: "Praia", image: "boards/praia.webp", frame: { file: "boards/praia-frame.webp", width: 952, height: 974, x0: 228.5, y0: 276.8, dx: 77.98, dy: 77.99, radius: 28.9, empty: "#192b37" }, description: "Madeira listrada, boia, farol, guarda-sol e um caranguejo na areia." },
+      { id: "board-inverno", name: "Inverno", image: "boards/inverno.webp", frame: { file: "boards/inverno-frame.webp", width: 989, height: 934, x0: 261.8, y0: 228.3, dx: 77.24, dy: 77.19, radius: 30.6, empty: "#000a13" }, description: "Pinheiros nevados, bancada de madeira e um boneco de neve de cachecol." },
     ],
   },
   {
     id: "emote",
     name: "Emotes",
     items: [
-      { id: "emote-risadinha", name: "Risadinha", price: 0, image: "emotes/risadinha.svg", emoji: "😄", description: "Uma gargalhada para celebrar qualquer jogada." },
-      { id: "emote-aplauso", name: "Aplauso", price: 200, image: "emotes/aplauso.svg", emoji: "👏", description: "Reconheça a boa jogada do adversário." },
-      { id: "emote-choro", name: "Choro", price: 200, image: "emotes/choro.svg", emoji: "😭", description: "Para quando a quarta peça escapa por um triz." },
-      { id: "emote-surpresa", name: "Surpresa", price: 200, image: "emotes/surpresa.svg", emoji: "😮", description: "Ninguém viu essa jogada chegando." },
-      { id: "emote-bravo", name: "Bravo", price: 200, image: "emotes/bravo.svg", emoji: "😡", description: "Mostre que você não gostou de ter sido bloqueado." },
-      { id: "emote-cool", name: "Cool", price: 300, image: "emotes/cool.svg", emoji: "😎", description: "Jogada tranquila, favorável e com muito estilo." },
-      { id: "emote-coracao", name: "Coração", price: 300, image: "emotes/coracao.svg", emoji: "😍", description: "Apaixonado por uma jogada perfeita." },
-      { id: "emote-confuso", name: "Confuso", price: 300, image: "emotes/confuso.svg", emoji: "🤔", description: "Hmm... o que será que o adversário está planejando?" },
+      { id: "emote-risadinha", name: "Risadinha", image: "emotes/risadinha.svg", emoji: "😄", description: "Uma gargalhada para celebrar qualquer jogada." },
+      { id: "emote-aplauso", name: "Aplauso", image: "emotes/aplauso.svg", emoji: "👏", description: "Reconheça a boa jogada do adversário." },
+      { id: "emote-choro", name: "Choro", image: "emotes/choro.svg", emoji: "😭", description: "Para quando a quarta peça escapa por um triz." },
+      { id: "emote-surpresa", name: "Surpresa", image: "emotes/surpresa.svg", emoji: "😮", description: "Ninguém viu essa jogada chegando." },
+      { id: "emote-bravo", name: "Bravo", image: "emotes/bravo.svg", emoji: "😡", description: "Mostre que você não gostou de ter sido bloqueado." },
+      { id: "emote-cool", name: "Cool", image: "emotes/cool.svg", emoji: "😎", description: "Jogada tranquila, favorável e com muito estilo." },
+      { id: "emote-coracao", name: "Coração", image: "emotes/coracao.svg", emoji: "😍", description: "Apaixonado por uma jogada perfeita." },
+      { id: "emote-confuso", name: "Confuso", image: "emotes/confuso.svg", emoji: "🤔", description: "Hmm... o que será que o adversário está planejando?" },
     ],
   },
   {
     id: "poderes",
     name: "Poderes",
     items: [
-      { id: "congelar-coluna", name: "Congelar Coluna", price: 700, /*image: "powers/congelar-coluna.svg",*/ emoji: "❄️", description: "Bloqueia uma coluna do adversário por 3 lances dele." },
-      { id: "queimar-peca", name: "Queimar Peça", price: 850, /*image: "powers/queimar-peca.svg",*/ emoji: "🔥", description: "Remove a peça mais alta do adversário em uma coluna." },
-      { id: "peca-extra", name: "Peça Extra", price: 1000, /*image: "powers/peca-extra.svg",*/ emoji: "➕", description: "Joga uma segunda peça na mesma vez." },
+      { id: "congelar-coluna", name: "Congelar Coluna", emoji: "❄️", description: "Bloqueia uma coluna do adversário por 3 lances dele." },
+      { id: "queimar-peca", name: "Queimar Peça", emoji: "🔥", description: "Remove a peça mais alta do adversário em uma coluna." },
+      { id: "peca-extra", name: "Peça Extra", emoji: "➕", description: "Joga uma segunda peça na mesma vez." },
     ],
   },
 ];
 
-let memoryUsers = {};
+const metaPorId = new Map(
+  categories.flatMap(c => c.items.map(item => [item.id, { ...item, category: c.id }])),
+);
+const CATEGORIAS_EQUIPAVEIS = ["avatar", "board", "emote"];
 
-function storeError(code, extra = {}) {
-  return { code, ...extra };
-}
+const caminhoLoja = (sufixo = "") => `/jogadores/${exigirId()}/loja${sufixo}`;
+const carregarLoja = () => get(caminhoLoja());
 
-function findCategoryItem(categoryId, itemId) {
-  return categories.find(entry => entry.id === categoryId)?.items.find(entry => entry.id === itemId) ?? null;
-}
-
-function isOwned(state, item) {
-  return item.price === 0 || state.purchased.includes(item.id);
-}
-
-function toPublicItem(categoryId, item, state) {
+// Junta o item do back (preço, posse, equipado) com os metadados locais.
+function paraItem(categoriaId, itemBack, equipados) {
+  const meta = metaPorId.get(itemBack.id) ?? {};
   return {
-    ...item,
-    category: categoryId,
-    owned: isOwned(state, item),
-    ...(item.frame ? { frame: { ...item.frame } } : {}),
+    ...meta,
+    id: itemBack.id,
+    name: itemBack.nome,
+    price: itemBack.preco,
+    category: categoriaId,
+    owned: Boolean(itemBack.possuido),
+    equipped: equipados?.[categoriaId] === itemBack.id,
   };
 }
 
-function normalizeState(raw) {
-  const saved = raw && typeof raw === "object" ? raw : {};
-  const purchasable = new Map(categories.flatMap(category => (
-    category.items.filter(item => item.price > 0).map(item => [item.id, item])
-  )));
-  const purchased = [...new Set(Array.isArray(saved.purchased) ? saved.purchased : [])]
-    .filter(itemId => purchasable.has(itemId));
-  const state = {
-    coins: Number.isInteger(saved.coins) && saved.coins >= 0 ? saved.coins : INITIAL_COINS,
-    purchased,
-    equipped: { ...DEFAULT_EQUIPPED },
+function paraCatalogo(loja) {
+  return {
+    categories: categories.map(meta => {
+      const categoriaBack = loja.categorias.find(c => c.id === meta.id);
+      return {
+        id: meta.id,
+        name: meta.name,
+        items: (categoriaBack?.itens ?? [])
+          .filter(item => !(meta.id === "board" && item.id === "board-classico"))
+          .map(item => paraItem(meta.id, item, loja.equipados)),
+      };
+    }),
   };
-  for (const category of categories) {
-    const item = findCategoryItem(category.id, saved.equipped?.[category.id]);
-    if (item && isOwned(state, item)) state.equipped[category.id] = item.id;
-  }
-  return state;
 }
 
-async function getUserKey() {
-  try {
-    const user = await getCurrentUser();
-    return user?.email ?? "visitante";
-  } catch {
-    return "visitante";
-  }
-}
-
-function readUsers() {
-  try {
-    if (!globalThis.localStorage) return memoryUsers;
-    const parsed = JSON.parse(globalThis.localStorage.getItem(STORE_KEY));
-    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
-  } catch {
-    return memoryUsers;
-  }
-}
-
-function writeUsers(users) {
-  try {
-    if (!globalThis.localStorage) throw new Error("sem localStorage");
-    globalThis.localStorage.setItem(STORE_KEY, JSON.stringify(users));
-  } catch {
-    // Sem armazenamento persistente (ex.: modo restrito): mantém a sessão em memória.
-    memoryUsers = users;
-  }
-}
-
-async function readState() {
-  const userKey = await getUserKey();
-  return normalizeState(readUsers()[userKey]);
-}
-
-// Leitura, validação e gravação ocorrem sem await entre elas: duas ações simultâneas não geram cobrança dupla.
-async function updateState(mutate) {
-  const userKey = await getUserKey();
-  const users = readUsers();
-  const state = normalizeState(users[userKey]);
-  const result = mutate(state);
-  users[userKey] = state;
-  writeUsers(users);
-  return result;
-}
-
-export function getItemImageUrl(item) {
-  return new URL(`../../assets/store/${item.image}`, import.meta.url).href;
-}
-
-export function getBoardFrameUrl(item) {
-  return item?.frame ? new URL(`../../assets/store/${item.frame.file}`, import.meta.url).href : null;
-}
-
-// Consulta estática (sem estado do jogador), usada para exibir itens vindos de outros jogadores.
+// Síncrono e sem rede: usado em renderRoom (partida.js, player-style.js, lobby.js).
 export function findItem(itemId) {
-  for (const category of categories) {
-    const item = category.items.find(entry => entry.id === itemId);
-    if (item) return toPublicItem(category.id, item, { purchased: [] });
-  }
-  return null;
+  const meta = metaPorId.get(itemId);
+  return meta ? { ...meta } : null;
 }
+
+export const getItemImageUrl = item =>
+  new URL(`../../assets/store/${item.image}`, import.meta.url).href;
+
+export const getBoardFrameUrl = item =>
+  item?.frame ? new URL(`../../assets/store/${item.frame.file}`, import.meta.url).href : null;
 
 export async function getCatalog() {
-  const state = await readState();
-  return {
-    categories: categories.map(category => ({
-      ...category,
-      items: category.items.filter(item => !(category.id === "board" && item.id === "board-classico")).map(item => toPublicItem(category.id, item, state)),
-    })),
-  };
+  return paraCatalogo(await carregarLoja());
 }
 
 export async function getBalance() {
-  const state = await readState();
-  return { coins: state.coins };
+  return { coins: (await carregarLoja()).moedas };
 }
 
 export async function getEquipped() {
-  const state = await readState();
-  return { ...state.equipped };
+  return { ...(await carregarLoja()).equipados };
 }
 
 export async function getEquippedItems() {
-  const state = await readState();
-  return Object.fromEntries(categories.map(category => {
-    const item = findCategoryItem(category.id, state.equipped[category.id]);
-    return [category.id, item ? toPublicItem(category.id, item, state) : null];
+  const loja = await carregarLoja();
+  return Object.fromEntries(CATEGORIAS_EQUIPAVEIS.map(id => {
+    const itemId = loja.equipados[id];
+    const itemBack = loja.categorias.find(c => c.id === id)?.itens.find(i => i.id === itemId);
+    return [id, itemBack ? paraItem(id, itemBack, loja.equipados) : null];
   }));
 }
 
 export async function getInventory() {
-  const state = await readState();
-  const byCategory = Object.fromEntries(categories.map(category => [
-    category.id,
-    category.items.filter(item => isOwned(state, item)).map(item => toPublicItem(category.id, item, state)),
+  const loja = await carregarLoja();
+  const byCategory = Object.fromEntries(loja.categorias.map(c => [
+    c.id,
+    c.itens.filter(i => i.possuido).map(i => paraItem(c.id, i, loja.equipados)),
   ]));
-  return {
-    byCategory,
-    items: Object.values(byCategory).flat(),
-    purchased: [...state.purchased],
-    total: categories.reduce((sum, category) => sum + category.items.length, 0),
-  };
+  return { byCategory, items: Object.values(byCategory).flat() };
 }
 
-export async function addDemoCoins(amount) {
-  const packages = [100, 500, 1000];
-  if (!packages.includes(amount)) throw storeError("PACOTE_INVALIDO");
-  return updateState(state => {
-    state.coins += amount;
-    return { coins: state.coins };
-  });
+// `valor` é o número do pacote (100, 500, 1000), como o coin-shop envia hoje.
+export async function addDemoCoins(valor) {
+  const resposta = await post(caminhoLoja("/moedas"), { pacoteId: `pacote-${valor}` });
+  return { coins: resposta.moedas };
 }
 
 export async function purchaseItem({ category, itemId } = {}) {
-  const item = findCategoryItem(category, itemId);
-  if (!item) throw storeError("ITEM_INEXISTENTE");
+  // O back não informa quanto falta; lemos o preço e o saldo antes da compra.
+  const antes = await carregarLoja();
+  const precoItem = antes.categorias.find(c => c.id === category)?.itens.find(i => i.id === itemId)?.preco ?? null;
 
-  return updateState(state => {
-    if (isOwned(state, item)) throw storeError("ITEM_JA_POSSUIDO");
-    if (state.coins < item.price) {
-      throw storeError("SALDO_INSUFICIENTE", { missing: item.price - state.coins, price: item.price });
+  let resposta;
+  try {
+    resposta = await post(caminhoLoja("/comprar"), { itemId });
+  } catch (erro) {
+    if (erro.code === "SALDO_INSUFICIENTE" && precoItem !== null) {
+      erro.missing = Math.max(0, precoItem - antes.moedas);
     }
-    state.coins -= item.price;
-    state.purchased.push(item.id);
-    return {
-      item: toPublicItem(category, item, state),
-      balance: { coins: state.coins },
-      equipped: { ...state.equipped },
-    };
-  });
+    throw erro;
+  }
+
+  const itemBack = resposta.categorias.find(c => c.id === category)?.itens.find(i => i.id === itemId);
+  return {
+    item: paraItem(category, itemBack, resposta.equipados),
+    balance: { coins: resposta.moedas },
+    equipped: { ...resposta.equipados },
+  };
 }
 
 export async function equipItem({ category, itemId } = {}) {
-  if (category === "emote" || category === "poderes") throw storeError("ITEM_NAO_EQUIPAVEL");
-  const item = findCategoryItem(category, itemId);
-  if (!item) throw storeError("ITEM_INEXISTENTE");
-
-  return updateState(state => {
-    if (!isOwned(state, item)) throw storeError("ITEM_NAO_POSSUIDO");
-    state.equipped[category] = item.id;
-    return { ...state.equipped };
-  });
+  const resposta = await put(caminhoLoja("/equipar"), { categoria: category, itemId });
+  return { ...resposta.equipados };
 }
