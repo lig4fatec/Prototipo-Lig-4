@@ -669,7 +669,7 @@ function renderEmpateUI() {
 }
 
 function renderRoom(nextRoom) {
-  // console.log("renderRoom (início): "+JSON.stringify(room.empate), room.game?.empatesPropostos, room.partidaId)
+  
 
   if (!nextRoom) {
     room = null;
@@ -723,7 +723,7 @@ function renderRoom(nextRoom) {
   const finished = room.phase === "finished" && Boolean(room.result);
   resultPanel.hidden = !finished;
   if (finished) {
-  // console.log("renderRoom (room.phase == finished): "+JSON.stringify(room.empate), room.game?.empatesPropostos, room.partidaId)
+  
 
     if (room.result.draw) {
       resultElement.textContent = "Empate.";
@@ -738,7 +738,7 @@ function renderRoom(nextRoom) {
     rematchStatus.textContent = requested.length
     ? "Aguardando o outro jogador."
     : "";
-    // console.log("renderRoom (requested): "+JSON.stringify(room.empate), room.game?.empatesPropostos, room.partidaId)
+    
 
   } else {
     rematchStatus.textContent = "";
@@ -750,10 +750,10 @@ function renderRoom(nextRoom) {
   if (btnDesistir) btnDesistir.disabled = !podeDesistir;
   
   renderBoard();
-  // console.log("renderRoom (renderBoard): "+JSON.stringify(room.empate), room.game?.empatesPropostos, room.partidaId)
+  
 
   renderEmpateUI();
-  // console.log("renderRoom (renderEmpateUI): "+JSON.stringify(room.empate), room.game?.empatesPropostos, room.partidaId)
+
 
 }
 
