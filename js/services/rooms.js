@@ -59,7 +59,7 @@ export class PartidaSocket {
     this.encerrado = false;
     this.tentativas = 0;
   }
-
+  
   conectar() {
     this.encerrado = false;
     this.ws = new WebSocket(this.url);
@@ -79,7 +79,7 @@ export class PartidaSocket {
       setTimeout(() => !this.encerrado && this.conectar(), espera); // o servidor reenvia o ESTADO
     };
   }
-
+  
   _enviar(obj) {
     if (this.ws?.readyState === 1) this.ws.send(JSON.stringify(obj));
     else this.h.onErro?.("SEM_CONEXAO", "Conexão com a partida indisponível.");
@@ -186,129 +186,132 @@ function tabuleiroParaTela(tabuleiro, seatVermelho) {
   const seatAmarelo = seatVermelho === 1 ? 2 : 1;
   return tabuleiro.map(linha => linha.map(celula =>
     celula === "VERMELHO" ? seatVermelho : celula === "AMARELO" ? seatAmarelo : 0));
-}
-
-function estadoParaTela(estado, sala) {
-  const s = (id) => seatDe(id, sala);
-  const seatVermelho = s(estado.jogadorUm?.id);
-  const emFim = estado.statusPartida !== "EM_ANDAMENTO";
-  const motivo = MOTIVO_FIM[estado.motivoFim] ?? null;
-  const vencedor = estado.vencedorId == null ? null : s(estado.vencedorId);
-  const usados = estado.empatesUsados || [];
-  const idDono = sala.players?.owner?.id;
-  const idConvidado = sala.players?.guest?.id;
-  const umMs = estado.tempoJogadorUmMs;
-  const doisMs = estado.tempoJogadorDoisMs;
-
-  return {
-    ...sala,
-    phase: emFim ? "finished" : "playing",
-    game: {
-      board: tabuleiroParaTela(estado.tabuleiro, seatVermelho),
-      turn: estado.proximoJogadorId == null ? null : s(estado.proximoJogadorId),
-      moveCount: estado.totalJogadas,
-      bloqueios: (estado.congelamentos || []).map(c => ({
-        coluna: c.coluna,
-        jogador: s(c.jogadorId),
-        lances: c.turnosRestantes,
-      })),
-      poderesUsados: poderesUsadosParaTela(estado, sala),
-      poderesDisponiveis: poderesDisponiveisParaTela(estado, sala),
-      pecaExtra: estado.pecaExtraAtiva
+  }
+  
+  function estadoParaTela(estado, sala) {
+    const s = (id) => seatDe(id, sala);
+    const seatVermelho = s(estado.jogadorUm?.id);
+    const emFim = estado.statusPartida !== "EM_ANDAMENTO";
+    const motivo = MOTIVO_FIM[estado.motivoFim] ?? null;
+    const vencedor = estado.vencedorId == null ? null : s(estado.vencedorId);
+    const usados = estado.empatesUsados || [];
+    const idDono = sala.players?.owner?.id;
+    const idConvidado = sala.players?.guest?.id;
+    const umMs = estado.tempoJogadorUmMs;
+    const doisMs = estado.tempoJogadorDoisMs;
+    
+    return {
+      ...sala,
+      phase: emFim ? "finished" : "playing",
+      game: {
+        board: tabuleiroParaTela(estado.tabuleiro, seatVermelho),
+        turn: estado.proximoJogadorId == null ? null : s(estado.proximoJogadorId),
+        moveCount: estado.totalJogadas,
+        bloqueios: (estado.congelamentos || []).map(c => ({
+          coluna: c.coluna,
+          jogador: s(c.jogadorId),
+          lances: c.turnosRestantes,
+        })),
+        poderesUsados: poderesUsadosParaTela(estado, sala),
+        poderesDisponiveis: poderesDisponiveisParaTela(estado, sala),
+        pecaExtra: estado.pecaExtraAtiva
         ? { jogador: s(estado.proximoJogadorId), etapa: 2 } : null,
-      empatesPropostos: {
-        1: usados.includes(idDono),
-        2: usados.includes(idConvidado),
+        empatesPropostos: {
+          1: usados.includes(idDono),
+          2: usados.includes(idConvidado),
+        },
       },
-    },
-    result: emFim ? { winner: vencedor, draw: motivo === "empate", motivo } : null,
-    empate: estado.empatePropostoPor == null
+      result: emFim ? { winner: vencedor, draw: motivo === "empate", motivo } : null,
+      empate: estado.empatePropostoPor == null
       ? null
       : { proponente: s(estado.empatePropostoPor), status: "pendente" },
-    tempos: {
-      1: seatVermelho === 1 ? umMs : doisMs,
-      2: seatVermelho === 1 ? doisMs : umMs,
-      relogioDe: s(estado.relogioDe),
-    },
+      tempos: {
+        1: seatVermelho === 1 ? umMs : doisMs,
+        2: seatVermelho === 1 ? doisMs : umMs,
+        relogioDe: s(estado.relogioDe),
+      },
+    };
+  }
+  
+  function poderesDisponiveisParaTela(estado, sala) {
+    const disponiveis = { 1: [], 2: [] };
+    const mapa = { QUEIMAR: "queimar-peca", CONGELAR: "congelar-coluna", EXTRA: "peca-extra" };
+    for (const p of estado.poderesDisponiveis || []) {
+      disponiveis[seatDe(p.jogadorId, sala)].push(mapa[p.poder] ?? p.poder);
+    }
+    return disponiveis;
+  }
+  
+  function poderesUsadosParaTela(estado, sala) {
+    const usados = { 1: [], 2: [] }; // TODO: verificar se precisa criar um terceiro "slot" para contabilizar o uso do terceiro poder.
+    const mapa = { QUEIMAR: "queimar-peca", CONGELAR: "congelar-coluna", EXTRA: "peca-extra" };
+    for (const p of estado.poderesUsados || []) {
+      usados[seatDe(p.jogadorId, sala)].push(mapa[p.poder] ?? p.poder);
+    }
+    return usados;
+  }
+  
+  // Partida ativa: uma conexão por vez, usada pelas funções abaixo.
+  let partidaAtiva = null;
+  let estadoAtual = null;
+  let ouvintesPartida = new Set();
+  
+  function notificarPartida(estado) {
+    estadoAtual = estado;
+    for (const ouvinte of ouvintesPartida) ouvinte(estado);
+  }
+  
+  let seqEmote = 0;
+  
+  export function abrirPartidaSocket(partidaId, jogadorId, sala, onEstado, onErro) {
+    fecharPartidaSocket();
+    ouvintesPartida = new Set([onEstado]);
+    partidaAtiva = new PartidaSocket(partidaId, jogadorId, {
+      onEstado: (estado) => notificarPartida({
+        ...estadoParaTela(estado, sala),
+        recebidoEm: Date.now(),
+      }),
+      onJogada: () => partidaAtiva?.pedirEstado(),
+      onEmote: (dados) => {
+        if (!estadoAtual) return;
+        const role = sala.players?.owner?.id === dados.jogadorId ? "owner" : "guest";
+        notificarPartida({
+          ...estadoAtual,
+          lastEmote: { id: ++seqEmote, emoteId: dados.emote, role },
+        });
+      },
+      onErro: (codigo, mensagem) => onErro?.({ code: codigo, message: mensagem }),
+    });
+    partidaAtiva.conectar();
+    return partidaAtiva;
+  }
+  
+  export function fecharPartidaSocket() {
+    partidaAtiva?.fechar();
+    partidaAtiva = null;
+    estadoAtual = null;
+  }
+  
+  // Funções que partida.js chama. Todas enviam pelo socket; o resultado chega em onEstado.
+  const enviar = (acao) => {
+    if (!partidaAtiva) return Promise.reject({ code: "SEM_CONEXAO" });
+    acao(partidaAtiva);
+    return Promise.resolve();
   };
-}
-
-function poderesDisponiveisParaTela(estado, sala) {
-  const disponiveis = { 1: [], 2: [] };
-  const mapa = { QUEIMAR: "queimar-peca", CONGELAR: "congelar-coluna", EXTRA: "peca-extra" };
-  for (const p of estado.poderesDisponiveis || []) {
-    disponiveis[seatDe(p.jogadorId, sala)].push(mapa[p.poder] ?? p.poder);
-  }
-  return disponiveis;
-}
-
-function poderesUsadosParaTela(estado, sala) {
-  const usados = { 1: [], 2: [] }; // TODO: verificar se precisa criar um terceiro "slot" para contabilizar o uso do terceiro poder.
-  const mapa = { QUEIMAR: "queimar-peca", CONGELAR: "congelar-coluna", EXTRA: "peca-extra" };
-  for (const p of estado.poderesUsados || []) {
-    usados[seatDe(p.jogadorId, sala)].push(mapa[p.poder] ?? p.poder);
-  }
-  return usados;
-}
-
-// Partida ativa: uma conexão por vez, usada pelas funções abaixo.
-let partidaAtiva = null;
-let estadoAtual = null;
-let ouvintesPartida = new Set();
-
-function notificarPartida(estado) {
-  estadoAtual = estado;
-  for (const ouvinte of ouvintesPartida) ouvinte(estado);
-}
-
-let seqEmote = 0;
-
-export function abrirPartidaSocket(partidaId, jogadorId, sala, onEstado, onErro) {
-  fecharPartidaSocket();
-  ouvintesPartida = new Set([onEstado]);
-  partidaAtiva = new PartidaSocket(partidaId, jogadorId, {
-    onEstado: (estado) => notificarPartida(estadoParaTela(estado, sala)),
-    onJogada: () => partidaAtiva?.pedirEstado(),
-    onEmote: (dados) => {
-      if (!estadoAtual) return;
-      const role = sala.players?.owner?.id === dados.jogadorId ? "owner" : "guest";
-      notificarPartida({
-        ...estadoAtual,
-        lastEmote: { id: ++seqEmote, emoteId: dados.emote, role },
-      });
-    },
-    onErro: (codigo, mensagem) => onErro?.({ code: codigo, message: mensagem }),
-  });
-  partidaAtiva.conectar();
-  return partidaAtiva;
-}
-
-export function fecharPartidaSocket() {
-  partidaAtiva?.fechar();
-  partidaAtiva = null;
-  estadoAtual = null;
-}
-
-// Funções que partida.js chama. Todas enviam pelo socket; o resultado chega em onEstado.
-const enviar = (acao) => {
-  if (!partidaAtiva) return Promise.reject({ code: "SEM_CONEXAO" });
-  acao(partidaAtiva);
-  return Promise.resolve();
-};
-
-export const publishState = ({ board, turn, moveCount, column } = {}) =>
-  enviar(s => s.jogar(column));
-export const publishResult = () => Promise.resolve(); // o servidor encerra a partida sozinho
-export const usarCongelarColuna = ({ coluna }) => enviar(s => s.congelar(coluna));
-export const usarQueimarPeca = ({ coluna, linha }) => enviar(s => s.queimar(coluna, linha));
-export const usarPecaExtra = () => enviar(s => s.pecaExtra());
-export const desistirPartida = () => enviar(s => s.desistir());
-export const proporEmpate = () => enviar(s => s.proporEmpate());
-export const responderEmpate = ({ aceitar }) => enviar(s => (aceitar ? s.aceitarEmpate() : s.recusarEmpate()));
-
-// Revanche usa REST (não há comando no socket): POST /salas/{pin}/revanche.
-export const requestRematch = ({ pin }) => pedirRevanche(pin, exigirId()).then(sala => paraTela(sala));
-
-export const sendEmote = ({ emoteId }) => enviar(s => s.emote(emoteId));
-
-export const buscarEstadoPartida = (partidaId) => buscarEstado(partidaId).then(e => e);
+  
+  export const publishState = ({ board, turn, moveCount, column } = {}) =>
+    enviar(s => s.jogar(column));
+  export const publishResult = () => Promise.resolve(); // o servidor encerra a partida sozinho
+  export const usarCongelarColuna = ({ coluna }) => enviar(s => s.congelar(coluna));
+  export const usarQueimarPeca = ({ coluna, linha }) => enviar(s => s.queimar(coluna, linha));
+  export const usarPecaExtra = () => enviar(s => s.pecaExtra());
+  export const desistirPartida = () => enviar(s => s.desistir());
+  export const proporEmpate = () => enviar(s => s.proporEmpate());
+  export const responderEmpate = ({ aceitar }) => enviar(s => (aceitar ? s.aceitarEmpate() : s.recusarEmpate()));
+  
+  // Revanche usa REST (não há comando no socket): POST /salas/{pin}/revanche.
+  export const requestRematch = ({ pin }) => pedirRevanche(pin, exigirId()).then(sala => paraTela(sala));
+  
+  export const sendEmote = ({ emoteId }) => enviar(s => s.emote(emoteId));
+  
+  export const buscarEstadoPartida = (partidaId) => buscarEstado(partidaId).then(e => e);
