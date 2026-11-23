@@ -99,7 +99,7 @@ export class PartidaSocket {
 // Remover quando as telas forem migradas para as funções nativas acima.
 import { exigirId } from "./auth.js";
 
-const PHASE_FROM_API = { AGUARDANDO: "waiting", JOGANDO: "playing", ENCERRADA: "closed" };
+const PHASE_FROM_API = { AGUARDANDO: "waiting", JOGANDO: "playing", ENCERRADA: "finished" };
 const MODE_FROM_API = { CLASSICO: "classico", CAOS: "caos" };
 
 const jogadorSala = (p) => (p ? { id: p.jogadorId, nome: p.nome, color: p.cor } : null);
@@ -148,10 +148,7 @@ export async function getRoom(pin) {
 export function watchRoom(pin, callback) {
   return acompanharSala(
     pin,
-    (sala) => {
-      const tela = paraTela(sala);
-      callback(tela?.phase === "closed" ? null : tela);
-    },
+    (sala) => callback(paraTela(sala)),
     (error) => {
       if (error.code === "PIN_NAO_ENCONTRADO") callback(null);
     },
