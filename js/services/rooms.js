@@ -1,744 +1,183 @@
-import { isValidGameMode } from "../game/modes.js";
-import { linhaDeQueda } from "../game/board.js";
-import { aplicarCongelar, consumirBloqueio, contarEspacosLivres, passarVezSeBloqueado, removerPecaAdversaria, temColunaJogavel } from "../game/rules.js";
-import { getInventory } from "./store.js";
-// MOCK DESCARTÁVEL. Persistência em localStorage apenas para desenvolvimento. Será removida quando o miolo for substituído pelo Firebase, mantendo as assinaturas.
+// js/services/rooms.js — salas (REST + polling) e partida (WebSocket)
+import { get, post, put } from "./http.js";
+import { WS_URL } from "../config.js";
 
-export const CORES_VALIDAS = Object.freeze([
-  "blue",
-  "red",
-  "purple",
-  "green",
-  "orange",
-  "yellow",
-  "brown",
-]);
+// room-ui.js e profile-page.js importam esta lista
+export const CORES_VALIDAS = ["blue", "red", "purple", "green", "orange", "yellow", "brown"];
 
-const ROOMS_STORAGE_KEY = "lig4-mock-rooms";
-const roomWatchers = new Map();
-const SESSION_KEYS = Object.freeze({
-  pin: "lig4.room.pin",
-  role: "lig4.room.role",
-  clientId: "lig4.room.clientId",
-});
+/* ---------- Salas ---------- */
+// Sala: {pin, modo, fase: AGUARDANDO|JOGANDO|ENCERRADA, dono:{id,nome,cor}, convidado,
+//        partidaId, revancheDe, prontoDono, prontoConvidado}
+export const criarSala = (jogadorId, cor, modo = "CLASSICO") =>
+  post("/salas", { jogadorId, modo, cor }); // modo: CLASSICO | CAOS
+export const entrarNaSala = (jogadorId, pin, cor) =>
+  post("/salas/entrar", { jogadorId, pin, cor });
+export const buscarSala = (pin) => get(`/salas/${pin}`);
+export const trocarCor = (pin, jogadorId, cor) => put(`/salas/${pin}/cor`, { jogadorId, cor });
+// Não existe /iniciar: quando os DOIS marcam pronto, a sala vira JOGANDO e vem partidaId
+export const marcarPronto = (pin, jogadorId, pronto = true) =>
+  put(`/salas/${pin}/pronto`, { jogadorId, pronto });
+export const pedirRevanche = (pin, jogadorId) => post(`/salas/${pin}/revanche`, { jogadorId });
+export const sairDaSala = (pin, jogadorId) => post(`/salas/${pin}/sair`, { jogadorId });
 
-function roomError(code) {
-  return { code };
+// Polling a cada 2s (a sala não tem WebSocket). Retorna a função que para o polling.
+export function acompanharSala(pin, onSala, onErro, intervaloMs = 2000) {
+  let ativo = true;
+  const ciclo = async () => {
+    if (!ativo) return;
+    try { onSala(await buscarSala(pin)); } catch (e) { onErro?.(e); }
+    if (ativo) setTimeout(ciclo, intervaloMs);
+  };
+  ciclo();
+  return () => { ativo = false; };
 }
 
-function getRoomStorage() {
-  try {
-    if (globalThis.localStorage) return globalThis.localStorage;
-    // Node tests may lack localStorage; browser pages always use localStorage.
-    if (typeof window === "undefined" && globalThis.sessionStorage) {
-      return globalThis.sessionStorage;
-    }
-  } catch {
-    throw roomError("SEM_PERMISSAO");
-  }
-  throw roomError("SEM_PERMISSAO");
-}
+/* ---------- Partida ---------- */
+export const buscarEstado = (partidaId) => get(`/partidas/${partidaId}/estado`);
 
-function readRooms() {
-  const storage = getRoomStorage();
-  let serialized;
-  try {
-    serialized = storage.getItem(ROOMS_STORAGE_KEY);
-  } catch {
-    throw roomError("SEM_PERMISSAO");
-  }
+// Tabuleiro: 6 linhas (cima p/ baixo) x 7 colunas; "VERMELHO" = jogadorUm, "AMARELO" = jogadorDois.
+// Nos poderes, "linha" conta da BASE (0 = base). Converte da linha da matriz:
+export const linhaDaBase = (linhaMatriz, total = 6) => total - 1 - linhaMatriz;
 
-  if (!serialized) return new Map();
-
-  try {
-    const entries = JSON.parse(serialized);
-    if (!Array.isArray(entries)) return new Map();
-    return new Map(entries.filter(entry => (
-      Array.isArray(entry)
-      && typeof entry[0] === "string"
-      && entry[1]
-      && typeof entry[1] === "object"
-    )));
-  } catch {
-    return new Map();
-  }
-}
-
-function writeRooms(rooms) {
-  try {
-    getRoomStorage().setItem(ROOMS_STORAGE_KEY, JSON.stringify([...rooms.entries()]));
-  } catch {
-    throw roomError("SEM_PERMISSAO");
-  }
-}
-
-function emptyGameState() {
+// Tempo restante de cada jogador, descontando o que correu desde que o estado chegou.
+// Chame com o estado recebido e o instante em que ele chegou (Date.now()).
+export function tempoRestante(estado, recebidoEm, agora = Date.now()) {
+  const gasto = estado.relogioDe != null ? agora - recebidoEm : 0;
+  const desconta = (id) => (estado.relogioDe === id ? gasto : 0);
   return {
-    board: Array.from({ length: 6 }, () => Array(7).fill(0)),
-    turn: 1,
-    moveCount: 0,
-    bloqueios: [],
-    poderesUsados: { 1: [], 2: [] },
-    pecaExtra: null,
-    empatesPropostos: { 1: false, 2: false },
+    jogadorUm: Math.max(0, estado.tempoJogadorUmMs - desconta(estado.jogadorUm?.id)),
+    jogadorDois: Math.max(0, estado.tempoJogadorDoisMs - desconta(estado.jogadorDois?.id)),
   };
 }
 
-function isValidBoard(board) {
-  return Array.isArray(board)
-    && board.length === 6
-    && board.every(row => (
-      Array.isArray(row)
-      && row.length === 7
-      && row.every(cell => cell === 0 || cell === 1 || cell === 2)
-    ));
-}
-
-function validatePin(pin) {
-  if (typeof pin !== "string" || !/^\d{6}$/.test(pin)) {
-    throw roomError("PIN_INVALIDO");
+// handlers: onEstado(estado), onJogada(jogada), onPresenca(ids), onErro(codigo, mensagem), onStatus(texto)
+export class PartidaSocket {
+  constructor(partidaId, jogadorId, handlers = {}) {
+    this.url = `${WS_URL}/ws/partidas/${partidaId}?jogadorId=${jogadorId}`;
+    this.h = handlers;
+    this.ws = null;
+    this.encerrado = false;
+    this.tentativas = 0;
   }
-}
 
-function validateColor(color) {
-  if (!CORES_VALIDAS.includes(color)) {
-    throw roomError("COR_INVALIDA");
+  conectar() {
+    this.encerrado = false;
+    this.ws = new WebSocket(this.url);
+    this.ws.onopen = () => { this.tentativas = 0; this.h.onStatus?.("aberto"); };
+    this.ws.onmessage = (ev) => {
+      let m; try { m = JSON.parse(ev.data); } catch { return; }
+      if (m.tipo === "ESTADO") this.h.onEstado?.(m.dados);
+      else if (m.tipo === "JOGADA") this.h.onJogada?.(m.dados);
+      else if (m.tipo === "PRESENCA") this.h.onPresenca?.(m.dados.conectados);
+      else if (m.tipo === "ERRO") this.h.onErro?.(m.codigo, m.mensagem);
+    };
+    this.ws.onclose = () => {
+      this.h.onStatus?.("fechado");
+      if (this.encerrado) return;
+      const espera = Math.min(500 * 2 ** this.tentativas++, 5000);
+      setTimeout(() => !this.encerrado && this.conectar(), espera); // o servidor reenvia o ESTADO
+    };
   }
-}
 
-function getRoomSnapshot(room) {
+  _enviar(obj) {
+    if (this.ws?.readyState === 1) this.ws.send(JSON.stringify(obj));
+    else this.h.onErro?.("SEM_CONEXAO", "Conexão com a partida indisponível.");
+  }
+  pedirEstado()          { this._enviar({ tipo: "ESTADO" }); }
+  jogar(coluna)          { this._enviar({ tipo: "JOGAR", coluna }); }
+  desistir()             { this._enviar({ tipo: "DESISTIR" }); }
+  proporEmpate()         { this._enviar({ tipo: "PROPOR_EMPATE" }); }
+  aceitarEmpate()        { this._enviar({ tipo: "ACEITAR_EMPATE" }); }
+  recusarEmpate()        { this._enviar({ tipo: "RECUSAR_EMPATE" }); }
+  queimar(coluna, linha) { this._enviar({ tipo: "PODER", poder: "QUEIMAR", coluna, linha }); }
+  congelar(coluna)       { this._enviar({ tipo: "PODER", poder: "CONGELAR", coluna }); }
+  pecaExtra()            { this._enviar({ tipo: "PODER", poder: "EXTRA" }); }
+  fechar()               { this.encerrado = true; this.ws?.close(); }
+}
+/* ---------- Adaptador para as telas atuais (formato antigo do front) ---------- */
+// As telas usam nomes e formatos do mock. Este bloco traduz o back para eles.
+// Remover quando as telas forem migradas para as funções nativas acima.
+import { exigirId } from "./auth.js";
+
+const PHASE_FROM_API = { AGUARDANDO: "waiting", JOGANDO: "playing", ENCERRADA: "finished" };
+const MODE_FROM_API = { CLASSICO: "classico", CAOS: "caos" };
+
+const jogadorSala = (p) => (p ? { id: p.jogadorId, nome: p.nome, color: p.cor } : null);
+
+// Converte a sala do back para o formato que as telas esperam.
+function paraTela(sala) {
+  if (!sala) return null;
   return {
-    pin: room.pin,
-    boardId: room.boardId || "board-classico",
-    ready: { owner: Boolean(room.ready?.owner), guest: Boolean(room.ready?.guest) },
-    mode: room.mode || "classico",
+    pin: sala.pin,
+    mode: MODE_FROM_API[sala.modo] ?? "classico",
+    phase: PHASE_FROM_API[sala.fase] ?? "waiting",
     players: {
-      owner: { ...room.players.owner },
-      guest: room.players.guest ? { ...room.players.guest } : null,
+      owner: jogadorSala(sala.dono),
+      guest: jogadorSala(sala.convidado),
     },
-    phase: room.phase,
-    game: room.game
-      ? {
-        board: room.game.board.map(row => row.slice()),
-        turn: room.game.turn,
-        moveCount: room.game.moveCount,
-        empatesPropostos: {
-          ...(room.game.empatesPropostos || { 1: false, 2: false }),
-        },
-        ...(room.mode === "caos" ? {
-          bloqueios: (room.game.bloqueios || []).map(bloqueio => ({ ...bloqueio })),
-          poderesUsados: {
-            1: [...(room.game.poderesUsados?.[1] || [])],
-            2: [...(room.game.poderesUsados?.[2] || [])],
-          },
-          pecaExtra: room.game.pecaExtra ? { ...room.game.pecaExtra } : null,
-        } : {}),
-      }
-      : null,
-    result: room.result ? { ...room.result } : null,
-    ...(room.empate
-      ? { empate: { proponente: room.empate.proponente, status: room.empate.status } }
-      : {}),
-    rematchRequested: [...(room.rematchRequested || [])],
-    ...(room.lastEmote ? { lastEmote: { ...room.lastEmote } } : {}),
+    ready: {
+      owner: Boolean(sala.prontoDono),
+      guest: Boolean(sala.prontoConvidado),
+    },
+    partidaId: sala.partidaId ?? null,
+    rematchRequested: [],
+    lastEmote: null,
   };
 }
 
-// Avatar é opcional e só cosmético: o id é validado pela UI contra o catálogo da loja.
-function avatarField(avatar) {
-  return typeof avatar === "string" && /^avatar-[a-z0-9-]{1,32}$/.test(avatar) ? { avatar } : {};
+// Papel na sala: o dono sempre é "owner"; quem entrou é "guest".
+function papelDoJogador(sala) {
+  const id = exigirId();
+  return sala?.dono?.jogadorId === id ? "owner" : "guest";
 }
 
-function notifyRoom(pin) {
-  const watchers = roomWatchers.get(pin);
-  if (!watchers) return;
-
-  const room = readRooms().get(pin);
-  const snapshot = room ? getRoomSnapshot(room) : null;
-  for (const callback of watchers) {
-    callback(snapshot);
-  }
+export async function createRoom({ mode = "classico" } = {}) {
+  const sala = await criarSala(exigirId(), "blue", mode === "caos" ? "CAOS" : "CLASSICO");
+  return { pin: sala.pin };
 }
 
-function generatePin(rooms) {
-  let pin;
-  do {
-    pin = String(Math.floor(100000 + Math.random() * 900000));
-  } while (rooms.has(pin));
-  return pin;
-}
-
-if (typeof globalThis.addEventListener === "function") {
-  globalThis.addEventListener("storage", event => {
-    if (event.key !== null && event.key !== ROOMS_STORAGE_KEY) return;
-    for (const pin of [...roomWatchers.keys()]) notifyRoom(pin);
-  });
-}
-
-function getSessionStorage() {
-  try {
-    return globalThis.sessionStorage;
-  } catch {
-    throw roomError("SEM_PERMISSAO");
-  }
-}
-
-function saveSession(pin, role) {
-  try {
-    const storage = getSessionStorage();
-    const clientId = storage.getItem(SESSION_KEYS.clientId)
-      || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    storage.setItem(SESSION_KEYS.pin, pin);
-    storage.setItem(SESSION_KEYS.role, role);
-    storage.setItem(SESSION_KEYS.clientId, clientId);
-  } catch {
-    throw roomError("SEM_PERMISSAO");
-  }
-}
-
-function clearSession(pin, role) {
-  try {
-    const storage = getSessionStorage();
-    if (
-      storage.getItem(SESSION_KEYS.pin) !== pin
-      || storage.getItem(SESSION_KEYS.role) !== role
-    ) {
-      throw roomError("SEM_PERMISSAO");
-    }
-    storage.removeItem(SESSION_KEYS.pin);
-    storage.removeItem(SESSION_KEYS.role);
-    storage.removeItem(SESSION_KEYS.clientId);
-  } catch (error) {
-    if (error?.code === "SEM_PERMISSAO") throw error;
-    throw roomError("SEM_PERMISSAO");
-  }
-}
-
-function assertSession(pin, role) {
-  if (role !== "owner" && role !== "guest") {
-    throw roomError("SEM_PERMISSAO");
-  }
-
-  try {
-    const storage = getSessionStorage();
-    if (
-      storage.getItem(SESSION_KEYS.pin) !== pin
-      || storage.getItem(SESSION_KEYS.role) !== role
-    ) {
-      throw roomError("SEM_PERMISSAO");
-    }
-  } catch (error) {
-    if (error?.code === "SEM_PERMISSAO") throw error;
-    throw roomError("SEM_PERMISSAO");
-  }
-}
-
-async function yieldMock() {
-  await Promise.resolve();
-}
-
-export async function createRoom(options = {}) {
-  await yieldMock();
-  const color = options?.color ?? "blue";
-  const mode = options?.mode ?? "classico";
-  if (!isValidGameMode(mode)) throw roomError("MODO_INVALIDO");
-
-  validateColor(color);
-
-  const rooms = readRooms();
-  const pin = generatePin(rooms);
-  saveSession(pin, "owner");
-  rooms.set(pin, {
-    pin,
-    mode,
-    boardId: "board-classico",
-    ready: { owner: false, guest: false },
-    players: { owner: { color, ...avatarField(options?.avatar) }, guest: null },
-    phase: "waiting",
-    game: null,
-    result: null,
-    rematchRequested: [],
-  });
-  writeRooms(rooms);
-  notifyRoom(pin);
-  return { pin };
-}
-
-export async function joinRoom(options = {}) {
-  await yieldMock();
-  const pin = options?.pin;
-  let color = options?.color;
-  validatePin(pin);
-
-  const rooms = readRooms();
-  const room = rooms.get(pin);
-  if (!room) throw roomError("PIN_NAO_ENCONTRADO");
-  if (!color) color = CORES_VALIDAS.find(candidate => candidate !== room.players.owner.color) || "red";
-  validateColor(color);
-  if (room.phase !== "waiting" || room.players.guest) {
-    throw roomError("SALA_CHEIA");
-  }
-  if (room.players.owner.color === color) {
-    throw roomError("COR_JA_ESCOLHIDA");
-  }
-
-  saveSession(pin, "guest");
-  room.players.guest = { color, ...avatarField(options?.avatar) };
-  room.ready = { owner: false, guest: false };
-  writeRooms(rooms);
-  notifyRoom(pin);
-  return { pin, role: "guest" };
+export async function joinRoom({ pin } = {}) {
+  const sala = await entrarNaSala(exigirId(), pin, "red");
+  return { pin: sala.pin, role: "guest" };
 }
 
 export async function getRoom(pin) {
-  await yieldMock();
-  validatePin(pin);
-  const room = readRooms().get(pin);
-  if (!room) throw roomError("PIN_NAO_ENCONTRADO");
-  return getRoomSnapshot(room);
+  return paraTela(await buscarSala(pin));
 }
 
 export function watchRoom(pin, callback) {
-  validatePin(pin);
-  const room = readRooms().get(pin);
-  if (!room) throw roomError("PIN_NAO_ENCONTRADO");
-
-  let watchers = roomWatchers.get(pin);
-  if (!watchers) {
-    watchers = new Set();
-    roomWatchers.set(pin, watchers);
-  }
-  watchers.add(callback);
-  callback(getRoomSnapshot(room));
-
-  return () => {
-    watchers.delete(callback);
-    if (watchers.size === 0) roomWatchers.delete(pin);
-  };
-}
-
-export async function setPlayerColor(options = {}) {
-  await yieldMock();
-  const pin = options?.pin;
-  const role = options?.role;
-  let color = options?.color;
-  validatePin(pin);
-  assertSession(pin, role);
-
-  const rooms = readRooms();
-  const room = rooms.get(pin);
-  if (!room) throw roomError("PIN_NAO_ENCONTRADO");
-  if (room.phase !== "waiting" || !room.players[role]) {
-    throw roomError("SEM_PERMISSAO");
-  }
-
-  const otherRole = role === "owner" ? "guest" : "owner";
-  if (room.players[otherRole]?.color === color) {
-    throw roomError("COR_JA_ESCOLHIDA");
-  }
-
-  room.players[role].color = color;
-  room.ready = { owner: false, guest: false };
-  writeRooms(rooms);
-  notifyRoom(pin);
-}
-
-export async function setRoomBoard({ pin, role, boardId } = {}) {
-  await yieldMock();
-  validatePin(pin);
-  assertSession(pin, role);
-  if (role !== "owner") throw roomError("SEM_PERMISSAO");
-  if (typeof boardId !== "string" || !/^board-[a-z0-9-]{1,32}$/.test(boardId)) {
-    throw roomError("TABULEIRO_INVALIDO");
-  }
-  const inventory = await getInventory();
-  if (!inventory.byCategory.board?.some(item => item.id === boardId)) {
-    throw roomError("TABULEIRO_NAO_POSSUIDO");
-  }
-  const rooms = readRooms();
-  const room = rooms.get(pin);
-  if (!room) throw roomError("PIN_NAO_ENCONTRADO");
-  if (room.phase !== "waiting") throw roomError("SEM_PERMISSAO");
-  room.boardId = boardId;
-  room.ready = { owner: false, guest: false };
-  writeRooms(rooms);
-  notifyRoom(pin);
-  return { pin, boardId };
-}
-
-export async function setPlayerReady({ pin, role, ready } = {}) {
-  await yieldMock();
-  validatePin(pin);
-  assertSession(pin, role);
-  if (typeof ready !== "boolean") throw roomError("PRONTIDAO_INVALIDA");
-  const rooms = readRooms();
-  const room = rooms.get(pin);
-  if (!room) throw roomError("PIN_NAO_ENCONTRADO");
-  if (room.phase !== "waiting" || !room.players[role] || !room.players.guest) {
-    throw roomError("SALA_NAO_PRONTA");
-  }
-  room.ready = { owner: Boolean(room.ready?.owner), guest: Boolean(room.ready?.guest) };
-  room.ready[role] = ready;
-  writeRooms(rooms);
-  notifyRoom(pin);
-  return { pin, ready: room.ready[role] };
-}
-
-export async function startMatch(options = {}) {
-  await yieldMock();
-  const pin = options?.pin;
-  validatePin(pin);
-  assertSession(pin, "owner");
-
-  const rooms = readRooms();
-  const room = rooms.get(pin);
-  if (!room) throw roomError("PIN_NAO_ENCONTRADO");
-  if (
-    room.phase !== "waiting"
-    || !room.players.owner
-    || !room.players.guest
-    || room.players.owner.color === room.players.guest.color
-    || !room.ready?.owner
-    || !room.ready?.guest
-  ) {
-    throw roomError("SALA_NAO_PRONTA");
-  }
-
-  room.phase = "playing";
-  room.game = emptyGameState();
-  room.result = null;
-  room.empate = null;
-  room.rematchRequested = [];
-  writeRooms(rooms);
-  notifyRoom(pin);
-}
-
-export async function proporEmpate({ pin, role } = {}) {
-  await yieldMock();
-  validatePin(pin);
-
-  const rooms = readRooms();
-  const room = rooms.get(pin);
-  if (!room) throw roomError("PIN_NAO_ENCONTRADO");
-  assertSession(pin, role);
-  if (room.phase !== "playing") throw roomError("FASE_INVALIDA");
-
-  const jogador = role === "owner" ? 1 : role === "guest" ? 2 : null;
-  if (!jogador || !room.players[role] || !room.game) throw roomError("SEM_PERMISSAO");
-  room.game.empatesPropostos = { 1: false, 2: false, ...(room.game.empatesPropostos || {}) }; 
-  if (room.game.empatesPropostos[jogador]) throw roomError("EMPATE_JA_PROPOSTO");
-
-  room.game.empatesPropostos[jogador] = true;
-  room.empate = { proponente: jogador, status: "pendente" };
-
-  writeRooms(rooms);
-  notifyRoom(pin);
-  return { pin, jogador };
-}
-
-export async function responderEmpate({ pin, role, aceitar } = {}) {
-  await yieldMock();
-  validatePin(pin);
-
-  const rooms = readRooms();
-  const room = rooms.get(pin);
-  if (!room) throw roomError("PIN_NAO_ENCONTRADO");
-  assertSession(pin, role);
-  if (room.phase !== "playing") throw roomError("FASE_INVALIDA");
-
-  const jogador = role === "owner" ? 1 : role === "guest" ? 2 : null;
-  if (!jogador || !room.players[role]) throw roomError("SEM_PERMISSAO");
-  if (!room.empate || room.empate.status !== "pendente") {
-    throw roomError("EMPATE_SEM_PROPOSTA");
-  }
-  if (room.empate.proponente === jogador) throw roomError("EMPATE_PROPONENTE_INVALIDO");
-
-  if (aceitar) {
-    room.result = { winner: null, draw: true };
-    room.phase = "finished";
-    room.empate = null;
-  } else {
-    room.empate = { proponente: room.empate.proponente, status: "recusado" };
-  }
-
-  writeRooms(rooms);
-  notifyRoom(pin);
-  return { pin, aceitar };
-}
-
-export async function publishState({ pin, role, board, turn, moveCount } = {}) {
-  await yieldMock();
-  validatePin(pin);
-  const rooms = readRooms();
-  const room = rooms.get(pin);
-  if (!room) throw roomError("PIN_NAO_ENCONTRADO");
-  if (room.phase !== "playing") throw roomError("FASE_INVALIDA");
-  if (!isValidBoard(board)) throw roomError("TABULEIRO_INVALIDO");
-
-  assertSession(pin, role);
-  const currentRole = room.game?.turn === 1 ? "owner" : room.game?.turn === 2 ? "guest" : null;
-  if (role !== currentRole || (turn !== 1 && turn !== 2)) {
-    throw roomError("SEM_PERMISSAO");
-  }
-
-  // O turno salvo autoriza a jogada; o turno recebido é o próximo a agir.
-  // Vitória e legalidade da queda pertencem a js/game/, não a este serviço.
-  const pecaExtra = room.game.pecaExtra;
-  const isFirstExtra = room.mode === "caos"
-    && pecaExtra?.etapa === 1
-    && pecaExtra.jogador === room.game.turn;
-  const isSecondExtra = room.mode === "caos"
-    && pecaExtra?.etapa === 2
-    && pecaExtra.jogador === room.game.turn;
-
-  const nextGame = {
-    board: board.map(row => row.slice()),
-    turn: isFirstExtra ? room.game.turn : turn,
-    moveCount,
-    bloqueios: room.mode === "caos"
-      ? (isFirstExtra ? (room.game.bloqueios || []).map(b => ({ ...b })) : consumirBloqueio(room.game.bloqueios || [], room.game.turn))
-      : [],
-    poderesUsados: {
-      1: [...(room.game.poderesUsados?.[1] || [])],
-      2: [...(room.game.poderesUsados?.[2] || [])],
+  return acompanharSala(
+    pin,
+    (sala) => callback(paraTela(sala)),
+    (error) => {
+      if (error.code === "PIN_NAO_ENCONTRADO") callback(null);
     },
-    pecaExtra: isFirstExtra ? { jogador: pecaExtra.jogador, etapa: 2 } : null,
-  };
-  if (isFirstExtra) {
-    room.game = nextGame;
-  } else {
-    room.game = room.mode === "caos" ? passarVezSeBloqueado(nextGame) : nextGame;
-  }
-  writeRooms(rooms);
-  notifyRoom(pin);
-  return { pin, turn: room.game.turn, moveCount };
+  );
 }
 
-export async function usarCongelarColuna({ pin, role, coluna } = {}) {
-  await yieldMock();
-  validatePin(pin);
-  const rooms = readRooms();
-  const room = rooms.get(pin);
-  if (!room) throw roomError("PIN_NAO_ENCONTRADO");
-  if (room.phase !== "playing") throw roomError("FASE_INVALIDA");
-  if (room.mode !== "caos") throw roomError("PODER_INDISPONIVEL");
-
-  assertSession(pin, role);
-  const jogador = role === "owner" ? 1 : role === "guest" ? 2 : null;
-  if (!jogador || !room.players[role]) throw roomError("SEM_PERMISSAO");
-  if (room.game?.turn !== jogador) throw roomError("NAO_EH_SEU_TURNO");
-  if (!Number.isInteger(coluna) || coluna < 0 || coluna >= 7) {
-    throw roomError("COLUNA_INVALIDA");
-  }
-  if (linhaDeQueda(room.game.board, coluna) === -1) throw roomError("COLUNA_CHEIA");
-
-  const poderesUsados = room.game.poderesUsados || { 1: [], 2: [] };
-  if ((poderesUsados[jogador] || []).includes("congelar-coluna")) {
-    throw roomError("PODER_JA_USADO");
-  }
-
-  const nextGame = aplicarCongelar(room.game, coluna, jogador);
-  nextGame.poderesUsados = {
-    1: [...(poderesUsados[1] || [])],
-    2: [...(poderesUsados[2] || [])],
-    [jogador]: [...(poderesUsados[jogador] || []), "congelar-coluna"],
-  };
-  room.game = nextGame;
-  writeRooms(rooms);
-  notifyRoom(pin);
-  return { pin, coluna, jogador };
+export async function setPlayerColor({ pin, color } = {}) {
+  return paraTela(await trocarCor(pin, exigirId(), color));
 }
 
-export async function usarQueimarPeca({ pin, role, coluna } = {}) {
-  await yieldMock();
-  validatePin(pin);
-  const rooms = readRooms();
-  const room = rooms.get(pin);
-  if (!room) throw roomError("PIN_NAO_ENCONTRADO");
-  if (room.phase !== "playing") throw roomError("FASE_INVALIDA");
-  if (room.mode !== "caos") throw roomError("PODER_INDISPONIVEL");
-
-  assertSession(pin, role);
-  const jogador = role === "owner" ? 1 : role === "guest" ? 2 : null;
-  if (!jogador || !room.players[role]) throw roomError("SEM_PERMISSAO");
-  if (room.game?.turn !== jogador) throw roomError("NAO_EH_SEU_TURNO");
-
-  const poderesUsados = room.game.poderesUsados || { 1: [], 2: [] };
-  if ((poderesUsados[jogador] || []).includes("queimar-peca")) {
-    throw roomError("PODER_JA_USADO");
-  }
-
-  const result = removerPecaAdversaria(room.game.board, coluna, jogador);
-  if (!result.ok) throw roomError(result.code);
-
-  room.game = {
-    ...room.game,
-    board: result.board,
-    poderesUsados: {
-      1: [...(poderesUsados[1] || [])],
-      2: [...(poderesUsados[2] || [])],
-      [jogador]: [...(poderesUsados[jogador] || []), "queimar-peca"],
-    },
-  };
-  writeRooms(rooms);
-  notifyRoom(pin);
-  return { pin, coluna, jogador };
+export async function setPlayerReady({ pin, ready } = {}) {
+  return paraTela(await marcarPronto(pin, exigirId(), ready));
 }
 
-export async function usarPecaExtra({ pin, role } = {}) {
-  await yieldMock();
-  validatePin(pin);
-  const rooms = readRooms();
-  const room = rooms.get(pin);
-  if (!room) throw roomError("PIN_NAO_ENCONTRADO");
-  if (room.phase !== "playing") throw roomError("FASE_INVALIDA");
-  if (room.mode !== "caos") throw roomError("PODER_INDISPONIVEL");
-
-  assertSession(pin, role);
-  const jogador = role === "owner" ? 1 : role === "guest" ? 2 : null;
-  if (!jogador || !room.players[role]) throw roomError("SEM_PERMISSAO");
-  if (room.game?.turn !== jogador) throw roomError("NAO_EH_SEU_TURNO");
-
-  const poderesUsados = room.game.poderesUsados || { 1: [], 2: [] };
-  if ((poderesUsados[jogador] || []).includes("peca-extra")) {
-    throw roomError("PODER_JA_USADO");
-  }
-
-  if (contarEspacosLivres(room.game.board) < 2) {
-    throw roomError("SEM_ESPACO_SUFICIENTE");
-  }
-
-  room.game = {
-    ...room.game,
-    poderesUsados: {
-      1: [...(poderesUsados[1] || [])],
-      2: [...(poderesUsados[2] || [])],
-      [jogador]: [...(poderesUsados[jogador] || []), "peca-extra"],
-    },
-    pecaExtra: { jogador, etapa: 1 },
-  };
-  writeRooms(rooms);
-  notifyRoom(pin);
-  return { pin, jogador };
+export async function leaveRoom({ pin } = {}) {
+  await sairDaSala(pin, exigirId());
 }
 
-export async function desistirPartida({ pin, role } = {}) {
-  await yieldMock();
-  validatePin(pin);
-  const rooms = readRooms();
-  const room = rooms.get(pin);
-  if (!room) throw roomError("PIN_NAO_ENCONTRADO");
-  assertSession(pin, role);
-  if (room.phase !== "playing") throw roomError("FASE_INVALIDA");
-  const jogador = role === "owner" ? 1 : role === "guest" ? 2 : null;
-  if (!jogador || !room.players[role]) throw roomError("SEM_PERMISSAO");
-  const winner = jogador === 1 ? 2 : 1;
-  room.result = { winner, draw: false, motivo: "desistencia" };
-  room.phase = "finished";
-  writeRooms(rooms);
-  notifyRoom(pin);
-  return { pin, jogador };
-}
-
-export async function publishResult({ pin, role, result } = {}) {
-  await yieldMock();
-  validatePin(pin);
-  const rooms = readRooms();
-  const room = rooms.get(pin);
-  if (!room) throw roomError("PIN_NAO_ENCONTRADO");
-
-  const validWin = result?.draw === false && (result.winner === 1 || result.winner === 2);
-  const validDraw = result?.draw === true && result.winner === null;
-  if (!validWin && !validDraw) throw roomError("RESULTADO_INVALIDO");
-
-  assertSession(pin, role);
-  if (room.result) {
-    if (room.result.winner !== result.winner || room.result.draw !== result.draw) {
-      throw roomError("RESULTADO_INVALIDO");
-    }
-    return { pin, phase: room.phase };
-  }
-  if (room.phase !== "playing") throw roomError("FASE_INVALIDA");
-
-  room.phase = "finished";
-  room.result = { winner: result.winner, draw: result.draw };
-  room.rematchRequested = [];
-  writeRooms(rooms);
-  notifyRoom(pin);
-  return { pin, phase: room.phase };
-}
-
-export async function requestRematch({ pin, role } = {}) {
-  await yieldMock();
-  validatePin(pin);
-  const rooms = readRooms();
-  const room = rooms.get(pin);
-  if (!room) throw roomError("PIN_NAO_ENCONTRADO");
-  if (room.phase !== "finished") throw roomError("FASE_INVALIDA");
-  assertSession(pin, role);
-
-  const requests = new Set(room.rematchRequested || []);
-  requests.add(role);
-  room.rematchRequested = [...requests];
-
-  if (requests.has("owner") && requests.has("guest")) {
-    room.phase = "playing";
-    room.game = emptyGameState();
-    room.result = null;
-    room.empate = null;
-    room.rematchRequested = [];
-  }
-
-  writeRooms(rooms);
-  notifyRoom(pin);
-  return { pin, phase: room.phase };
-}
-
-export async function sendEmote({ pin, role, emoteId } = {}) {
-  await yieldMock();
-  validatePin(pin);
-  assertSession(pin, role);
-  if (typeof emoteId !== "string" || !/^emote-[a-z0-9-]{1,32}$/.test(emoteId)) {
-    throw roomError("EMOTE_INVALIDO");
-  }
-
-  const rooms = readRooms();
-  const room = rooms.get(pin);
-  if (!room) throw roomError("PIN_NAO_ENCONTRADO");
-  if (room.phase !== "playing" && room.phase !== "finished") throw roomError("FASE_INVALIDA");
-  if (!room.players[role]) throw roomError("SEM_PERMISSAO");
-
-  room.lastEmote = {
-    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    role,
-    emoteId,
-  };
-  writeRooms(rooms);
-  notifyRoom(pin);
-  return { pin, id: room.lastEmote.id };
-}
-
-export async function leaveRoom(options = {}) {
-  await yieldMock();
-  const pin = options?.pin;
-  const role = options?.role;
-  validatePin(pin);
-  assertSession(pin, role);
-
-  const rooms = readRooms();
-  const room = rooms.get(pin);
-  if (!room) throw roomError("PIN_NAO_ENCONTRADO");
-
-  if (role === "owner") {
-    rooms.delete(pin);
-  } else {
-    if (!room.players.guest) throw roomError("SEM_PERMISSAO");
-    room.players.guest = null;
-    room.ready = { owner: false, guest: false };
-    room.phase = "waiting";
-  }
-
-  writeRooms(rooms);
-  clearSession(pin, role);
-  notifyRoom(pin);
-}
+// Partida ainda não integrada: estas funções são chamadas por partida.js e controller.js.
+const naoIntegrado = () => Promise.reject({ code: "NAO_INTEGRADO" });
+export const startMatch = naoIntegrado;
+export const publishState = naoIntegrado;
+export const publishResult = naoIntegrado;
+export const requestRematch = naoIntegrado;
+export const sendEmote = naoIntegrado;
+export const usarCongelarColuna = naoIntegrado;
+export const usarQueimarPeca = naoIntegrado;
+export const usarPecaExtra = naoIntegrado;
+export const desistirPartida = naoIntegrado;
+export const proporEmpate = naoIntegrado;
+export const responderEmpate = naoIntegrado;
+export const getRoomPartida = naoIntegrado;

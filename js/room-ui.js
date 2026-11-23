@@ -27,6 +27,12 @@ const ERROR_MESSAGES = Object.freeze({
   TABULEIRO_INVALIDO: "Selecione um tabuleiro válido.",
   TABULEIRO_NAO_POSSUIDO: "O criador da sala não possui esse tabuleiro.",
   PRONTIDAO_INVALIDA: "Não foi possível atualizar sua prontidão.",
+  // Códigos do back-end real
+  SEM_CONVIDADO: "Aguarde o outro jogador entrar na sala.",
+  FASE_INVALIDA: "Esta ação não está disponível agora.",
+  MODO_INVALIDO: "Selecione um modo de jogo válido.",
+  JOGADOR_NAO_ENCONTRADO: "Jogador não encontrado. Entre novamente.",
+  SEM_CONEXAO: "Sem conexão com o servidor.",
 });
 
 export function getRoomErrorMessage(code) {
