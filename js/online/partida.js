@@ -1,4 +1,5 @@
 import { getGameMode } from "../game/modes.js";
+import { formatarRelogio, jogadorSemTempo, tempoRestante } from "../game/clock.js";
 import {
   abrirPartidaSocket,
   linhaDaBase,
@@ -39,7 +40,6 @@ const COLUMNS = 7;
 const FALL_STEP_MS = 80;
 const EMOTE_COOLDOWN_MS = 1500;
 const EMOTE_VISIBLE_MS = 2600;
-const INITIAL_CLOCK_MS = 300000;
 const CLOCK_REFRESH_MS = 250;
 const boardWrap = document.querySelector(".online-game-board-wrap");
 const boardElement = document.querySelector("[data-game-board]");
@@ -96,9 +96,7 @@ let room = null;
 let role = null;
 let cancelRoomWatch = null;
 let pendingPower = null;
-let clockStorageKey = null;
 let clockInterval = null;
-let clockStorageHandler = null;
 let onRoomLost = () => {};
 let onLeave = () => {};
 let moveInProgress = false;
@@ -110,9 +108,51 @@ const emoteTimers = new Map();
 let empatePopup = null;
 let empateRecusadoTimer = null;
 let empateRecusadoAvisado = false;
-let tabuleiroProprio = "board-classico";
-
 let socketAtual = null;
+let tabuleiroProprio = "board-classico";
+let pedidoTempoEm = null;
+
+// Relógio derivado só do que o servidor mandou, sem localStorage.
+function relogioDaSala(sala) {
+  const t = sala.tempos;
+  const vez = t.relogioDe;
+  return {
+    restante1: t[1],
+    restante2: t[2],
+    vez: vez ?? 1,
+    inicioVez: vez == null ? null : sala.recebidoEm,
+  };
+}
+
+function redrawClocks() {
+  if (!room?.tempos) return;
+  const relogio = relogioDaSala(room);
+  const agora = Date.now();
+  clockElements.forEach((element, index) => {
+    if (element) element.textContent = formatarRelogio(tempoRestante(relogio, index + 1, agora));
+  });
+}
+
+// Se o tempo de quem está na vez acabou, pede o estado: quem decide é o servidor.
+function verificarTempoEsgotado() {
+  if (!room?.tempos || room.phase !== "playing") return;
+  if (jogadorSemTempo(relogioDaSala(room), Date.now()) === null) return;
+  if (pedidoTempoEm === room.recebidoEm) return;
+  pedidoTempoEm = room.recebidoEm;
+  setTimeout(() => socketAtual?.pedirEstado(), 1500);
+}
+
+function startClockUpdates() {
+  clockInterval = window.setInterval(() => {
+    verificarTempoEsgotado();
+    redrawClocks();
+  }, CLOCK_REFRESH_MS);
+}
+
+function stopClockUpdates() {
+  if (clockInterval !== null) window.clearInterval(clockInterval);
+  clockInterval = null;
+}
 
 const gameErrorMessages = {
   COLUNA_INVALIDA: "Selecione uma coluna válida.",
@@ -135,120 +175,6 @@ function playerNumberForRole(playerRole) {
   return playerRole === "owner" ? 1 : playerRole === "guest" ? 2 : null;
 }
 
-function readClockState() {
-  if (!clockStorageKey) return null;
-  const serialized = localStorage.getItem(clockStorageKey);
-  if (!serialized) return null;
-  
-  try {
-    const state = JSON.parse(serialized);
-    if (
-      !Number.isFinite(state.restante1) || state.restante1 < 0
-      || !Number.isFinite(state.restante2) || state.restante2 < 0
-      || ![1, 2].includes(state.vez)
-      || !(state.inicioVez === null || Number.isFinite(state.inicioVez))
-    ) return null;
-    
-    return {
-      restante1: state.restante1,
-      restante2: state.restante2,
-      vez: state.vez,
-      inicioVez: state.inicioVez,
-    };
-  } catch {
-    return null;
-  }
-}
-
-function sameClockState(left, right) {
-  return Boolean(left && right)
-  && left.restante1 === right.restante1
-  && left.restante2 === right.restante2
-  && left.vez === right.vez
-  && left.inicioVez === right.inicioVez;
-}
-
-function storeClockState(nextState, expectedState = null) {
-  if (!clockStorageKey) return null;
-  const currentState = readClockState();
-  if (expectedState ? !sameClockState(currentState, expectedState) : currentState) {
-    return currentState;
-  }
-  if (sameClockState(currentState, nextState)) return currentState;
-  
-  localStorage.setItem(clockStorageKey, JSON.stringify(nextState));
-  return nextState;
-}
-
-function remainingClockTime(state, playerNumber, now = Date.now()) {
-  const remaining = state[`restante${playerNumber}`];
-  if (state.vez !== playerNumber || state.inicioVez === null) return remaining;
-  const elapsed = Math.max(0, now - state.inicioVez);
-  return Math.max(0, remaining - elapsed);
-}
-
-function formatClock(milliseconds) {
-  const totalSeconds = Math.ceil(Math.max(0, milliseconds) / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
-}
-
-function redrawClocks({ stopAtZero = true } = {}) {
-  let state = readClockState();
-  if (!state) return;
-  
-  if (stopAtZero && state.inicioVez !== null && remainingClockTime(state, state.vez) === 0) {
-    const stoppedState = storeClockState({
-      ...state,
-      [`restante${state.vez}`]: 0,
-      inicioVez: null,
-    }, state);
-    state = stoppedState || readClockState();
-  }
-  
-  if (!state) return;
-  const now = Date.now();
-  for (let index = 0; index < clockElements.length; index++) {
-    const element = clockElements[index];
-    if (element) element.textContent = formatClock(remainingClockTime(state, index + 1, now));
-  }
-}
-
-function reconcileClock(nextRoom) {
-  const turn = nextRoom.game?.turn;
-  if (![1, 2].includes(turn)) return;
-  
-  const playing = nextRoom.phase === "playing";
-  const now = Date.now();
-  const currentState = readClockState();
-  if (!currentState) {
-    storeClockState({
-      restante1: INITIAL_CLOCK_MS,
-      restante2: INITIAL_CLOCK_MS,
-      vez: turn,
-      inicioVez: playing ? now : null,
-    });
-    return;
-  }
-  
-  const nextState = { ...currentState };
-  if (currentState.vez !== turn) {
-    if (currentState.inicioVez !== null) {
-      nextState[`restante${currentState.vez}`] = remainingClockTime(currentState, currentState.vez, now);
-    }
-    nextState.vez = turn;
-    nextState.inicioVez = playing && nextState[`restante${turn}`] > 0 ? now : null;
-  } else if (playing && currentState.inicioVez === null) {
-    if (currentState[`restante${turn}`] > 0) nextState.inicioVez = now;
-  } else if (!playing && currentState.inicioVez !== null) {
-    nextState[`restante${turn}`] = remainingClockTime(currentState, turn, now);
-    nextState.inicioVez = null;
-  }
-  
-  if (!sameClockState(currentState, nextState)) storeClockState(nextState, currentState);
-}
-
 function renderPlayerColors(nextRoom) {
   for (const [index, playerRole] of ["owner", "guest"].entries()) {
     const card = playerCards[index];
@@ -269,22 +195,6 @@ function renderActivePlayer(nextRoom) {
       nextRoom.phase === "playing" && nextRoom.game?.turn === index + 1,
     );
   }
-}
-
-function startClockUpdates() {
-  clockStorageHandler = event => {
-    if (event.key === clockStorageKey) redrawClocks({ stopAtZero: false });
-  };
-  window.addEventListener("storage", clockStorageHandler);
-  clockInterval = window.setInterval(() => redrawClocks(), CLOCK_REFRESH_MS);
-}
-
-function stopClockUpdates() {
-  if (clockInterval !== null) window.clearInterval(clockInterval);
-  if (clockStorageHandler) window.removeEventListener("storage", clockStorageHandler);
-  clockInterval = null;
-  clockStorageHandler = null;
-  clockStorageKey = null;
 }
 
 function stopRoomWatch() {
@@ -697,7 +607,6 @@ function renderRoom(nextRoom) {
   room = nextRoom;
   renderPlayerColors(room);
   renderActivePlayer(room);
-  reconcileClock(room);
   redrawClocks();
   renderPowerButtons();
   const mode = getGameMode(room.mode);
@@ -857,7 +766,6 @@ export async function abrirPartida({ onRoomLost, onLeave } = {}) {
     await applyPersonalization();
     const initialRoom = await getRoom(session.pin);
     room = initialRoom;
-    clockStorageKey = `lig4-relogio:${session.pin}`;
     // Emotes anteriores à entrada na partida não devem reaparecer.
     lastEmoteSeen = initialRoom.lastEmote?.id ?? null;
     emoteStatus.textContent = "";
