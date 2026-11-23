@@ -1,72 +1,30 @@
-import { getCurrentUser } from "./auth.js";
-import { CORES_VALIDAS } from "./rooms.js";
+// js/services/profile.js
+// A tela usa {nick, name, bio, color}; o back usa {nick, nomeCompleto, bio, cor}.
+// IMPORTANTE: getProfile/updateProfile devolvem SÓ essas 4 chaves, porque a tela
+// faz form.elements[chave] para cada chave do objeto salvo.
+import { get, put } from "./http.js";
+import { exigirId } from "./auth.js";
 
-const PROFILES_KEY = "lig4.profiles";
-const STATS_KEY = "lig4.stats";
-
-function createProfileError(code) {
-  const error = new Error(code);
-  error.code = code;
-  return error;
-}
-
-function readJson(key) {
-  try {
-    return JSON.parse(localStorage.getItem(key)) ?? {};
-  } catch {
-    return {};
-  }
-}
-
-async function getUserKey() {
-  const user = await getCurrentUser();
-  return user?.email ?? "visitante";
-}
-
-function defaultNick(userKey) {
-  return userKey.split("@")[0];
-}
+const paraTela = (p) => ({
+  nick: p.nick ?? "",
+  name: p.nomeCompleto ?? "",
+  bio: p.bio ?? "",
+  color: p.cor ?? "blue",
+});
 
 export async function getProfile() {
-  const userKey = await getUserKey();
-  const saved = readJson(PROFILES_KEY)[userKey] ?? {};
-  return {
-    nick: saved.nick ?? (await getCurrentUser())?.nickname ?? defaultNick(userKey),
-    name: saved.name ?? "",
-    bio: saved.bio ?? "",
-    color: saved.color ?? "blue",
-  };
+  return paraTela(await get(`/jogadores/${exigirId()}/perfil`));
 }
 
 export async function getStats() {
-  const userKey = await getUserKey();
-  const saved = readJson(STATS_KEY)[userKey] ?? {};
-  return {
-    wins: saved.wins ?? 0,
-    losses: saved.losses ?? 0,
-  };
+  const p = await get(`/jogadores/${exigirId()}/perfil`);
+  return { wins: p.vitorias ?? 0, losses: p.derrotas ?? 0 };
 }
 
-export async function updateProfile(changes) {
-  const nick = typeof changes.nick === "string" ? changes.nick.trim() : "";
-  if (!nick || nick.length > 20) throw createProfileError("NICK_INVALIDO");
-  if (!CORES_VALIDAS.includes(changes.color)) throw createProfileError("COR_INVALIDA");
-
-  const userKey = await getUserKey();
-  const profile = {
-    nick,
-    name: (changes.name ?? "").trim(),
-    bio: (changes.bio ?? "").trim(),
-    color: changes.color,
-  };
-
-  try {
-    const profiles = readJson(PROFILES_KEY);
-    profiles[userKey] = profile;
-    localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
-  } catch {
-    throw createProfileError("ARMAZENAMENTO_INDISPONIVEL");
-  }
-
-  return profile;
+// Erros do back que a tela já trata: NICK_INVALIDO, COR_INVALIDA
+export async function updateProfile({ nick, name, bio, color }) {
+  const p = await put(`/jogadores/${exigirId()}/perfil`, {
+    nick, nomeCompleto: name, bio, cor: color,
+  });
+  return paraTela(p);
 }
