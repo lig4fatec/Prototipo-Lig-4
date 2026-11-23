@@ -394,3 +394,158 @@
 .game-select__option:focus-visible { background: #07190E; color: #fff; }
 .game-select__option[aria-selected="true"] { font-weight: 700; }
 .game-select__option:disabled { opacity: .5; cursor: not-allowed; }
+
+.music-control {
+  position: fixed;
+  z-index: 20;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+}
+
+.music-control[hidden] {
+  display: none;
+}
+
+.music-control__launcher {
+  display: grid;
+  width: 38px;
+  min-height: 100px;
+  place-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.35rem;
+  border: 1px solid rgb(255 255 255 / 18%);
+  border-right: 0;
+  border-radius: 10px 0 0 10px;
+  background: rgb(1 18 5 / 76%);
+  color: rgb(255 255 255 / 82%);
+  cursor: pointer;
+  opacity: 0.78;
+  transition: opacity 160ms ease, background-color 160ms ease;
+}
+
+.music-control__launcher span {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 0.7rem;
+  font-weight: 650;
+}
+
+.music-control__launcher:hover,
+.music-control__launcher:focus-visible {
+  background: rgb(1 18 5 / 96%);
+  opacity: 1;
+}
+
+.music-control__launcher svg {
+  width: 20px;
+  height: 20px;
+}
+
+.music-control__panel {
+  position: absolute;
+  top: 50%;
+  right: calc(100% + 0.5rem);
+  display: grid;
+  width: min(210px, calc(100vw - 3.5rem));
+  gap: 0.5rem;
+  padding: 0.65rem;
+  border: 1px solid rgb(255 255 255 / 20%);
+  border-radius: 9px;
+  background: rgb(1 18 5 / 94%);
+  box-shadow: 0 6px 24px rgb(0 0 0 / 30%);
+  color: #fff;
+  transform: translateY(-50%);
+}
+
+.music-control__panel[hidden] {
+  display: none;
+}
+
+.music-control__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.music-control__title {
+  margin-right: auto;
+}
+
+.music-control__volume {
+  color: rgb(255 255 255 / 76%);
+  font-variant-numeric: tabular-nums;
+}
+
+.music-control__close {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: rgb(255 255 255 / 72%);
+  cursor: pointer;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.music-control__close:hover {
+  background: rgb(255 255 255 / 12%);
+  color: #fff;
+}
+
+.music-control__toggle {
+  min-height: 32px;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid rgb(255 255 255 / 28%);
+  border-radius: 5px;
+  background: rgb(255 255 255 / 10%);
+  color: inherit;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 650;
+}
+
+.music-control__toggle:hover {
+  background: rgb(255 255 255 / 18%);
+}
+
+.music-control__hide {
+  min-height: 30px;
+  padding: 0.3rem 0.5rem;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: rgb(255 255 255 / 68%);
+  cursor: pointer;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.music-control__hide:hover {
+  background: rgb(255 255 255 / 10%);
+  color: #fff;
+}
+
+.music-control__slider {
+  width: 100%;
+  margin: 0;
+  accent-color: var(--color-primary, #f2b705);
+  cursor: pointer;
+}
+
+@media (max-width: 700px) {
+  .music-control {
+    right: 0;
+  }
+
+  .music-control__launcher {
+    width: 34px;
+    min-height: 90px;
+  }
+}
