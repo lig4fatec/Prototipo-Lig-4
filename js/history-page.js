@@ -6,6 +6,7 @@ const status = document.querySelector("[data-history-status]");
 const search = document.querySelector("[data-history-search]");
 const dateFormat = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
 const modeNames = { classico: "Clássico", caos: "Caos" };
+const resultNames = { win: "Vitória", loss: "Derrota", draw: "Empate" };
 let activeFilter = "todos";
 let searchTimer = null;
 
@@ -18,7 +19,7 @@ function makeCell(text, className = "") {
 function renderMatches(matches) {
   list.replaceChildren(...matches.map(match => {
     const row = document.createElement("tr");
-    const resultCell = makeCell(match.result === "win" ? "Vitória" : "Derrota", "history-result");
+    const resultCell = makeCell(resultNames[match.result] || "Derrota", "history-result");
     resultCell.dataset.result = match.result;
     row.append(
       makeCell(dateFormat.format(new Date(match.date))),

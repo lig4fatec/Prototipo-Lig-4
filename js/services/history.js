@@ -1,18 +1,28 @@
-const matches = [];
+// js/services/history.js
+// A tela espera {matches:[{date, opponent, result, moves, mode}]}.
+import { get } from "./http.js";
+import { exigirId } from "./auth.js";
 
-const VALID_FILTERS = new Set(["todos", "classico", "caos"]);
+// O back só filtra por modo. Qualquer outro filtro (ex.: "diario") daria FILTRO_INVALIDO.
+const FILTROS_DO_BACK = new Set(["todos", "classico", "caos"]);
+const RESULTADO = { VITORIA: "win", DERROTA: "loss", EMPATE: "draw" };
+const normalizar = (s) => String(s ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
 export async function listMatches({ filter = "todos", query = "" } = {}) {
-  await Promise.resolve();
-  if (!VALID_FILTERS.has(filter)) throw { code: "FILTRO_INVALIDO" };
-  const normalize = value => String(value).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-  const term = normalize(query.trim());
-  const selected = matches.filter(match => {
-    if (filter !== "todos" && match.mode !== filter) return false;
-    if (!term) return true;
-    const mode = match.mode === "classico" ? "clássico" : "caos";
-    const result = match.result === "win" ? "vitória" : "derrota";
-    const date = new Date(match.date).toLocaleDateString("pt-BR");
-    return normalize(`${match.opponent} ${mode} ${result} ${date}`).includes(term);
-  });
-  return { matches: selected.map(match => ({ ...match })) };
+  if (!FILTROS_DO_BACK.has(filter)) return { matches: [] };
+
+  const r = await get(`/jogadores/${exigirId()}/historico?filtro=${encodeURIComponent(filter)}`);
+  let matches = (r.partidas ?? []).map((p) => ({
+    id: p.id,
+    date: p.data,
+    opponent: p.adversario,
+    result: RESULTADO[p.resultado] ?? "loss",
+    moves: p.jogadas,
+    mode: String(p.modo ?? "").toLowerCase(), // CLASSICO -> classico, CAOS -> caos
+  }));
+
+  // O back não pesquisa por texto: filtra aqui pelo nome do adversário.
+  const q = normalizar(query.trim());
+  if (q) matches = matches.filter((m) => normalizar(m.opponent).includes(q));
+  return { matches };
 }
