@@ -109,6 +109,8 @@ let empatePopup = null;
 let empateRecusadoTimer = null;
 let empateRecusadoAvisado = false;
 
+let socketAtual = null;
+
 const gameErrorMessages = {
   COLUNA_INVALIDA: "Selecione uma coluna válida.",
   COLUNA_CHEIA: "Esta coluna está cheia.",
@@ -843,12 +845,29 @@ export async function abrirPartida({ onRoomLost, onLeave } = {}) {
     startClockUpdates();
     
     // Polling da sala: só para detectar quando ela some (ex.: o outro jogador saiu).
+    let partidaAtualId = initialRoom.partidaId;
     const cancelarPolling = watchRoom(session.pin, sala => {
-      if (!sala) onRoomLost();
+      if (!sala) {
+        onRoomLost();
+        return;
+      }
+      if (sala.phase === "playing" && sala.partidaId && sala.partidaId !== partidaAtualId) {
+        partidaAtualId = sala.partidaId;
+        socketAtual.fechar();
+        socketAtual = abrirPartidaSocket(
+          sala.partidaId,
+          exigirId(),
+          sala,
+          renderRoom,
+          ({ code, message }) => {
+            statusElement.textContent = getRoomErrorMessage(code) || message;
+          },
+        );
+      }
     });
     
     // Socket da partida: traz o estado (tabuleiro, turno, tempos, poderes).
-    const socket = abrirPartidaSocket(
+    socketAtual = abrirPartidaSocket(
       initialRoom.partidaId,
       exigirId(),
       initialRoom,
@@ -858,10 +877,10 @@ export async function abrirPartida({ onRoomLost, onLeave } = {}) {
       },
     );
     
-    cancelRoomWatch = () => {
+        cancelRoomWatch = () => {
       cancelarPolling();
-      socket.fechar();
-    };
+      socketAtual?.fechar();
+    };;
   } catch (error) {
     if (error.code === "PIN_NAO_ENCONTRADO") onRoomLost();
     else statusElement.textContent = getRoomErrorMessage(error.code);
@@ -886,13 +905,13 @@ rematchButton.addEventListener("click", async () => {
   rematchButton.disabled = true;
   rematchStatus.textContent = "";
   try {
-    const result = await requestRematch({ pin: room.pin, role });
-    if (result.phase === "finished") rematchStatus.textContent = "Aguardando o outro jogador.";
+    await requestRematch({ pin: room.pin, role });
+    rematchStatus.textContent = "Aguardando o outro jogador.";
   } catch (error) {
     rematchStatus.textContent = getRoomErrorMessage(error.code);
     rematchButton.disabled = false;
   }
-});
+});;
 
 leaveButton.addEventListener("click", async () => {
   console.log("sair: início");
@@ -918,7 +937,7 @@ leaveButton.addEventListener("click", async () => {
     console.log("sair: clearRoomSession");
     onLeave();
     console.log("sair: onLeave");
-
+    
   }
 });
 
