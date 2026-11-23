@@ -99,7 +99,7 @@ export class PartidaSocket {
 // Remover quando as telas forem migradas para as funções nativas acima.
 import { exigirId } from "./auth.js";
 
-const PHASE_FROM_API = { AGUARDANDO: "waiting", JOGANDO: "playing", ENCERRADA: "finished" };
+const PHASE_FROM_API = { AGUARDANDO: "waiting", JOGANDO: "playing", ENCERRADA: "closed" };
 const MODE_FROM_API = { CLASSICO: "classico", CAOS: "caos" };
 
 const jogadorSala = (p) => (p ? { id: p.jogadorId, nome: p.nome, color: p.cor } : null);
@@ -148,7 +148,10 @@ export async function getRoom(pin) {
 export function watchRoom(pin, callback) {
   return acompanharSala(
     pin,
-    (sala) => callback(paraTela(sala)),
+    (sala) => {
+      const tela = paraTela(sala);
+      callback(tela?.phase === "closed" ? null : tela);
+    },
     (error) => {
       if (error.code === "PIN_NAO_ENCONTRADO") callback(null);
     },
@@ -169,15 +172,118 @@ export async function leaveRoom({ pin } = {}) {
 
 // Partida ainda não integrada: estas funções são chamadas por partida.js e controller.js.
 const naoIntegrado = () => Promise.reject({ code: "NAO_INTEGRADO" });
-export const startMatch = naoIntegrado;
-export const publishState = naoIntegrado;
-export const publishResult = naoIntegrado;
-export const requestRematch = naoIntegrado;
-export const sendEmote = naoIntegrado;
-export const usarCongelarColuna = naoIntegrado;
-export const usarQueimarPeca = naoIntegrado;
-export const usarPecaExtra = naoIntegrado;
-export const desistirPartida = naoIntegrado;
-export const proporEmpate = naoIntegrado;
-export const responderEmpate = naoIntegrado;
-export const getRoomPartida = naoIntegrado;
+/* ---------- Adaptador de partida (WebSocket) ---------- */
+// Traduz o estado do back para o formato que partida.js já usa.
+
+const JOGADOR_DA_API = { VERMELHO: 1, AMARELO: 2 };
+const MOTIVO_FIM = { VITORIA: "vitoria", TABULEIRO_CHEIO: "empate", DESISTENCIA: "desistencia", EMPATE_ACORDADO: "empate", TEMPO: "tempo" };
+
+// Converte o tabuleiro: "VERMELHO" -> 1, "AMARELO" -> 2, null -> 0
+const tabuleiroParaTela = (tabuleiro) =>
+  tabuleiro.map(linha => linha.map(celula => JOGADOR_DA_API[celula] ?? 0));
+
+// Estado do back -> sala no formato que partida.js espera (room.game, room.result, room.phase).
+function estadoParaTela(estado, sala) {
+  const turnoJogador = estado.proximoJogadorId === estado.jogadorUm?.id ? 1 : 2;
+  const emFim = estado.statusPartida !== "EM_ANDAMENTO";
+  const motivo = MOTIVO_FIM[estado.motivoFim] ?? null;
+  const vencedor = estado.vencedorId == null
+    ? null
+    : (estado.vencedorId === estado.jogadorUm?.id ? 1 : 2);
+
+  return {
+    ...sala,
+    phase: emFim ? "finished" : "playing",
+    game: {
+      board: tabuleiroParaTela(estado.tabuleiro),
+      turn: turnoJogador,
+      moveCount: estado.totalJogadas,
+      bloqueios: (estado.congelamentos || []).map(c => ({
+        coluna: c.coluna,
+        jogador: c.jogadorId === estado.jogadorUm?.id ? 1 : 2,
+        lances: c.turnosRestantes,
+      })),
+      poderesUsados: poderesUsadosParaTela(estado),
+      pecaExtra: estado.pecaExtraAtiva ? { jogador: turnoJogador, etapa: 2 } : null,
+      empatesPropostos: {
+        1: (estado.empatesUsados || []).includes(estado.jogadorUm?.id),
+        2: (estado.empatesUsados || []).includes(estado.jogadorDois?.id),
+      },
+    },
+    result: emFim ? { winner: vencedor, draw: motivo === "empate", motivo } : null,
+    empate: estado.empatePropostoPor == null
+      ? null
+      : {
+          proponente: estado.empatePropostoPor === estado.jogadorUm?.id ? 1 : 2,
+          status: "pendente",
+        },
+    tempos: {
+      1: estado.tempoJogadorUmMs,
+      2: estado.tempoJogadorDoisMs,
+      relogioDe: estado.relogioDe === estado.jogadorUm?.id ? 1 : estado.relogioDe === estado.jogadorDois?.id ? 2 : null,
+    },
+  };
+}
+
+function poderesUsadosParaTela(estado) {
+  const usados = { 1: [], 2: [] };
+  const mapa = { QUEIMAR: "queimar-peca", CONGELAR: "congelar-coluna", EXTRA: "peca-extra" };
+  for (const p of estado.poderesUsados || []) {
+    const jogador = p.jogadorId === estado.jogadorUm?.id ? 1 : 2;
+    usados[jogador].push(mapa[p.poder] ?? p.poder);
+  }
+  return usados;
+}
+
+// Partida ativa: uma conexão por vez, usada pelas funções abaixo.
+let partidaAtiva = null;
+let estadoAtual = null;
+let ouvintesPartida = new Set();
+
+function notificarPartida(estado) {
+  estadoAtual = estado;
+  for (const ouvinte of ouvintesPartida) ouvinte(estado);
+}
+
+export function abrirPartidaSocket(partidaId, jogadorId, sala, onEstado, onErro) {
+  fecharPartidaSocket();
+  ouvintesPartida = new Set([onEstado]);
+  partidaAtiva = new PartidaSocket(partidaId, jogadorId, {
+    onEstado: (estado) => notificarPartida(estadoParaTela(estado, sala)),
+    onJogada: () => partidaAtiva?.pedirEstado(),
+    onErro: (codigo, mensagem) => onErro?.({ code: codigo, message: mensagem }),
+  });
+  partidaAtiva.conectar();
+  return partidaAtiva;
+}
+
+export function fecharPartidaSocket() {
+  partidaAtiva?.fechar();
+  partidaAtiva = null;
+  estadoAtual = null;
+}
+
+// Funções que partida.js chama. Todas enviam pelo socket; o resultado chega em onEstado.
+const enviar = (acao) => {
+  if (!partidaAtiva) return Promise.reject({ code: "SEM_CONEXAO" });
+  acao(partidaAtiva);
+  return Promise.resolve();
+};
+
+export const publishState = ({ board, turn, moveCount, column } = {}) =>
+  enviar(s => s.jogar(column));
+export const publishResult = () => Promise.resolve(); // o servidor encerra a partida sozinho
+export const usarCongelarColuna = ({ coluna }) => enviar(s => s.congelar(coluna));
+export const usarQueimarPeca = ({ coluna, linha }) => enviar(s => s.queimar(coluna, linha));
+export const usarPecaExtra = () => enviar(s => s.pecaExtra());
+export const desistirPartida = () => enviar(s => s.desistir());
+export const proporEmpate = () => enviar(s => s.proporEmpate());
+export const responderEmpate = ({ aceitar }) => enviar(s => (aceitar ? s.aceitarEmpate() : s.recusarEmpate()));
+
+// Revanche usa REST (não há comando no socket): POST /salas/{pin}/revanche.
+export const requestRematch = ({ pin }) => pedirRevanche(pin, exigirId()).then(sala => paraTela(sala));
+
+// Emotes não existem no back: stub até decidir o caminho.
+export const sendEmote = () => Promise.reject({ code: "NAO_INTEGRADO" });
+
+export const buscarEstadoPartida = (partidaId) => buscarEstado(partidaId).then(e => e);

@@ -40,19 +40,19 @@ export async function mostrarSecao(name) {
     cancelLobbyPhaseWatch = null;
   }
   if (currentSection === "partida" && name !== "partida") fecharPartida();
-
+  
   for (const [sectionName, section] of Object.entries(sections)) {
     section.hidden = sectionName !== name;
   }
   currentSection = name;
   document.body.dataset.currentSection = name;
-
+  
   if (name === "lobby") {
     await abrirLobby({ onLost: redirectToPlay });
     if (redirecting || currentSection !== "lobby") return;
     const { pin } = readRoomSession();
     if (!pin) return redirectToPlay({ notify: true });
-
+    
     try {
       cancelLobbyPhaseWatch = watchRoom(pin, room => {
         if (!room) {
@@ -69,13 +69,13 @@ export async function mostrarSecao(name) {
       if (error.code === "PIN_NAO_ENCONTRADO") redirectToPlay({ notify: true });
     }
   }
-
+  
   if (name === "partida") {
     if (cancelLobbyPhaseWatch) cancelLobbyPhaseWatch();
     cancelLobbyPhaseWatch = null;
     await abrirPartida({
       onRoomLost: () => redirectToPlay({ notify: true }),
-      onLeave: () => redirectToPlay(),
+      onLeave: () => window.location.assign("./t05-jogar.html"),
     });
   }
 }
@@ -93,13 +93,13 @@ async function initializeOnline() {
     await mostrarSecao("lobby");
     return;
   }
-
+  
   const initialSection = window.location.hash.slice(1);
   if (initialSection === "criar" || initialSection === "entrar") {
     await mostrarSecao(initialSection);
     return;
   }
-
+  
   redirectToPlay();
 }
 
