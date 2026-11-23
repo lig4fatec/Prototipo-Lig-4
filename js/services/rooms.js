@@ -175,59 +175,66 @@ const naoIntegrado = () => Promise.reject({ code: "NAO_INTEGRADO" });
 const JOGADOR_DA_API = { VERMELHO: 1, AMARELO: 2 };
 const MOTIVO_FIM = { VITORIA: "vitoria", TABULEIRO_CHEIO: "empate", DESISTENCIA: "desistencia", EMPATE_ACORDADO: "empate", TEMPO: "tempo" };
 
-// Converte o tabuleiro: "VERMELHO" -> 1, "AMARELO" -> 2, null -> 0
-const tabuleiroParaTela = (tabuleiro) =>
-  tabuleiro.map(linha => linha.map(celula => JOGADOR_DA_API[celula] ?? 0));
+// Assento da tela: 1 = dono da sala, 2 = convidado, independente de VERMELHO/AMARELO
+function seatDe(jogadorId, sala) {
+  return jogadorId === sala.players?.owner?.id ? 1 : 2;
+}
 
-// Estado do back -> sala no formato que partida.js espera (room.game, room.result, room.phase).
+function tabuleiroParaTela(tabuleiro, seatVermelho) {
+  const seatAmarelo = seatVermelho === 1 ? 2 : 1;
+  return tabuleiro.map(linha => linha.map(celula =>
+    celula === "VERMELHO" ? seatVermelho : celula === "AMARELO" ? seatAmarelo : 0));
+}
+
 function estadoParaTela(estado, sala) {
-  const turnoJogador = estado.proximoJogadorId === estado.jogadorUm?.id ? 1 : 2;
+  const s = (id) => seatDe(id, sala);
+  const seatVermelho = s(estado.jogadorUm?.id);
   const emFim = estado.statusPartida !== "EM_ANDAMENTO";
   const motivo = MOTIVO_FIM[estado.motivoFim] ?? null;
-  const vencedor = estado.vencedorId == null
-    ? null
-    : (estado.vencedorId === estado.jogadorUm?.id ? 1 : 2);
+  const vencedor = estado.vencedorId == null ? null : s(estado.vencedorId);
+  const usados = estado.empatesUsados || [];
+  const idDono = sala.players?.owner?.id;
+  const idConvidado = sala.players?.guest?.id;
+  const umMs = estado.tempoJogadorUmMs;
+  const doisMs = estado.tempoJogadorDoisMs;
 
   return {
     ...sala,
     phase: emFim ? "finished" : "playing",
     game: {
-      board: tabuleiroParaTela(estado.tabuleiro),
-      turn: turnoJogador,
+      board: tabuleiroParaTela(estado.tabuleiro, seatVermelho),
+      turn: s(estado.proximoJogadorId),
       moveCount: estado.totalJogadas,
       bloqueios: (estado.congelamentos || []).map(c => ({
         coluna: c.coluna,
-        jogador: c.jogadorId === estado.jogadorUm?.id ? 1 : 2,
+        jogador: s(c.jogadorId),
         lances: c.turnosRestantes,
       })),
-      poderesUsados: poderesUsadosParaTela(estado),
-      pecaExtra: estado.pecaExtraAtiva ? { jogador: turnoJogador, etapa: 2 } : null,
+      poderesUsados: poderesUsadosParaTela(estado, sala),
+      pecaExtra: estado.pecaExtraAtiva
+        ? { jogador: s(estado.proximoJogadorId), etapa: 2 } : null,
       empatesPropostos: {
-        1: (estado.empatesUsados || []).includes(estado.jogadorUm?.id),
-        2: (estado.empatesUsados || []).includes(estado.jogadorDois?.id),
+        1: usados.includes(idDono),
+        2: usados.includes(idConvidado),
       },
     },
     result: emFim ? { winner: vencedor, draw: motivo === "empate", motivo } : null,
     empate: estado.empatePropostoPor == null
       ? null
-      : {
-          proponente: estado.empatePropostoPor === estado.jogadorUm?.id ? 1 : 2,
-          status: "pendente",
-        },
+      : { proponente: s(estado.empatePropostoPor), status: "pendente" },
     tempos: {
-      1: estado.tempoJogadorUmMs,
-      2: estado.tempoJogadorDoisMs,
-      relogioDe: estado.relogioDe === estado.jogadorUm?.id ? 1 : estado.relogioDe === estado.jogadorDois?.id ? 2 : null,
+      1: seatVermelho === 1 ? umMs : doisMs,
+      2: seatVermelho === 1 ? doisMs : umMs,
+      relogioDe: s(estado.relogioDe),
     },
   };
 }
 
-function poderesUsadosParaTela(estado) {
-  const usados = { 1: [], 2: [] };
+function poderesUsadosParaTela(estado, sala) {
+  const usados = { 1: [], 2: [] }; // TODO: verificar se precisa criar um terceiro "slot" para contabilizar o uso do terceiro poder.
   const mapa = { QUEIMAR: "queimar-peca", CONGELAR: "congelar-coluna", EXTRA: "peca-extra" };
   for (const p of estado.poderesUsados || []) {
-    const jogador = p.jogadorId === estado.jogadorUm?.id ? 1 : 2;
-    usados[jogador].push(mapa[p.poder] ?? p.poder);
+    usados[seatDe(p.jogadorId, sala)].push(mapa[p.poder] ?? p.poder);
   }
   return usados;
 }
