@@ -1,6 +1,7 @@
 // js/services/rooms.js — salas (REST + polling) e partida (WebSocket)
 import { get, post, put } from "./http.js";
 import { WS_URL } from "../config.js";
+import { getProfile } from "./profile.js"
 
 // room-ui.js e profile-page.js importam esta lista
 export const CORES_VALIDAS = ["blue", "red", "purple", "green", "orange", "yellow", "brown"];
@@ -104,7 +105,7 @@ import { exigirId } from "./auth.js";
 const PHASE_FROM_API = { AGUARDANDO: "waiting", JOGANDO: "playing", ENCERRADA: "finished" };
 const MODE_FROM_API = { CLASSICO: "classico", CAOS: "caos" };
 
-const jogadorSala = (p) => (p ? { id: p.jogadorId, nome: p.nome, color: p.cor } : null);
+const jogadorSala = (p) => (p ? { id: p.jogadorId, nome: p.nome, color: p.cor, avatar: p.avatar } : null);
 
 // Converte a sala do back para o formato que as telas esperam.
 function paraTela(sala) {
@@ -134,13 +135,26 @@ function papelDoJogador(sala) {
 }
 
 export async function createRoom({ mode = "classico" } = {}) {
-  const sala = await criarSala(exigirId(), "blue", mode === "caos" ? "CAOS" : "CLASSICO");
+  const perfil = await getProfile();
+  const sala = await criarSala(exigirId(), perfil.color || "blue", mode === "caos" ? "CAOS" : "CLASSICO");
   return { pin: sala.pin };
 }
 
 export async function joinRoom({ pin } = {}) {
-  const sala = await entrarNaSala(exigirId(), pin, "red");
-  return { pin: sala.pin, role: "guest" };
+  const perfil = await getProfile();
+  const preferida = perfil.color || "red";
+  const ordem = [preferida, ...CORES_VALIDAS.filter(c => c !== preferida)];
+  let ultimoErro = null;
+  for (const cor of ordem) {
+    try {
+      const sala = await entrarNaSala(exigirId(), pin, cor);
+      return { pin: sala.pin, role: "guest" };
+    } catch (error) {
+      if (error.code !== "COR_JA_ESCOLHIDA") throw error;
+      ultimoErro = error;
+    }
+  }
+  throw ultimoErro;
 }
 
 export async function getRoom(pin) {

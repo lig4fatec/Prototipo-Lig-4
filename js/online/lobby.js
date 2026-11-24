@@ -49,20 +49,23 @@ function setPlayer(roleName, player) {
   const colorElement = document.querySelector(`[data-player-color="${roleName}"]`);
   const swatch = document.querySelector(`[data-player-swatch="${roleName}"]`);
   const preview = document.querySelector(`[data-player-swatch-preview="${roleName}"]`);
+  const nomeElement = document.querySelector(`[data-player-card="${roleName}"] [data-player-name]`);
   setPlayerAvatar(roleName, player);
-  
+
   if (!player) {
     roleElement.textContent = "Aguardando jogador";
     colorElement.textContent = "—";
     swatch.dataset.color = "empty";
     preview.dataset.color = "empty";
+    if (nomeElement) nomeElement.textContent = "";
     return;
   }
-  
+
   roleElement.textContent = roleName === "owner" ? "Dono" : "Convidado";
   colorElement.textContent = COLOR_NAMES[player.color] || "—";
   swatch.dataset.color = player.color;
   preview.dataset.color = player.color;
+  if (nomeElement) nomeElement.textContent = player.nome || "";
 }
 
 async function renderBoardChoices() {
