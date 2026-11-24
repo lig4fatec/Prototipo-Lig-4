@@ -327,7 +327,7 @@
   border-radius: 8px;
   background: var(--color-button-dark);
   color: var(--color-text);
-  opacity: 0.45;
+  opacity: 1;
   transition: opacity 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
 }
 
@@ -343,6 +343,18 @@
   opacity: 1;
   border-color: var(--player-color);
   box-shadow: 0 0 16px color-mix(in srgb, var(--player-color) 40%, transparent);
+}
+.rooms-screen .online-game-player-card .player-name,
+.rooms-screen .online-game-player-card .player-clock,
+.rooms-screen .online-game-player-card .player-powers {
+  opacity: 0.45;
+  transition: opacity 160ms ease;
+}
+
+.rooms-screen .online-game-player-card.is-active .player-name,
+.rooms-screen .online-game-player-card.is-active .player-clock,
+.rooms-screen .online-game-player-card.is-active .player-powers {
+  opacity: 1;
 }
 
 .online-game-player-card .player-info {
@@ -378,7 +390,7 @@
 }
 
 .online-game-player-card .player-powers .is-used {
-  opacity: 0.35;
+  /* opacity: 0.35; */
   filter: grayscale(1);
   text-decoration: line-through;
   pointer-events: none;
@@ -389,7 +401,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: 0rem;
   min-width: 0;
 }
 
@@ -409,7 +421,7 @@
 .online-game-emotes-container {
   display: grid;
   grid-template-columns: minmax(180px, 220px) minmax(0, 1fr) minmax(180px, 220px);
-  gap: 1.25rem;
+  gap: 0.10rem;
   align-items: center;
   width: 100%;
 }
@@ -580,7 +592,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.25rem;
   }
 
   .online-game-emotes-container .online-game-emote-menu {
@@ -967,6 +979,11 @@
   width: min(100%, 820px, calc(76vh * var(--board-aspect, 1)));
 }
 
+.rooms-screen .online-game-board-wrap {
+  width: min(100%, 560px, calc((100vh - 130px) * var(--board-aspect, 1)));
+  max-width: none;
+}
+
 .online-game-board-wrap[data-board-theme] .online-game-board {
   position: relative;
   display: block;
@@ -1179,7 +1196,7 @@
 .online-game-emote-toggle { min-width: 165px; display: inline-flex; align-items: center; justify-content: center; gap: 0.75rem; cursor: pointer; }
 .online-game-emotes[hidden] { display: none !important; }
 .online-game-emote-menu .online-game-emotes:not([hidden]) {
-  position: absolute; z-index: 30; top: calc(100% + 6px);
+  position: absolute; z-index: 30; bottom: calc(100% + 6px);
   width: min(90vw, 360px); max-height: 240px; overflow-y: auto;
   padding: 12px; background: #18301D; border: 1px solid #F2B705;
   border-radius: 12px; box-shadow: 0 10px 28px #0009;
@@ -1247,4 +1264,341 @@
 @media (max-width: 520px) {
   .lobby-board-choices { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .lobby-board-choice img { height: 96px; }
+}
+.rooms-screen .online-game-player-card .player-clock {
+  display: inline-block;
+  padding: 0.25rem 0.9rem;
+  border-radius: 999px;
+  background: var(--color-button-dark);
+  color: var(--player-color);
+}
+
+.rooms-screen .online-game-player-card[data-score-player="1"] .emote-bubble {
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  right: auto;
+  transform: translateY(-50%);
+  margin-left: 0.75rem;
+  z-index: 20;
+  isolation: isolate;
+  pointer-events: none;
+}
+
+.rooms-screen .online-game-player-card[data-score-player="2"] .emote-bubble {
+  position: absolute;
+  top: 50%;
+  left: auto;
+  right: 100%;
+  transform: translateY(-50%);
+  margin-right: 0.75rem;
+  z-index: 20;
+  isolation: isolate;
+  pointer-events: none;
+}
+
+.online-game-player-card .player-name,
+.online-game-player-card .player-clock,
+.online-game-player-card .player-powers {
+  opacity: 0.45;
+  transition: opacity 160ms ease;
+}
+
+.online-game-player-card.is-active .player-name,
+.online-game-player-card.is-active .player-clock,
+.online-game-player-card.is-active .player-powers {
+  opacity: 1;
+}
+
+@media (max-width: 900px) {
+  .rooms-screen .online-game-player-card[data-score-player="1"] .emote-bubble,
+  .rooms-screen .online-game-player-card[data-score-player="2"] .emote-bubble {
+    left: auto;
+    right: 0.5rem;
+    top: auto;
+    bottom: 0.5rem;
+    transform: none;
+    margin: 0;
+  }
+}
+
+.rooms-screen .online-game-player-card > .player-avatar {
+  align-self: center;
+  margin-inline: auto;
+}
+
+@media (min-width: 901px) {
+  .rooms-screen #secao-partida[data-role="guest"] .online-game-emotes-container {
+    grid-template-columns: minmax(180px, 220px) minmax(0, 1fr) minmax(180px, 220px);
+  }
+
+  .rooms-screen #secao-partida[data-role="guest"] .online-game-emotes-container .online-game-emote-menu {
+    grid-column: 3;
+    justify-self: end;
+  }
+}
+
+.rooms-screen .online-game-emotes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+  gap: 0.5rem;
+  width: min(100%, 200px);
+  max-width: 200px;
+  padding: 0.75rem;
+  box-sizing: border-box;
+}
+
+.rooms-screen .online-game-result:not([hidden]) {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: #050214b3;
+  margin: 0;
+}
+
+.rooms-screen .online-game-result__box {
+  display: grid;
+  gap: 1rem;
+  width: min(90vw, 420px);
+  padding: 2rem;
+  box-sizing: border-box;
+  border: 4px solid #000;
+  border-radius: 6px;
+  background: linear-gradient(160deg, rgba(26, 11, 61, 0.97), rgba(11, 26, 74, 0.97));
+  box-shadow: 8px 8px 0 #000;
+}
+
+.rooms-screen .online-game-result__box .button {
+  width: 100%;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.rooms-screen .online-game-player-card {
+  align-self: start;
+  min-height: 0;
+  height: auto;
+}
+
+.rooms-screen .online-game-status {
+  position: fixed;
+  left: 50%;
+  bottom: 1rem;
+  transform: translateX(-50%);
+  z-index: 900;
+  width: min(90vw, 480px);
+  margin: 0;
+  padding: 0.6rem 1rem;
+  text-align: center;
+  border-radius: 8px;
+  background: rgba(9, 5, 20, 0.85);
+  pointer-events: none;
+}
+
+.rooms-screen .online-game-status:empty {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .rooms-screen .online-game-player-card {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+      "avatar info"
+      "powers powers";
+    align-items: center;
+    gap: 0.4rem 0.6rem;
+    padding: 0.5rem;
+    min-height: 0;
+  }
+
+  .rooms-screen .online-game-player-card > .player-avatar {
+    grid-area: avatar;
+    width: 40px;
+    height: 40px;
+    margin: 0;
+  }
+
+  .rooms-screen .online-game-player-card .player-info {
+    grid-area: info;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .rooms-screen .online-game-player-card .player-powers {
+    grid-area: powers;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: center;
+    gap: 0.3rem;
+    min-height: 0;
+  }
+
+  .rooms-screen .online-game-player-card .player-powers .button {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 0.25rem 0.2rem;
+    font-size: 0.6rem;
+  }
+}
+
+@media (max-width: 900px) {
+  #secao-partida {
+    padding-bottom: 4.5rem;
+  }
+
+  .rooms-screen .online-game-emotes-container {
+    position: fixed;
+    left: 0.5rem;
+    bottom: 0.5rem;
+    z-index: 800;
+    width: auto;
+  }
+}
+
+@media (max-width: 900px) {
+  .rooms-screen .online-game-player-card .player-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 900px) {
+  .rooms-screen .online-game-player-card .player-clock {
+    font-size: 0.95rem;
+    padding: 0.15rem 0.5rem;
+  }
+}
+
+@media (max-width: 900px) {
+  .rooms-screen .online-game-player-card .player-powers .button {
+    font-size: 0.5rem;
+    line-height: 1.1;
+    padding: 0.2rem 0.1rem;
+    white-space: normal;
+    word-break: keep-all;
+  }
+}
+
+@media (max-width: 900px) {
+  .rooms-screen .rooms-main {
+    padding: 0.5rem;
+  }
+
+  #secao-partida {
+    padding: 0;
+  }
+}
+
+@media (max-width: 900px) {
+  .rooms-screen .online-game-player-card {
+    grid-template-columns: minmax(44px, 20%) 1fr;
+    padding: 0.4rem 0.5rem;
+  }
+
+  .rooms-screen .online-game-player-card > .player-avatar {
+    width: 100%;
+    max-width: 52px;
+    height: auto;
+    aspect-ratio: 1;
+  }
+}
+
+@media (max-width: 900px) {
+  .rooms-screen #secao-partida .online-game-layout > aside.online-game-player-card {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    padding: 0;
+    min-height: 0;
+  }
+
+@media (max-width: 900px) {
+  .rooms-screen #secao-partida .online-game-layout > aside.online-game-player-card.is-active {
+    background: color-mix(in srgb, var(--color-primary) 22%, transparent);
+    border: 0;
+    box-shadow: none;
+    min-height: 0;
+  }
+}
+
+  .rooms-screen #secao-partida .online-game-layout > aside.online-game-player-card.is-active .player-name {
+    text-decoration: underline;
+    text-decoration-color: var(--color-primary);
+    text-underline-offset: 4px;
+  }
+
+  .rooms-screen #secao-partida .online-game-layout > aside.online-game-player-card > .player-avatar {
+    max-width: 56px;
+  }
+}
+
+@media (max-width: 900px) {
+  #secao-partida {
+    padding-bottom: 5rem;
+  }
+}
+
+@media (max-width: 900px) {
+  .rooms-screen .online-game-board-wrap,
+  .rooms-screen .online-game-board-wrap[data-board-theme] {
+    width: min(100%, 320px);
+  }
+}
+
+@media (max-width: 900px) {
+    .rooms-screen .empate-popup {
+    position: fixed;
+    right: 0.5rem;
+    bottom: 4.5rem;
+    left: auto;
+    top: auto;
+    z-index: 850;
+    font-size: 0.7rem;
+    max-width: 140px;
+    padding: 0.5rem 0.5rem 0.8rem 0.5rem ;
+    margin: 0;
+    width: auto;
+    white-space: normal;
+    background: rgba(0, 0, 0, 0.28);
+    border-radius: 20px;
+  }
+}
+
+@media (max-width: 900px) {
+  .rooms-screen #secao-partida .online-game-layout > aside.online-game-player-card {
+    position: relative;
+  }
+}
+
+
+@media (min-width: 901px) 
+{
+
+  .rooms-screen .empate-popup {
+    position: fixed;
+    right: 5rem;
+    bottom: 2rem;
+    left: auto;
+    top: auto;
+    z-index: 850;
+    font-size: 0.7rem;
+    max-width: 140px;
+    /* padding: 1rem ; */
+    margin: 0;
+    width: auto;
+    white-space: normal;
+    border-radius: 20px;
+    background-color: #050214b3;
+  }
 }
