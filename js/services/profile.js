@@ -28,3 +28,8 @@ export async function updateProfile({ nick, name, bio, color }) {
   });
   return paraTela(p);
 }
+
+export const alterarEmail = (email, senha) =>
+  put(`/jogadores/${exigirId()}/email`, { email, senha });
+export const alterarSenha = (senhaAtual, senhaNova) =>
+  put(`/jogadores/${exigirId()}/senha`, { senhaAtual, senhaNova });
