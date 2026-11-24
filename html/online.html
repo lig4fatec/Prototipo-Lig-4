@@ -128,7 +128,7 @@
           <p class="room-status" data-lobby-status role="status" aria-live="polite"></p>
           <div class="lobby-actions">
             <button class="button button-primary-light" type="button" data-lobby-ready disabled>Estou pronto</button>
-            <button class="button button-primary-light" type="button" data-lobby-start disabled>Começar partida</button>
+            <button class="button button-primary-light" type="button" data-lobby-start disabled style="display: none;">Começar partida</button>
             <button class="button button-secondary" type="button" data-lobby-leave>Sair da sala</button>
           </div>
         </section>
@@ -155,8 +155,7 @@
             <!-- Esquerda: Jogador 1 -->
             <aside class="ui-card online-game-player-card" data-score-player="1">
               <div class="player-info">
-                <span class="player-name">Jogador 1<span data-player-tag></span></span>
-                <span class="player-clock" data-game-clock="1">05:00</span>
+                <span class="player-name"><span data-player-name>Jogador 1</span><span data-player-tag></span></span>                <span class="player-clock" data-game-clock="1">05:00</span>
               </div>
               <div class="player-powers" data-game-powers="1"></div>
             </aside>
@@ -170,7 +169,7 @@
 
               <!-- Abaixo do tabuleiro: Ações de jogo (Empate e Desistir) -->
               <div class="online-game-actions">
-                <button class="button button-secondary" type="button" data-game-draw disabled aria-label="Propor empate">1/2</button>
+                <button class="button button-secondary" type="button" data-game-draw disabled aria-label="Propor empate">Empate</button>
                 <button class="button button-danger" type="button" data-game-resign aria-label="Desistir da partida">
                   <span aria-hidden="true">🏳</span> Desistir
                 </button>
@@ -180,8 +179,7 @@
             <!-- Direita: Jogador 2 -->
             <aside class="ui-card online-game-player-card" data-score-player="2">
               <div class="player-info">
-                <span class="player-name">Jogador 2<span data-player-tag></span></span>
-                <span class="player-clock" data-game-clock="2">05:00</span>
+                <span class="player-name"><span data-player-name>Jogador 2</span><span data-player-tag></span></span>                <span class="player-clock" data-game-clock="2">05:00</span>
               </div>
               <div class="player-powers" data-game-powers="2"></div>
             </aside>
@@ -199,11 +197,14 @@
           <!-- Status, Resultado e Sair da sala mantidos -->
           <p class="online-game-status" data-game-status role="status" aria-live="polite"></p>
           <section class="online-game-result" data-game-result-panel aria-labelledby="game-result-title" hidden>
-            <h2 id="game-result-title">Resultado</h2>
-            <p data-game-result></p>
-            <p data-game-rematch-status role="status" aria-live="polite"></p>
-            <button class="button button-primary-dark" type="button" data-game-rematch disabled>Revanche</button>
-            <a href="t05-jogar.html"><button class="button button-danger online-game-leave" type="button" data-game-leave>Sair da sala</button></a>
+            <div class="online-game-result__box">
+              <h2 id="game-result-title" data-game-result-title>Resultado</h2>
+              <p data-game-result></p>
+              <p data-game-coins></p>
+              <p data-game-rematch-status role="status" aria-live="polite"></p>
+              <button class="button button-primary-dark" type="button" data-game-rematch disabled>Revanche</button>
+              <a href="./t05-jogar.html"><button class="button button-danger online-game-leave" type="button" data-game-leave>Sair da sala</button></a>
+            </div>
           </section>
         </section>
       </div>

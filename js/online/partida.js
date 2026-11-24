@@ -42,6 +42,10 @@ const FALL_STEP_MS = 80;
 const EMOTE_COOLDOWN_MS = 1500;
 const EMOTE_VISIBLE_MS = 2600;
 const CLOCK_REFRESH_MS = 250;
+const MOEDAS_POR_RESULTADO = {
+  classico: { vitoria: 15, empate: 5, derrota: 2 },
+  caos: { vitoria: 30, empate: 10, derrota: 5 },
+};
 const boardWrap = document.querySelector(".online-game-board-wrap");
 const boardElement = document.querySelector("[data-game-board]");
 const columnsElement = document.querySelector("[data-game-columns]");
@@ -62,6 +66,7 @@ const powerElements = [
 const statusElement = document.querySelector("[data-game-status]");
 const resultPanel = document.querySelector("[data-game-result-panel]");
 const resultElement = document.querySelector("[data-game-result]");
+const gameCoinsElement = document.querySelector("[data-game-coins]");
 const rematchStatus = document.querySelector("[data-game-rematch-status]");
 const rematchButton = document.querySelector("[data-game-rematch]");
 const leaveButton = document.querySelector("[data-game-leave]");
@@ -145,6 +150,7 @@ function verificarTempoEsgotado() {
 }
 
 function startClockUpdates() {
+  stopClockUpdates();
   clockInterval = window.setInterval(() => {
     verificarTempoEsgotado();
     redrawClocks();
@@ -178,6 +184,10 @@ function playerNumberForRole(playerRole) {
 }
 
 function renderPlayerColors(nextRoom) {
+  const nomeOwner = document.querySelector('[data-score-player="1"] [data-player-name]');
+  const nomeGuest = document.querySelector('[data-score-player="2"] [data-player-name]');
+  if (nomeOwner) nomeOwner.textContent = room.players?.owner?.nome || "Jogador 1";
+  if (nomeGuest) nomeGuest.textContent = room.players?.guest?.nome || "Jogador 2";
   for (const [index, playerRole] of ["owner", "guest"].entries()) {
     const card = playerCards[index];
     if (!card) continue;
@@ -305,7 +315,7 @@ function showEmote(lastEmote) {
 
 function updateEmoteButtons() {
   const mayEmote = EMOTES_HABILITADOS
-    && Boolean(room) && (room.phase === "playing" || room.phase === "finished");
+  && Boolean(room) && (room.phase === "playing" || room.phase === "finished");
   emotesElement.querySelectorAll("button").forEach(button => {
     button.disabled = !mayEmote || emoteCooldown;
   });
@@ -317,14 +327,14 @@ function renderPowerButtons() {
     { id: "queimar-peca", label: "Queimar peça" },
     { id: "peca-extra", label: "Peça extra" },
   ];
-
+  
   for (const [index, container] of powerElements.entries()) {
     if (!container) continue;
     if (room?.mode !== "caos" || !room?.game) {
       container.replaceChildren();
       continue;
     }
-
+    
     const playerNumber = index + 1;
     const isLocalPlayer = playerNumberForRole(role) === playerNumber;
     const isTurn = room.phase === "playing" && room.game?.turn === playerNumber;
@@ -337,8 +347,8 @@ function renderPowerButtons() {
       button.className = "button button-secondary";
       button.textContent = power.label;
       button.disabled = !disponivel || used || !isLocalPlayer || !isTurn || moveInProgress
-        || (power.id === "peca-extra" && poucosEspacos)
-        || room.game?.pecaExtra?.etapa === 2;
+      || (power.id === "peca-extra" && poucosEspacos)
+      || room.game?.pecaExtra?.etapa === 2;
       if (!disponivel) button.title = "Compre este poder na loja";
       if (power.id === "peca-extra") {
         button.setAttribute("aria-pressed", "false");
@@ -362,8 +372,8 @@ function renderPowerButtons() {
           if (!room || room.phase !== "playing" || moveInProgress) return;
           pendingPower = pendingPower === power.id ? null : power.id;
           statusElement.textContent = pendingPower
-            ? "Clique em uma coluna para usar o poder."
-            : "";
+          ? "Clique em uma coluna para usar o poder."
+          : "";
           renderPowerButtons();
         });
       }
@@ -404,7 +414,7 @@ async function sendOwnEmote(emoteId) {
     await sendEmote({ emoteId });
     closeEmoteMenu();
   } catch (error) {
-      statusElement.textContent = gameErrorMessages[error.code] || getRoomErrorMessage(error.code);
+    statusElement.textContent = gameErrorMessages[error.code] || getRoomErrorMessage(error.code);
   } finally {
     setTimeout(() => {
       emoteCooldown = false;
@@ -417,7 +427,7 @@ async function applyPersonalization() {
   try {
     const [equippedItems, inventory] = await Promise.all([getEquippedItems(), getInventory()]);
     ownAvatarId = equippedItems.avatar.id;
-
+    
     tabuleiroProprio = equippedItems.board?.id || "board-classico";
     if (room) applyBoardTheme(boardWrap, findItem(tabuleiroProprio));
     
@@ -528,7 +538,9 @@ function renderEmpateUI() {
   if (statusElement.textContent === "O adversário recusou o empate.") {
     statusElement.textContent = "";
   }
-  
+  if (statusElement.textContent === "Aguardando resposta.") {
+    statusElement.textContent = "";
+  }
   if (!pendente) return;
   
   if (empate.proponente === jogador) {
@@ -560,7 +572,7 @@ function renderEmpateUI() {
   recusar.textContent = "Recusar";
   
   box.append(label, aceitar, recusar);
-  playerName.after(box);
+  document.getElementById("secao-partida").append(box);
   empatePopup = box;
   
   aceitar.addEventListener("click", async () => {
@@ -586,10 +598,11 @@ function renderEmpateUI() {
 
 function renderRoom(nextRoom) {
   
-
+  
   if (!nextRoom) {
     room = null;
     pendingPower = null;
+    gameCoinsElement.textContent = "";
     stopRoomWatch();
     stopClockUpdates();
     removerEmpatePopup();
@@ -608,6 +621,8 @@ function renderRoom(nextRoom) {
   ) pendingPower = null;
   room = nextRoom;
   renderPlayerColors(room);
+  document.getElementById("secao-partida").dataset.role = role;
+  if (room.phase !== "playing") stopClockUpdates();
   renderActivePlayer(room);
   redrawClocks();
   renderPowerButtons();
@@ -638,15 +653,26 @@ function renderRoom(nextRoom) {
   const finished = room.phase === "finished" && Boolean(room.result);
   resultPanel.hidden = !finished;
   if (finished) {
-  
+    const resultadoLocal = room.result.draw
+      ? "empate"
+      : room.result.winner === playerNumberForRole(role)
+        ? "vitoria"
+        : "derrota";
+    const moedas = MOEDAS_POR_RESULTADO[room.mode][resultadoLocal];
+    gameCoinsElement.textContent = `Você ganhou ${moedas} moedas.`;
+
+    const nomeOwner = room.players?.owner?.nome || "Jogador 1";
+    const nomeGuest = room.players?.guest?.nome || "Jogador 2";
+    const nomeVencedor = room.result.winner === 1 ? nomeOwner : nomeGuest;
+    const nomePerdedor = room.result.winner === 1 ? nomeGuest : nomeOwner;
 
     if (room.result.draw) {
       resultElement.textContent = "Empate.";
     } else if (room.result.motivo === "desistencia") {
       const perdedor = room.result.winner === 1 ? 2 : 1;
-      resultElement.textContent = `${perdedor === 1 ? "Jogador 1 · Dono" : "Jogador 2 · Convidado"} desistiu. ${room.result.winner === 1 ? "Jogador 1 · Dono" : "Jogador 2 · Convidado"} venceu.`;
+      resultElement.textContent = `${nomePerdedor} desistiu. ${nomeVencedor} venceu.`;
     } else {
-      resultElement.textContent = `${room.result.winner === 1 ? "Jogador 1 · Dono" : "Jogador 2 · Convidado"} venceu.`;
+      resultElement.textContent = `${nomeVencedor} venceu.`;
     }
     if (!room.result.draw) {
       const currentPlayer = playerNumberForRole(role);
@@ -664,8 +690,9 @@ function renderRoom(nextRoom) {
     ? "Aguardando o outro jogador."
     : "";
     
-
+    
   } else {
+    gameCoinsElement.textContent = "";
     rematchStatus.textContent = "";
     rematchButton.disabled = true;
   }
@@ -676,10 +703,10 @@ function renderRoom(nextRoom) {
   
   renderBoard();
   
-
+  
   renderEmpateUI();
-
-
+  
+  
 }
 
 function delay(milliseconds) {
@@ -715,7 +742,7 @@ async function dropInColumn(column) {
     return;
   }
   
-    if (pendingPower === "queimar-peca") {
+  if (pendingPower === "queimar-peca") {
     const oponente = player === 1 ? 2 : 1;
     const linhaMatriz = room.game.board.findIndex(linha => linha[column] === oponente);
     if (linhaMatriz < 0) {
@@ -794,7 +821,7 @@ export async function abrirPartida({ onRoomLost, onLeave } = {}) {
       if (sala.phase === "playing" && sala.partidaId && sala.partidaId !== partidaAtualId) {
         partidaAtualId = sala.partidaId;
         socketAtual.fechar();
-        socketAtual = abrirPartidaSocket(
+        socketAtual = abrirPartidaSocket( 
           sala.partidaId,
           exigirId(),
           sala,
@@ -803,6 +830,7 @@ export async function abrirPartida({ onRoomLost, onLeave } = {}) {
             statusElement.textContent = getRoomErrorMessage(code) || message;
           },
         );
+        startClockUpdates();
       }
     });
     
@@ -817,7 +845,7 @@ export async function abrirPartida({ onRoomLost, onLeave } = {}) {
       },
     );
     
-        cancelRoomWatch = () => {
+    cancelRoomWatch = () => {
       cancelarPolling();
       socketAtual?.fechar();
     };;
