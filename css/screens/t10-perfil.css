@@ -785,3 +785,16 @@
     height: 60px;
   }
 }
+
+#profile-bio {
+  field-sizing: content;
+  resize: none;
+}
+
+.profile-screen .form-field__control input,
+.profile-screen .form-field__control textarea {
+  border: 0;
+  box-shadow: none;
+  outline: none;
+  background-color: rgba(0, 0, 0, 0.0);
+}

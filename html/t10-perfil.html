@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="../css/screens/t10-perfil.css">
     <script type="module" src="../js/global-nav.js"></script>
     <script type="module" src="../js/profile-page.js"></script>
+    <script type="module" src="../js/profile-security.js"></script>
     <script type="module" src="../js/button-click-sound.js"></script>
     <script type="module" src="../js/background-music.js"></script>
   </head>
@@ -95,22 +96,49 @@
 
           <section class="profile-section profile-security" aria-labelledby="profile-security-title">
             <h2 id="profile-security-title">Segurança</h2>
-            <div class="profile-security-row">
-              <div>
-                <h3>E-mail</h3>
-                <p data-profile-email>Carregando...</p>
+
+            <form class="profile-form" data-security-form="email" novalidate>
+              <h3>E-mail</h3>
+              <p data-profile-email>Carregando...</p>
+
+              <div class="form-field">
+                <label class="form-field__label" for="profile-new-email">Novo e-mail</label>
+                <div class="form-field__control">
+                  <input id="profile-new-email" name="email" type="email" autocomplete="email" required>
+                </div>
               </div>
-              <button class="button button-primary-dark" type="button" disabled aria-describedby="profile-email-soon">Alterar e-mail</button>
-              <span id="profile-email-soon">Em breve</span>
-            </div>
-            <div class="profile-security-row">
-              <div>
-                <h3>Senha</h3>
-                <p>Gerencie sua senha de acesso.</p>
+
+              <div class="form-field">
+                <label class="form-field__label" for="profile-email-password">Senha atual</label>
+                <div class="form-field__control">
+                  <input id="profile-email-password" name="senha" type="password" autocomplete="current-password" required>
+                </div>
               </div>
-              <button class="button button-primary-dark" type="button" disabled aria-describedby="profile-password-soon">Alterar senha</button>
-              <span id="profile-password-soon">Em breve</span>
-            </div>
+
+              <button class="button button-secondary profile-save" type="submit">Alterar e-mail</button>
+              <p class="profile-form-status" data-security-status="email" role="status" aria-live="polite"></p>
+            </form>
+
+            <form class="profile-form" data-security-form="senha" novalidate>
+              <h3>Senha</h3>
+
+              <div class="form-field">
+                <label class="form-field__label" for="profile-current-password">Senha atual</label>
+                <div class="form-field__control">
+                  <input id="profile-current-password" name="senhaAtual" type="password" autocomplete="current-password" required>
+                </div>
+              </div>
+
+              <div class="form-field">
+                <label class="form-field__label" for="profile-new-password">Nova senha</label>
+                <div class="form-field__control">
+                  <input id="profile-new-password" name="senhaNova" type="password" autocomplete="new-password" minlength="6" maxlength="72" required>
+                </div>
+              </div>
+
+              <button class="button button-secondary profile-save" type="submit">Alterar senha</button>
+              <p class="profile-form-status" data-security-status="senha" role="status" aria-live="polite"></p>
+            </form>
           </section>
         </section>
 
